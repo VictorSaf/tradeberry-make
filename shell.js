@@ -1,4 +1,4 @@
-/* tradeBerry — v11 shell: workspaces (Trade · Markets · Research · Lab · Coach),
+/* tradeBerry — v11 shell: workspaces (Trade · Monitor · Research · Strategy Lab · Coach),
    compact chart toolbar menus, fixed-height market panel switcher, symbol details and the quote monitor. */
 (function shell() {
   if (typeof S === 'undefined' || !S || !S.set || typeof setTab !== 'function' || !window.wsApply || !document.getElementById('views')) return setTimeout(shell, 150);
@@ -8,16 +8,25 @@
 
   /* ---------------- workspaces ---------------- */
   const VIEWS = {
-    trade: { label: 'Trade', tabs: ['positions', 'orders', 'history', 'alerts'] },
-    monitor: { label: 'Markets', tabs: ['positions', 'orders', 'history', 'alerts'] },
+    trade: { label: 'Trade', tabs: ['positions', 'orders', 'history', 'alerts', 'journal'] },
+    monitor: { label: 'Monitor', tabs: ['positions', 'orders', 'history', 'alerts'] },
     research: { label: 'Research', tabs: ['brief', 'obs', 'corr', 'vol', 'calendar'] },
-    lab: { label: 'Lab', tabs: ['bt', 'lab', 'calc'] },
+    lab: { label: 'Strategy Lab', tabs: ['bt', 'lab', 'calc'] },
     coach: { label: 'Coach', tabs: ['behav', 'chal', 'journal'] }
   };
   const ORDER = Object.keys(VIEWS);
   const homeOf = t => ['trade', 'research', 'lab', 'coach'].find(v => VIEWS[v].tabs.includes(t));
-  S.set.lastTab = S.set.lastTab && typeof S.set.lastTab === 'object' ? S.set.lastTab : {};
-  let view = VIEWS[S.set.view] ? S.set.view : 'trade';
+  // the last tab per workspace; read through LT() because Reset/Import replace S.set and drop it
+  const LT = () => S.set.lastTab && typeof S.set.lastTab === 'object' ? S.set.lastTab : (S.set.lastTab = {});
+  LT();
+  // Research, Strategy Lab and Coach open per user: the administrator ticks them in Administration (users.modules, read
+  // from /api/me at load); Trade and Monitor are open to everyone. A local dev server opens all, so the tests reach them.
+  const LOCKED = ['research', 'lab', 'coach'], devHost = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  let mods = new Set(devHost ? LOCKED : []);
+  const allowed = v => !LOCKED.includes(v) || mods.has(v);
+  const marks = () => LOCKED.forEach(m => body.classList.toggle('ws-no-' + m, !mods.has(m)));
+  marks();
+  let view = VIEWS[S.set.view] && allowed(S.set.view) ? S.set.view : 'trade';
   const nav = $s('#views');
 
   // every tab button knows which workspaces show it
@@ -28,28 +37,34 @@
 
   const _set = window.setTab;
   window.setTab = function (name) {
+    // a tool of a module this user does not have opens nowhere (the phone's Tools grid calls setTab directly too)
+    { const h = homeOf(name); if (h && !allowed(h)) return; }
     if (!phone() && !VIEWS[view].tabs.includes(name)) { const h = homeOf(name); if (h) return setView(h, name); }
-    if (!phone()) { S.set.lastTab[view] = name; }
+    if (!phone()) { LT()[view] = name; }
     return _set.apply(this, arguments);
   };
   function setView(v, tab) {
     if (!VIEWS[v]) return;
+    if (!allowed(v)) { v = 'trade'; tab = undefined; }
     const prev = view; view = v; S.set.view = v;
     body.dataset.view = v;
     nav.querySelectorAll('button').forEach(b => { const on = b.dataset.view === v; b.classList.toggle('on', on); on ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'); });
     title.textContent = v === 'trade' || v === 'monitor' ? '' : VIEWS[v].label;
     tl.setAttribute('aria-label', VIEWS[v].label + ' tools');
-    let t = tab || S.set.lastTab[v] || VIEWS[v].tabs[0];
+    let t = tab || LT()[v] || VIEWS[v].tabs[0];
     if (!VIEWS[v].tabs.includes(t)) t = VIEWS[v].tabs[0];
-    S.set.lastTab[v] = t;
+    LT()[v] = t;
     if (document.querySelector('.grid').classList.contains('dock-big') && typeof toggleDock === 'function') toggleDock(false);
     if (activeTab !== t || prev !== v) _set(t);
     save();
     if (typeof window.monPanes === 'function') window.monPanes();
     if (v === 'monitor') { buildBoard(); boardTick(true); }
-    requestAnimationFrame(() => { window.dispatchEvent(new Event('resize')); if (typeof reqOverlay === 'function') reqOverlay(); if (activeTab === 'journal' && typeof renderJournal === 'function') renderJournal(); if (activeTab === 'lab' && typeof runLab === 'function') runLab(); });
+    requestAnimationFrame(() => { window.dispatchEvent(new Event('resize')); if (typeof reqOverlay === 'function') reqOverlay(); if (activeTab === 'journal' && typeof renderJournal === 'function') renderJournal(); if (activeTab === 'lab' && typeof redrawLab === 'function') redrawLab(); });
   }
   window.setView = setView;
+  window.wsCan = m => allowed(m);
+  window.wsGate = list => { mods = new Set(devHost ? LOCKED : (list || []).filter(m => LOCKED.includes(m))); marks(); if (!allowed(view)) setView('trade'); };
+  if (typeof store !== 'undefined' && store.ready) store.ready.then(() => { const c = store.cloud && store.cloud(); if (c && c.on) wsGate(c.modules); });
   window.currentView = () => view;
   nav.addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if (b) setView(b.dataset.view); });
   nav.addEventListener('keydown', e => {
@@ -86,7 +101,7 @@
     return { close };
   }
   const typeDD = dropdown('typeDD'); dropdown('indDD');
-  if ($s('#layDD')) { const layDD = dropdown('layDD'); $s('#mcSeg').addEventListener('click', e => { if (e.target.closest('[data-l]')) { layDD.close(); $s('#layBtn').focus(); } }); }
+  if ($s('#layDD')) { const layDD = dropdown('layDD'); $s('#mcSeg').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (b && b.dataset.l === '1') { layDD.close(); $s('#layBtn').focus(); } }); } // a multi-chart layout keeps the list open for its Multi-chart options; outside click or the button closes it
   // instrument details: filled on open from the chart symbol (capture phase, so the menu is placed with its content)
   if ($s('#insDD')) {
     const ins = dropdown('insDD');
@@ -104,11 +119,16 @@
 
   /* ---------------- market panel switcher (desktop rail) ---------------- */
   const isw = $s('#isw');
+  // Stats (Victor, 31.10.2026): one tab for Exposure, Strength and Sessions, open one under the other; a saved or
+  // preset id of one of them opens Stats
+  const STATS = ['iExp', 'iStr', 'iSes'];
   function iswSet(id) {
-    if (!document.getElementById(id)) id = 'iDom';
+    if (STATS.includes(id)) id = 'iStats';
+    if (id !== 'iStats' && !document.getElementById(id)) id = 'iDom';
     S.set.isw = id;
-    isw.querySelectorAll('button').forEach(b => { const on = b.dataset.i === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; b.setAttribute('aria-controls', b.dataset.i); });
-    $$s('.rail > .intel').forEach(sx => { sx.classList.toggle('isw-on', sx.id === id); sx.setAttribute('role', 'tabpanel'); });
+    const ids = id === 'iStats' ? STATS : [id];
+    isw.querySelectorAll('button').forEach(b => { const on = b.dataset.i === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; b.setAttribute('aria-controls', b.dataset.i === 'iStats' ? STATS.join(' ') : b.dataset.i); });
+    $$s('.rail .intel').forEach(sx => { sx.classList.toggle('isw-on', ids.includes(sx.id)); sx.classList.toggle('isw-stats', id === 'iStats' && STATS.includes(sx.id)); sx.setAttribute('role', 'tabpanel'); });
   }
   /* a click on the open tab folds the panel to its tab strip (the ticket takes the room); any tab opens it again.
      Kept per browser: a display preference, not account state. Scalping keeps its full-height ladder (CSS). */
@@ -135,7 +155,7 @@
     if (j >= 0) { e.preventDefault(); bs[j].focus(); iswSet(bs[j].dataset.i); save(); }
   });
   // the open market panel's own close button on its title band (desktop); its tab stays in the column
-  $$s('.rail > .intel > .ph').forEach(ph => ph.insertAdjacentHTML('beforeend', '<button type="button" class="intel-x" aria-label="Close the market panel" title="Close the panel (its tab stays in the column)">×</button>'));
+  $$s('.rail .intel > .ph').forEach(ph => ph.insertAdjacentHTML('beforeend', '<button type="button" class="intel-x" aria-label="Hide the market panel" title="Hide the panel (its tab stays in the column)"><span>Hide</span><i aria-hidden="true">›</i></button>'));
   isw.closest('.rail')?.addEventListener('click', e => { if (!e.target.closest('.intel-x')) return; iswFold(true); const b = isw.querySelector('button.on'); if (b) b.focus({ preventScroll: true }); });
   iswSet(S.set.isw || 'iDom');
   isw.setAttribute('aria-orientation', 'vertical');
@@ -152,7 +172,7 @@
   function tkSections() {
     const more = $s('#tkMore'), wi = $s('#tkWhatIf'), stats = $s('#tkStats');
     if (!more || !wi || !stats) return false;
-    if (more.querySelector('.tk-sec')) return true;
+    if (document.querySelector('.ticket .tk-sec')) return true;
     const open = tksOpen();
     const groups = [
       ['acct', 'Account after this order', [wi]],
@@ -189,28 +209,44 @@
     $s('.ticket').addEventListener('change', () => setTimeout(tkSecSum, 0));
   })();
 
+  // the market watch list's scrollbar width (0 with overlay scrollbars): its header pads by it, so the columns line up
+  (function () {
+    const wl = document.getElementById('wl'); if (!wl) return;
+    const upd = () => { if (!wl.offsetWidth) return; const c = getComputedStyle(wl), g = wl.offsetWidth - wl.clientWidth - (parseFloat(c.borderLeftWidth) || 0) - (parseFloat(c.borderRightWidth) || 0); document.documentElement.style.setProperty('--sbw', Math.max(0, g) + 'px'); };
+    upd(); if (window.ResizeObserver) new ResizeObserver(upd).observe(wl);
+  })();
+
   /* ---------------- shared market stats ---------------- */
   const pipOf = sym => M(sym).pip;
   const statCache = {};
+  /* The window is the last 24 hours of clock time up to the instrument's last bar (with real prices a closed market
+     shows its last trading day; 1 440 one-minute bars would span two to four sessions on indices and stocks).
+     open = the last close at or before the window starts (the previous session's close on a market that closes).
+     typ = mean range of the five previous 24 h windows that traded (at least half the hours of this one), read on
+     1-hour bars, which the platform history holds for 90 days. */
   function stats(sym) {
     const now = Date.now(), c = statCache[sym];
     if (c && now - c.at < 2000) return c;
-    const arr = Engine.candles[sym], n = arr.length, p = pipOf(sym);
+    const arr = Engine.candles[sym], n = arr.length, p = pipOf(sym), DAY = 86400;
+    const tEnd = n ? arr[n - 1].time : Engine.simTime, t0 = tEnd - DAY;
+    let i0 = n; while (i0 > 0 && arr[i0 - 1].time > t0) i0--;
     let hi = -Infinity, lo = Infinity;
-    for (let i = Math.max(0, n - 1440); i < n; i++) { if (arr[i].high > hi) hi = arr[i].high; if (arr[i].low < lo) lo = arr[i].low; }
-    const open = arr[Math.max(0, n - 1441)].close;
+    for (let i = i0; i < n; i++) { if (arr[i].high > hi) hi = arr[i].high; if (arr[i].low < lo) lo = arr[i].low; }
+    const open = n ? arr[Math.max(0, i0 - 1)].close : NaN;
     // ATR(14) 1H: Wilder's, on complete hours (shared.js atr1h, the same number as every other panel)
     const a1 = atr1h(sym), atr = a1 != null ? a1 / p : 0;
-    // typical day range: mean of the previous five 24h windows
-    let typ = 0, d = 0;
-    for (let j = 1; j <= 5; j++) {
-      const a = n - (j + 1) * 1440, z = n - j * 1440; if (a < 0) break;
-      let H = -Infinity, L = Infinity; for (let i = a; i < z; i++) { if (arr[i].high > H) H = arr[i].high; if (arr[i].low < L) L = arr[i].low; }
-      typ += (H - L) / p; d++;
+    // typical day range on 1-hour bars: windows [t0 - j·DAY, t0 - (j-1)·DAY) back from this one, the empty or thin ones skipped
+    const hb = Engine.aggregate(sym, 60, 24 * 90), nowH = hb.filter(x => x.time >= Math.floor(t0 / 3600) * 3600).length;
+    let typ = 0, d = 0, k = hb.length;
+    for (let j = 1; j <= 15 && d < 5; j++) {
+      const a = t0 - j * DAY, z = a + DAY; let H = -Infinity, L = Infinity, cnt = 0;
+      while (k > 0 && hb[k - 1].time >= z) k--;
+      for (let i = k - 1; i >= 0 && hb[i].time >= a; i--) { cnt++; if (hb[i].high > H) H = hb[i].high; if (hb[i].low < L) L = hb[i].low; }
+      if (cnt && cnt >= nowH / 2) { typ += (H - L) / p; d++; }
     }
-    typ = d ? typ / d : 0;
-    const spark = []; for (let i = Math.max(0, n - 1440); i < n; i += 30) spark.push(arr[i].close); spark.push(arr[n - 1].close);
-    const out = { at: now, hi, lo, open, atr, typ, range: (hi - lo) / p, spark };
+    typ = d === 5 ? typ / 5 : 0;
+    const spark = []; for (let i = i0; i < n; i += 30) spark.push(arr[i].close); if (n) spark.push(arr[n - 1].close);
+    const out = { at: now, hi, lo, open, atr, typ, range: n ? (hi - lo) / p : 0, spark };
     statCache[sym] = out; return out;
   }
   const hourNow = () => { const d = new Date(Engine.simTime * 1000); return d.getUTCHours() + d.getUTCMinutes() / 60; };
@@ -298,6 +334,8 @@
     else if (mon.sort === 'abs') ps.sort((a, b) => Math.abs(ch(b)) - Math.abs(ch(a)));
     else if (mon.sort === 'vol') ps.sort((a, b) => (stats(b).range / (stats(b).typ || 1)) - (stats(a).range / (stats(a).typ || 1)));
     else if (mon.sort === 'spr') ps.sort((a, b) => Engine.quote(a).spread - Engine.quote(b).spread);
+    // scanning "who moves now": a closed market has nothing moving, so the ranked sorts put it behind the open ones (stable: order kept inside each group)
+    if (mon.sort !== 'name') { const open = ps.filter(s => sessOf(s).open); ps = open.concat(ps.filter(s => !sessOf(s).open)); }
     return ps;
   }
   const tileVis = new Set();
@@ -312,7 +350,7 @@
       <div class="mq-px"><button class="mq-s" data-side="sell" title="Sell ${pretty(sym)} — opens the ticket"><small>Sell</small><span class="mono"></span></button><button class="mq-b" data-side="buy" title="Buy ${pretty(sym)} — opens the ticket"><small>Buy</small><span class="mono"></span></button></div>
       <div class="mq-rg"><span class="mono"></span><i><i></i></i><span class="mono"></span></div>
       <div class="mq-ft"><canvas class="mq-sk" aria-hidden="true"></canvas></div>
-      <div class="mq-st mono"><span class="mq-typ" title="Today's range against the average of the previous five days"></span><span class="mq-rng" title="Range of the last 24 hours"></span><span class="mq-atr" title="ATR(14) on 1-hour bars (Wilder)"></span></div>
+      <div class="mq-st mono"><span class="mq-typ" title="Range of the last 24 hours against the average of the five previous trading days"></span><span class="mq-rng" title="Range of the last 24 hours up to the last price (a closed market: its last trading day)"></span><span class="mq-atr" title="ATR(14) on 1-hour bars (Wilder)"></span></div>
       <div class="mq-pl mono" hidden><span class="mq-pn"></span><b class="mq-pp"></b></div>
     </div>`).join('');
     for (const k in tiles) delete tiles[k];
@@ -394,23 +432,37 @@
     const seg = (id, key, attr) => { const el = $s(id); el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset[attr] === mon[key]));
       el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mon[key] = b.dataset[attr]; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); save(); buildBoard(); boardTick(); }); };
     // the market panel (rail) and the bottom panel (dock) start hidden on the Monitor; their buttons bring them back
-    const paneButton = (id, shown, name, detail) => {
-      const b = $s(id), action = shown ? 'Hide' : 'Show';
-      b.setAttribute('aria-pressed', String(shown));
-      b.setAttribute('aria-label', `${action} ${name}`);
-      b.title = `${action} ${detail}`;
-      const state = b.querySelector('.mon-tg-state'); if (state) state.textContent = shown ? 'Shown' : 'Show';
-    };
     const panes = () => { const on = view === 'monitor'; body.classList.toggle('mon-norail', on && !mon.rail); body.classList.toggle('mon-nodock', on && !mon.dock);
-      paneButton('#monRailBtn', !!mon.rail, 'market panel', 'market intelligence');
-      paneButton('#monDockBtn', !!mon.dock, 'positions panel', 'positions, orders and history'); };
+      const tg = (btn, st, label, tip, shown) => { const b = $s(btn); b.setAttribute('aria-pressed', String(!!shown)); b.setAttribute('aria-label', `${label} panel: ${shown ? 'shown. Hide it.' : 'hidden. Show it.'}`); b.title = `${shown ? 'Hide' : 'Show'} the ${tip}`; $s(st).textContent = shown ? 'Shown' : 'Show'; };
+      tg('#monRailBtn', '#monRailS', 'Market', 'market panel (currency strength, sessions, exposure, depth)', mon.rail); tg('#monDockBtn', '#monDockS', 'Positions', 'positions, orders and history panel', mon.dock); };
     window.monPanes = panes; panes();
     $s('#monRailBtn').addEventListener('click', () => { mon.rail = !mon.rail; panes(); save(); window.dispatchEvent(new Event('resize')); });
     $s('#monDockBtn').addEventListener('click', () => { mon.dock = !mon.dock; panes(); save(); window.dispatchEvent(new Event('resize')); });
     $s('#monFilter').addEventListener('click', e => { const b = e.target.closest('button'); if (b && b.dataset.f !== mon.f) mon.sub = 'all'; });
     seg('#monFilter', 'f', 'f'); seg('#monDen', 'den', 'd');
     $s('#monSub').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mon.sub = b.dataset.s; save(); buildBoard(); boardTick(); });
-    const so = $s('#monSort'); so.value = mon.sort; so.addEventListener('change', () => { mon.sort = so.value; save(); buildBoard(); boardTick(); });
+    const so = $s('#monSort'); so.value = mon.sort; if (!so.value) { so.value = mon.sort = 'name'; } so.addEventListener('change', () => { mon.sort = so.value; save(); buildBoard(); boardTick(); });
+    // the sort select behind one amber "Sort" button with a compact list (the select stays the source of truth)
+    { const lab = so.closest('label'), btn = document.createElement('button'), pop = document.createElement('div');
+      btn.type = 'button'; btn.className = 'mon-sortbtn'; btn.innerHTML = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2v12M1.5 11.5 4 14l2.5-2.5M12 14V2M9.5 4.5 12 2l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Sort</span>'; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
+      pop.className = 'mon-sortpop'; pop.setAttribute('role', 'listbox'); pop.hidden = true; document.body.appendChild(pop);
+      const sync = () => { const o = so.options[so.selectedIndex]; btn.title = 'Sort: ' + (o ? o.text : ''); btn.querySelector('span').textContent = o && so.value !== 'name' ? 'Sort · ' + o.text : 'Sort'; };
+      const close = () => { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+      btn.addEventListener('click', e => { e.stopPropagation(); if (!pop.hidden) return close();
+        pop.innerHTML = [...so.options].map(o => `<button type="button" role="option" data-v="${escHtml(o.value)}" aria-selected="${o.value === so.value}"${o.value === so.value ? ' class="on"' : ''}>${escHtml(o.text)}</button>`).join('');
+        const r = btn.getBoundingClientRect(); pop.style.left = r.left + 'px'; pop.style.top = r.bottom + 'px'; pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); pop.querySelector('.on')?.focus(); });
+      pop.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; so.value = b.dataset.v; so.dispatchEvent(new Event('change')); sync(); close(); btn.focus(); });
+      so.addEventListener('change', sync); document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) close(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { close(); btn.focus(); } });
+      lab.classList.add('mon-sort-on'); lab.after(btn); sync(); }
+    // Compact / Comfort as one toggle: small rows icon + large tiles icon, the current mode lit (the seg stays, hidden)
+    { const den = $s('#monDen'), tg = document.createElement('button');
+      tg.type = 'button'; tg.className = 'mon-dentg';
+      const paint = () => { const c = (den.querySelector('button.on') || {}).dataset?.d !== 'comfort';
+        tg.innerHTML = `<svg class="${c ? 'on' : ''}" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2 3h12M2 6.5h12M2 10h12M2 13.5h12" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><svg class="${c ? '' : 'on'}" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M1.5 1.5h13v5.5h-13zM1.5 9h13v5.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>${c ? 'Compact' : 'Comfort'}</span>`;
+        tg.title = c ? 'Compact view · click for the detailed view' : 'Detailed view · click for the compact view'; tg.setAttribute('aria-label', 'Density: ' + (c ? 'compact' : 'comfort')); };
+      tg.addEventListener('click', () => { const nx = den.querySelector('button:not(.on)'); if (nx) nx.click(); paint(); });
+      den.after(tg); paint(); }
   }
 
   /* ---------------- phone: settings travel into the Tools screen ---------------- */
@@ -431,7 +483,11 @@
     const close = () => { if (ap.hidden) return; ap.hidden = true; am.setAttribute('aria-expanded', 'false'); clearInterval(tm); };
     const open = () => { copy(); ap.hidden = false; am.setAttribute('aria-expanded', 'true'); clearInterval(tm); tm = setInterval(() => safe('account popover', copy), 500); };
     am.addEventListener('click', e => { e.stopPropagation(); ap.hidden ? open() : close(); });
-    document.addEventListener('pointerdown', e => { if (!e.target.closest('#acctX')) close(); });
+    /* decision 43: the account figures are the button; the panel holds Used margin, Drawdown, the account flag and Leverage */
+    const ac = $s('#acct');
+    if (ac) { const tg = () => { ap.hidden ? open() : close(); ac.setAttribute('aria-expanded', String(!ap.hidden)); };
+      ac.addEventListener('click', tg); ac.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tg(); } }); }
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('#acctX,#acct')) { close(); if (ac) ac.setAttribute('aria-expanded', 'false'); } });
     $s('#acctX').addEventListener('keydown', e => { if (e.key === 'Escape' && !ap.hidden) { e.stopPropagation(); close(); am.focus(); } });
     addEventListener('resize', () => { if (!am.offsetParent) close(); });
   }
@@ -443,5 +499,5 @@
   if (typeof _ss === 'function') window.setSymbol = function () { const r = _ss.apply(this, arguments); renderDet(); if (view === 'monitor') boardSlow(); return r; };
 
   placeStatus(); renderDet(); renderStatus();
-  body.dataset.view = view; if (!phone()) setView(view, S.set.lastTab[view]);
+  body.dataset.view = view; if (!phone()) setView(view, LT()[view]);
 })();

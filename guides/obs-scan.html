@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge check guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Edge check in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Edge check</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Edge check</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#the-five-signals"><span>02</span>The five signals</a>
+  <a href="#controls"><span>03</span>Controls</a>
+  <a href="#how-each-record-is-measured"><span>04</span>How each record is measured</a>
+  <a href="#the-verdict-per-signal-and-pair"><span>05</span>The verdict per signal and pair</a>
+  <a href="#the-banner-the-live-list-and-the-report-"><span>06</span>The banner, the live list and the report card</a>
+  <a href="#more"><span>07</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Edge check</h1>
+  <p class="g-lede">How to read, interpret and use Edge check: what it shows, how it is computed and how to act on it.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Edge check</b></div>
+    <div><label>Covers</label><b>The 16 G8 FX pairs</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“Which live signals have actually paid on this pair. Every signal carries its own track record and a test of whether it beats luck.”</p></div>
+  <p class="lead">“Every scanner finds signals. This one also checks whether each signal has actually paid on that pair: it finds every past trigger in the last week of 15-minute bars, then measures the move 2 hours later. Triggers never overlap, so the t-statistic is honest. A survivor is a hypothesis to test forward, not a signal.”</p>
+
+  
+</section>
+
+<section class="ch" id="the-five-signals">
+  <div class="ch-h"><span class="n">02</span><h3>The five signals</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Signal</th><th>Fires when (15-minute closes)</th><th>Side</th></tr></thead>
+    <tbody>
+      <tr><td>24h breakout</td><td>Close beyond the high or low of the previous 24 hours (96 bars) — trade with it</td><td>buy above · sell below</td></tr>
+      <tr><td>Stretch fade</td><td>Close more than 2σ from its 20-bar mean — trade back toward it</td><td>sell above · buy below</td></tr>
+      <tr><td>Trend pullback</td><td>EMA20 above EMA50, price dips to EMA20 (low ≤ EMA20, close above EMA50) — trade with the trend; the mirror for a sell</td><td>with the trend</td></tr>
+      <tr><td>RSI extreme</td><td>RSI(14) below 25 or above 75 — trade the reversal</td><td>buy below 25 · sell above 75</td></tr>
+      <tr><td>Volatility squeeze</td><td>20-bar volatility in the quietest 10% of the week so far — expect a bigger move</td><td>either</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">A trigger counts only on a fresh bar (the signal was not already on). All 16 pairs are scanned, whatever is open; pairs with fewer than 150 closed bars are skipped.</p>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">03</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>horizon</td><td class="n">1H · <b>2H</b> · 4H</td><td>Each past signal is scored on what price did over the next 4, 8 or 16 bars of 15 minutes. A signal can work at one horizon and not at another.</td></tr>
+      <tr><td>filter</td><td class="n"><b>With a record</b> · All live</td><td>With a record lists the live signals whose past record on their pair reached |t| &gt; 2 (Noise and Too few are hidden); All live lists every signal firing now. A button <b>Show them anyway</b> appears when live signals are hidden.</td></tr>
+      <tr><td>Alert me when an FDR-significant signal fires</td><td class="n">off</td><td>A toast when a <b>Robust</b> signal fires on the last closed bar, once per pair, signal and bar.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-each-record-is-measured">
+  <div class="ch-h"><span class="n">04</span><h3>How each record is measured</h3></div>
+
+  <div class="fml">
+    <div>move     f = ln(C[i+H] ÷ C[i]) × 10⁴ bp   <span class="c">windows across a closed market skipped</span></div>
+    <div>score    direction × (f − the average move of windows starting in that UTC hour)</div>
+    <div>         squeeze: |f| − the average |f| of that hour</div>
+    <div>hit      share of scores &gt; 0 · base = the same share for every window starting at those hours (the hit to beat, not 50%)</div>
+    <div>t        mean score ÷ (sd ÷ √n) · after a trigger the next H − 1 bars are skipped</div>
+    <div>stable   both halves of the week ≥ 4 cases and the same sign as the whole</div>
+    <div>spread   the pair’s normal spread in bp, paid once (directional signals only)</div>
+    <div>FDR      Benjamini–Hochberg at 10% over every signal × pair with n ≥ 8</div>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="the-verdict-per-signal-and-pair">
+  <div class="ch-h"><span class="n">05</span><h3>The verdict per signal and pair</h3></div>
+
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="Verdict order of Edge check">
+      <rect x="10" y="16" width="120" height="40" class="s-box"/><text x="70" y="41" text-anchor="middle" class="b s s-tx">n &lt; 8 ?</text>
+      <rect x="170" y="16" width="160" height="40" class="s-box"/><text x="250" y="34" text-anchor="middle" class="b s s-tx">t &gt; 2 and passes</text><text x="250" y="48" text-anchor="middle" class="b s s-tx">the FDR?</text>
+      <rect x="370" y="16" width="160" height="40" class="s-box"/><text x="450" y="34" text-anchor="middle" class="b s s-tx">t &lt; −2 and passes</text><text x="450" y="48" text-anchor="middle" class="b s s-tx">the FDR?</text>
+      <rect x="570" y="16" width="80" height="40" class="s-box"/><text x="610" y="41" text-anchor="middle" class="b s s-tx">t &gt; 2 ?</text>
+      <rect x="670" y="16" width="84" height="40" class="s-box"/><text x="712" y="41" text-anchor="middle" class="b s s-tx">t &lt; −2 ?</text>
+      <path d="M130 36H168M330 36H368M530 36H568M650 36H668" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M70 56V96M250 56V96M450 56V160M610 56V160M712 56V160" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="10" y="98" width="120" height="30" class="s-box2"/><text x="70" y="117" text-anchor="middle" class="b s s-tx">Too few</text>
+      <rect x="170" y="98" width="160" height="40" class="s-box"/><text x="250" y="116" text-anchor="middle" class="b s s-tx">same sign in both</text><text x="250" y="130" text-anchor="middle" class="b s s-tx">halves of the week?</text>
+      <path d="M210 138V160M290 138V160" class="s-arrow" marker-end="url(#ah)"/><text x="196" y="154" class="s s-tx3">yes</text><text x="296" y="154" class="s s-tx3">no</text>
+      <rect x="150" y="162" width="110" height="34" class="s-upbg" style="stroke:var(--up)"/><text x="205" y="183" text-anchor="middle" class="b s s-up">▲ Robust</text>
+      <rect x="266" y="162" width="110" height="46" class="s-box2"/><text x="321" y="181" text-anchor="middle" class="b s s-tx">Significant ·</text><text x="321" y="196" text-anchor="middle" class="b s s-tx">unstable</text>
+      <rect x="390" y="162" width="120" height="46" class="s-box2"/><text x="450" y="181" text-anchor="middle" class="b s s-tx">t &lt; −2 ·</text><text x="450" y="196" text-anchor="middle" class="b s s-tx">significant</text>
+      <rect x="560" y="162" width="100" height="34" class="s-box2"/><text x="610" y="183" text-anchor="middle" class="b s s-tx">t &gt; 2 · luck?</text>
+      <rect x="666" y="162" width="88" height="34" class="s-box2"/><text x="710" y="183" text-anchor="middle" class="b s s-tx">t &lt; −2 · luck?</text>
+      <text x="10" y="236" class="s s-tx3">Each “no” passes to the right; after the last one: Noise (t between −2 and 2). Only Robust is shown in gain colours and counts as a record.</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The verdict, checked left to right. Up/down colours appear only on Robust: a noise result in green would read as a direction.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Verdict</th><th>Meaning, in the tool’s words</th></tr></thead>
+    <tbody>
+      <tr><td class="up">▲ Robust</td><td>t above 2, survives the Benjamini–Hochberg correction for all tests at once, and the same sign in both halves of the week (a weak check: about half of pure-noise results pass it too). The only verdict that counts as a record, and still a hypothesis to test forward.</td></tr>
+      <tr><td>Significant · unstable</td><td>Survives the correction, but the sign flipped between the two halves of the week: not a record.</td></tr>
+      <tr><td>t &lt; −2 · significant</td><td>Lost on this pair and survives the correction. The tests share currencies and overlap in time: not a contrarian signal.</td></tr>
+      <tr><td>t &gt; 2 · luck? · t &lt; −2 · luck?</td><td>Paid (or lost) on this pair in the past week, but does not survive the correction: about as many pass |t| &gt; 2 by chance alone.</td></tr>
+      <tr><td>Noise</td><td>The past results are within what chance gives.</td></tr>
+      <tr><td>Too few</td><td>Fewer than 8 past triggers on this pair: no judgement.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="the-banner-the-live-list-and-the-report-">
+  <div class="ch-h"><span class="n">06</span><h3>The banner, the live list and the report card</h3></div>
+
+  <figure><div class="fig-b" style="padding:12px">
+    <div class="mock">
+      <div style="padding:10px;border-bottom:1px solid var(--line)"><b>No signal survives the multiple-testing correction · 0 of 76</b><div style="color:var(--tx3);font-size:12px">7.0 trading days of 15-minute bars: 8–31 cases per test · 5 passed |t| &gt; 2 · about 4.4 expected by luck</div></div>
+      <div class="mh"><span>Live signals · 2 live now · 1 with t beyond ±2 shown</span><span>illustration</span></div>
+      <div style="display:grid;grid-template-columns:70px 1fr 50px 44px 86px 50px 110px;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);color:var(--tx3);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em"><span>Pair</span><span>Signal</span><span>Side</span><span>Cases</span><span>Hit</span><span>t</span><span>Verdict</span></div>
+      <div style="display:grid;grid-template-columns:70px 1fr 50px 44px 86px 50px 110px;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line)"><b>GBP/JPY</b><span>24h breakout</span><span>buy</span><span class="mono">14</span><span class="mono">64% base 49%</span><span class="mono">2.3</span><span class="tag nt">t &gt; 2 · luck?</span></div>
+      <div style="padding:8px 10px;color:var(--tx2);font-size:12.5px">Neutral colours and an untouched ticket side: the record does not survive the correction for 76 tests.</div>
+    </div>
+  </div><figcaption><b>Fig. 2</b>Illustration of a common result: five passes of |t| &gt; 2, about what luck alone gives for 76 tests.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Part</th><th>Says</th></tr></thead>
+    <tbody>
+      <tr><td>Banner, no survivor</td><td><code>No signal survives the multiple-testing correction · 0 of N</code>: every “t &gt; 2” below is most likely luck.</td></tr>
+      <tr><td>Banner, survivors (never green)</td><td>The count against scans of shuffled data with no order at all: 1 survivor happens in about 1 in 10 scans of pure noise (1 in 13 at 4H); 2 or more in about 1 in 53 (1 in 63 at 4H). The tests are not independent, so the correction is optimistic.</td></tr>
+      <tr><td>Live signals</td><td>Signals firing on the last closed bar, on all 16 pairs, sorted Robust first. Columns: Cases, Hit with its base, Avg (bp and pips, before the spread), After spread, t, Verdict, <b>Details</b> and <b>Open chart</b>. When FX is closed: “Signals at the close”.</td></tr>
+      <tr><td>Details</td><td>Every past trigger as a cumulative line, the two half-week averages, and the average move at 15m, 30m, 1h, 2h and 4h: a real edge usually builds or holds with the horizon; noise jumps around.</td></tr>
+      <tr><td>Signal report card</td><td>Each signal pooled over the 16 pairs: cases, hit and base, average bp, a <b>pooled t, clustered</b> (triggers in the same window on several pairs count as one cluster: one market move on five yen pairs is not five pieces of evidence) and on how many pairs it passed t &gt; 2.</td></tr>
+    </tbody>
+  </table>
+  <p><b>Open chart</b> opens the pair. It sets the ticket’s side only for a Robust directional row (“a Robust record, still a hypothesis. Check the cone before you size it.”); otherwise the side is left unchanged. The scan recomputes every 15 minutes of market time.</p>
+  <div class="cards">
+    <div class="card"><h5>Colour before numbers</h5><p>Ignore a live signal whose record is noise, however convincing it looks on the chart. Only Robust is a record.</p></div>
+    <div class="card"><h5>Count the luck</h5><p>Compare the passes with the number expected by luck under the table. In line with luck: no signal has shown an edge here.</p></div>
+    <div class="card"><h5>Let the record call you</h5><p>Turn the alert on: it stays silent for signals that only look good.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>One week of data. The tests share currencies and overlap in time while the correction assumes independence, so its verdict is optimistic. Hit and average are before the spread. A survivor is a hypothesis to test forward, not a signal.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">07</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Edge check guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

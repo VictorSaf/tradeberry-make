@@ -32,17 +32,20 @@
     if (price == null || !(price > 0)) return;
     // the chart plots the bid: below the bid a buy limit / sell stop, above the ask a sell limit / buy stop
     const sym = S.set.sym, m = M(sym), q = Engine.quote(sym), px = +price.toFixed(m.digits);
-    const t = S.tk, raw = (typeof tkCalc === 'function' ? tkCalc('buy').lots : t.lots) || 0;
-    const lots = Math.max(volOf(sym)[0], normLots(sym, raw) || 0);
+    // the size is the ticket's; a size it cannot send (under the minimum, over the maximum, as the row under Volume
+    // says) offers no order with another size: the pop-up says why (UX 09.11 round 2, #2)
+    const t = S.tk, k = typeof tkCalc === 'function' ? tkCalc('buy') : null;
+    const sizeWhy = k && typeof tkSizeWhy === 'function' ? tkSizeWhy(k) : '';
+    const lots = k ? k.lots : Math.max(volOf(sym)[0], normLots(sym, t.lots) || 0);
     const below = px < q.bid, above = px > q.ask;
     // closed market, off quotes, close only or not offered: nothing to place, the alert still works
-    const why = marketWhy(sym) || (tradeStatus(sym) !== 'full' ? unavailableWhy(sym) : '');
+    const why = marketWhy(sym) || (tradeStatus(sym) !== 'full' ? unavailableWhy(sym) : '') || (sizeWhy ? `Order size: ${sizeWhy} — set it in the ticket` : '');
     const opts = [];
     if (why) { /* no order buttons */ } else if (below) opts.push(['buy', 'limit', 'Buy limit'], ['sell', 'stop', 'Sell stop']);
     else if (above) opts.push(['sell', 'limit', 'Sell limit'], ['buy', 'stop', 'Buy stop']);
     haptic(18); close();
     pop = document.createElement('div'); pop.className = 'lp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Order at price');
-    pop.innerHTML = `<div class="lp-h"><b class="mono">${fp(sym, px)}</b><span>${escHtml(pretty(sym))} · ${escHtml(lotsWord(sym, lots))}</span></div>
+    pop.innerHTML = `<div class="lp-h"><b class="mono">${fp(sym, px)}</b><span>${escHtml(pretty(sym))}${sizeWhy ? '' : ' · ' + escHtml(lotsWord(sym, lots))}</span></div>
       ${why ? `<p class="lp-note">${escHtml(why)}.</p>` : opts.map(([sd, ot, l]) => `<button class="lp-b ${sd}" data-sd="${sd}" data-ot="${ot}">${l}</button>`).join('') || '<p class="lp-note">Inside the spread — move further from the price.</p>'}
       <button class="lp-b" data-al="1">Alert at this price</button><button class="lp-x" aria-label="Close">Cancel</button>`;
     document.body.appendChild(pop);

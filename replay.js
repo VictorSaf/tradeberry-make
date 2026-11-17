@@ -49,8 +49,8 @@ function rpBarSetFromSession(from, to) {
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   const listAnd = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   const el = (tag, attrs = {}, html = '') => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (html) e.innerHTML = html; return e; };
-  const INFO_SIM = 'Replay of the simulated market. The same seed and start always give the same prices. Directional edge is zero by construction.';
-  const INFO_BARS = "Replay of your session's simulated prices as 1-minute bars. Movement inside each minute is reconstructed (open → low → high → close on up bars, open → high → low → close on down bars).";
+  const INFO_SIM = 'Replay from a seed: the same seed and start always give the same prices.';
+  const INFO_BARS = "Replay of your session's prices as 1-minute bars. Movement inside each minute is reconstructed (open → low → high → close on up bars, open → high → low → close on down bars).";
   const tagText = sp => sp.kind === 'sim' ? `REPLAY · seed ${sp.seed}` : 'REPLAY · your session (1m bars)';
 
   if (Engine.isReplayDoc) child(); else host();
@@ -195,7 +195,7 @@ function rpBarSetFromSession(from, to) {
         <p id="rpFrom" hidden style="color:var(--info)">Opened from a replay link</p>
         <div class="warn" id="rpVer" hidden></div>
         <div style="padding:0 12px;display:grid;gap:12px">
-          <div class="mini-seg" role="radiogroup" aria-label="Source"><button type="button" role="radio" data-src="sim">Simulated market (seed)</button><button type="button" role="radio" data-src="bars">Your session (1m bars)</button></div>
+          <div class="mini-seg" role="radiogroup" aria-label="Source"><button type="button" role="radio" data-src="sim">Seed replay</button><button type="button" role="radio" data-src="bars">Your session (1m bars)</button></div>
           <div id="rpSim" style="display:grid;gap:10px">
             <label style="display:grid;gap:4px"><span class="muted">Seed</span><span style="display:flex;gap:6px"><input id="rpSeed" class="search" inputmode="numeric" autocomplete="off" style="flex:1"><button class="ghost sm" type="button" id="rpRand">Random</button></span></label>
             <div style="display:flex;gap:8px;flex-wrap:wrap"><label style="display:grid;gap:4px"><span class="muted">Start date (UTC)</span><input type="date" id="rpDate" class="search"></label><label style="display:grid;gap:4px"><span class="muted">Start time (UTC)</span><input type="time" id="rpTime" class="search"></label></div>
@@ -203,7 +203,7 @@ function rpBarSetFromSession(from, to) {
             <span class="muted" id="rpRates"></span>
           </div>
           <div id="rpBars" style="display:none;gap:6px"><label style="display:grid;gap:4px"><span class="muted">Start</span><select id="rpBarsStart"></select></label>
-            <span class="muted">Your own simulated prices, replayed as recorded 1-minute bars; the movement inside each minute is reconstructed.</span></div>
+            <span class="muted">Your own session's prices, replayed as recorded 1-minute bars; the movement inside each minute is reconstructed.</span></div>
           <p class="muted" style="margin:0">Same seed and start give the same market every time. The replay account starts at $100,000 and is separate; your main account is frozen while Replay is open. Replays last up to 3 days of market time.</p>
           <p id="rpErr" role="alert" style="margin:0;color:var(--bad)"></p>
           <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="ghost" type="button" data-x2>Cancel</button><button class="ghost" type="button" id="rpCopy">Copy link</button><button class="btn-pri" type="button" id="rpGo">Start replay</button></div>
@@ -529,7 +529,7 @@ function rpBarSetFromSession(from, to) {
         const rows = [['Net P&L', usdFmt(s.net, true), 'rp-key' + net], ['Replay trades', `${s.trades} (${s.wins} won)`, ''], ['Largest drawdown (closed trades)', usdFmt(-s.maxDD), ''], ['Open positions', String(s.open), '']];
         p.innerHTML = `<div class="rp-sum-h"><b>Replay summary</b></div><table class="tbl rp-sum-t"><tbody>${rows.map(([k, v, c]) => `<tr><th scope="row">${escHtml(k)}</th><td class="mono${c ? ' ' + c : ''}">${escHtml(v)}</td></tr>`).join('')}</tbody></table>
           <div class="rp-sum-act"><button class="ghost sm" type="button" data-go="journal">Open Journal</button></div>
-          <small class="muted">Replay account — separate from your main account. Simulated market; practice data, not investment advice.</small>`;
+          <small class="muted">Replay account — separate from your main account. Practice data, not investment advice.</small>`;
         p.querySelector('[data-go]').addEventListener('click', () => { p.hidden = true; ui.sum.setAttribute('aria-expanded', 'false'); setTab('journal'); });
       }
       p.hidden = !open; ui.sum.setAttribute('aria-expanded', String(open));

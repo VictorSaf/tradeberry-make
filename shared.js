@@ -6,8 +6,8 @@ const fmtDur = m => { if (m < 1) return '<1m'; m = Math.round(m); return m < 60 
 const bp = v => (v >= 0 ? '+' : '') + (v * 1e4).toFixed(1) + ' bp';
 function toggleDock(force) {
   const g = document.querySelector('.grid'), on = force ?? !g.classList.contains('dock-big');
-  g.classList.toggle('dock-big', on); $('#dockBtn').textContent = on ? 'Collapse panel' : 'Expand panel';
-  setTimeout(() => { if (activeTab === 'bt' && typeof drawBtCurve === 'function') drawBtCurve(); if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') runLab(); reqOverlay(); }, 60);
+  g.classList.toggle('dock-big', on); $('#dockBtn').textContent = on ? 'Collapse panel' : 'Expand panel'; $('#dockBtn').title = on ? 'Return the bottom panel to its normal height' : 'Give the bottom panel more room'; $('#dockBtn').setAttribute('aria-pressed', String(on));
+  setTimeout(() => { if (activeTab === 'bt' && typeof drawBtCurve === 'function') drawBtCurve(); if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') redrawLab(); reqOverlay(); }, 60);
 }
 /* ---- one trade model ----
    S.history holds one row per close, partial closes included (same id), newest first; a row's pnl is before
@@ -16,7 +16,7 @@ function toggleDock(force) {
 // minutes after a losing close in which a new entry counts as a revenge trade (Behaviour flag and coach)
 const REVENGE_MIN = 10;
 const netPnl = h => (+h.pnl || 0) - (+h.comm || 0);
-const TRADE_FIRST = ['pm', 'ctx', 'news', 'note', 'setup', 'conf', 'mood', 'risk', 'sl0', 'tp0', 'basket', 'bgid', 'timeStop'];
+const TRADE_FIRST = ['pm', 'ctx', 'news', 'note', 'conf', 'mood', 'risk', 'sl0', 'tp0', 'basket', 'bgid', 'timeStop'];
 function tradesOf(history) {
   const groups = new Map();
   for (const h of Array.isArray(history) ? history : []) {

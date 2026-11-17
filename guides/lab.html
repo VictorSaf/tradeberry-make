@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk Lab guide · tradeBerry</title>
+<meta name="description" content="How to use the Risk Lab in tradeBerry: the Monte Carlo stress test of win rate, reward : risk and risk per trade, and how to read its outcomes.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* Risk Lab guide: fan bands and sample paths drawn by the calculators, on the guide tokens */
+.lb-b1{fill:var(--tx2);fill-opacity:.14}
+.lb-b2{fill:var(--tx2);fill-opacity:.30}
+.lb-sp{stroke:var(--tx2);stroke-opacity:.22;fill:none;stroke-width:1}
+.lb-md{stroke:var(--tx);fill:none;stroke-width:2}
+.lb-gr{stroke:var(--line2);fill:none}
+.lb-run{font:600 13px var(--sans);padding:8px 14px;background:var(--s2);color:var(--tx);border:1px solid var(--acc);cursor:pointer}
+.lb-run:hover{background:color-mix(in srgb,var(--acc) 18%,var(--s2))}
+.lb-fan{margin-top:14px;border:1px solid var(--line);background:var(--bg)}
+.lb-fan svg{display:block;width:100%;height:auto}
+.calc .cin input[type=number]{width:90px}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Strategy Lab <i>/</i> Risk Lab</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the Risk Lab is</a>
+  <a href="#minute"><span>02</span>The Lab in one minute</a>
+  <a href="#map"><span>03</span>Map of the page</a>
+  <span class="p">II · Inputs and model</span>
+  <a href="#inputs"><span>04</span>The four inputs</a>
+  <a href="#model"><span>05</span>How one path is built</a>
+  <a href="#fill"><span>06</span>Filling it from your trades</a>
+  <span class="p">III · Reading the outcomes</span>
+  <a href="#exp"><span>07</span>Expectancy</a>
+  <a href="#final"><span>08</span>Median, 5th and 95th percentile</a>
+  <a href="#prof"><span>09</span>Profitable paths</a>
+  <a href="#dd"><span>10</span>Drawdown: median and P(DD &gt; 20%)</a>
+  <a href="#ruin"><span>11</span>Risk of ruin (−50%)</a>
+  <a href="#fan"><span>12</span>The equity fan</a>
+  <span class="p">IV · Using it</span>
+  <a href="#size"><span>13</span>Choosing risk per trade</a>
+  <a href="#growth"><span>14</span>Why more risk is not more growth</a>
+  <a href="#examples"><span>15</span>Worked examples</a>
+  <a href="#try"><span>16</span>Try it: the stress test</a>
+  <a href="#exact"><span>17</span>Try it: exact odds and streaks</a>
+  <a href="#limits"><span>18</span>Limits and caveats</a>
+  <span class="p">V · Reference</span>
+  <a href="#ref"><span>19</span>All definitions and formulas</a>
+  <a href="#glossary"><span>20</span>Glossary</a>
+  <a href="#related"><span>21</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Strategy Lab</span>
+  <h1>Risk Lab</h1>
+  <p class="g-lede">A Monte Carlo stress test of a trading rule. You give it a win rate, a reward : risk and a risk per trade; it plays 1,000 random sequences of wins and losses with those odds and shows the spread of results: the typical outcome, bad and good luck, how deep the drawdowns get and how often the account halves. Use it to pick a risk per trade whose bad days you could live through.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Strategy Lab › Risk Lab</b></div>
+    <div><label>Paths per run</label><b>1,000</b></div>
+    <div><label>Shortcut</label><b>Alt+4, or type “risk” in ⌘K</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the Lab answers, what to read first, where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the Risk Lab is, and what it is not</h3></div>
+  <p class="lead">The same rule, with the same odds, can give very different accounts depending only on the <b>order</b> in which wins and losses arrive. The Risk Lab shows that spread. It answers: <b>with these odds and this risk per trade, what range of results should I expect, and how bad can the road get?</b></p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18c4-1 6-6 8-8s5-3 8-6M4 18c4 0 7-3 9-4s4-1 7-1M4 18c3 1 6 1 9 2"/></svg></div><h5>Many futures, one rule</h5><p>Each of the 1,000 paths is one possible order of wins and losses. Their spread is the part of the result that is luck.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6"/></svg></div><h5>Risk, not edge</h5><p>Win rate and reward : risk set the edge. Risk per trade does not change the edge; it changes how far the account swings around it.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 10l7-7 7 7"/></svg></div><h5>No market data</h5><p>The Lab does not read prices. It is pure arithmetic on the three numbers you give it, so it says nothing about any instrument or about the future market.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why it matters</b><p>A strategy with a real edge can still halve an account if the risk per trade is too high, and a rule with no edge can look good for a while by luck. Seeing 1,000 versions side by side separates the two questions: <b>is there an edge?</b> (expectancy) and <b>can I survive the swings?</b> (drawdown and ruin).</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The Lab in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Fill the odds</h5><p>Type a win rate and a reward : risk, or press <b>Use my journal</b> to take them from your closed trades.</p></div>
+    <div><h5>Set the risk</h5><p>Risk per trade %: the share of equity each stop costs. Trades: how many you plan to take.</p></div>
+    <div><h5>Run 1,000 paths</h5><p>The Lab plays 1,000 random sequences with those odds.</p></div>
+    <div><h5>Read the tail</h5><p>Look first at the 5th percentile, the median max drawdown and the risk of ruin, not at the median.</p></div>
+    <div><h5>Adjust</h5><p>Lower the risk until the bad cases are ones you could stand; then run again.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the page</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 360" role="img" aria-label="Layout of the Risk Lab: the form with four inputs and three buttons on the left, the outcomes below it, the equity fan on the right">
+      <rect x="1" y="1" width="290" height="358" class="s-box"/>
+      <text x="14" y="24" class="b s-tx">Monte Carlo strategy stress test</text>
+      <text x="14" y="46" class="s s-tx2">Win rate %</text><rect x="14" y="52" width="124" height="22" class="s-box2"/><text x="22" y="67" class="m s s-tx">45</text>
+      <text x="152" y="46" class="s s-tx2">Reward : risk</text><rect x="152" y="52" width="124" height="22" class="s-box2"/><text x="160" y="67" class="m s s-tx">2</text>
+      <text x="14" y="92" class="s s-tx2">Risk per trade %</text><rect x="14" y="98" width="124" height="22" class="s-box2"/><text x="22" y="113" class="m s s-tx">1</text>
+      <text x="152" y="92" class="s s-tx2">Trades</text><rect x="152" y="98" width="124" height="22" class="s-box2"/><text x="160" y="113" class="m s s-tx">200</text>
+      <rect x="14" y="132" width="98" height="22" class="s-tx"/><text x="63" y="147" text-anchor="middle" class="s b s-bg" style="fill:var(--bg)">Run 1,000 paths</text>
+      <rect x="118" y="132" width="88" height="22" class="s-box2"/><text x="162" y="147" text-anchor="middle" class="s s-tx">Use my journal</text>
+      <rect x="14" y="160" width="190" height="22" class="s-box2"/><text x="109" y="175" text-anchor="middle" class="s s-tx">Challenge odds on my trades</text>
+      <text x="14" y="206" class="s b s-tx3">MEDIAN RESULT</text><text x="14" y="226" class="m b s-tx">+96.4%</text>
+      <text x="14" y="250" class="s b s-tx3">EXPECTANCY</text><text x="14" y="266" class="m s s-tx2">+0.35R / trade</text>
+      <text x="152" y="250" class="s b s-tx3">5TH PCT</text><text x="152" y="266" class="m s b s-tx">+39.2%</text>
+      <text x="14" y="288" class="s b s-tx3">95TH PCT</text><text x="14" y="304" class="m s s-tx2">+178.2%</text>
+      <text x="152" y="288" class="s b s-tx3">PROFITABLE PATHS</text><text x="152" y="304" class="m s s-tx2">99.9%</text>
+      <text x="14" y="326" class="s b s-tx3">MEDIAN MAX DD</text><text x="14" y="342" class="m s b s-tx">−9.1%</text>
+      <text x="152" y="326" class="s b s-tx3">P(DD &gt; 20%)</text><text x="152" y="342" class="m s s-tx2">0.7%</text>
+      <rect x="296" y="1" width="463" height="358" class="s-box"/>
+      <path d="M340 300 C420 270 520 200 740 90" class="s-px" style="stroke-width:2"/>
+      <path d="M340 300 C430 260 540 150 740 40 L740 160 C560 240 440 290 340 300 Z" class="lb-b1"/>
+      <path d="M340 300 C425 265 530 180 740 70 L740 115 C540 220 430 280 340 300 Z" class="lb-b2"/>
+      <line x1="340" y1="330" x2="740" y2="330" class="lb-gr"/>
+      <text x="340" y="348" class="m s s-tx3">trade 0</text><text x="740" y="348" text-anchor="end" class="m s s-tx3">trade 200</text>
+      <text x="306" y="304" class="m s s-tx3">0%</text><text x="306" y="160" class="m s s-tx3">100%</text>
+      <text x="740" y="22" text-anchor="end" class="s s-tx2">median · 25–75% · 5–95%</text>
+      <text x="520" y="200" class="s s-tx2">equity fan (log scale)</text>
+      <g class="s">
+        <circle cx="282" cy="40" r="9" class="s-acc"/><text x="282" y="44" text-anchor="middle" class="s b s-bg" style="fill:var(--bg)">1</text>
+        <circle cx="282" cy="143" r="9" class="s-acc"/><text x="282" y="147" text-anchor="middle" class="s b s-bg" style="fill:var(--bg)">2</text>
+        <circle cx="282" cy="210" r="9" class="s-acc"/><text x="282" y="214" text-anchor="middle" class="s b s-bg" style="fill:var(--bg)">3</text>
+        <circle cx="310" cy="30" r="9" class="s-acc"/><text x="310" y="34" text-anchor="middle" class="s b s-bg" style="fill:var(--bg)">4</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The page. 1 the four inputs · 2 the buttons · 3 the outcomes (the median result is the largest figure) · 4 the equity fan. Values are from one run with the defaults.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>#</th><th>Part</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>Inputs</td><td>Win rate %, Reward : risk, Risk per trade %, Trades (chapter 4).</td></tr>
+      <tr><td class="n">2</td><td>Buttons</td><td><b>Run 1,000 paths</b> runs the test (Enter in any field does the same). <b>Use my journal</b> fills the inputs from your closed trades. <b>Challenge odds on my trades</b> opens Coach › Challenge (chapter 6).</td></tr>
+      <tr><td class="n">3</td><td>Outcomes</td><td>Eight figures from the 1,000 paths. The median result is the largest; the 5th percentile, the median max drawdown and the risk of ruin are the key ones (bold); the others are secondary.</td></tr>
+      <tr><td class="n">4</td><td>Equity fan</td><td>Percentile bands of equity across the 1,000 paths at every trade, the median line and 40 sample paths (chapter 12).</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">The Lab runs on its own the first time you open the tab. Resizing the window, folding the panel or coming back to the tab redraws the same 1,000 paths; only <b>Run 1,000 paths</b>, Enter or a fill draws new ones (chapter 8, “Run to run”). On a phone the fan sits under the form.</p>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Inputs and model</h2><p>What each field means, what the Lab does with it, and how to fill it from your own record.</p></div></div>
+
+<section class="ch" id="inputs">
+  <div class="ch-h"><span class="n">04</span><h3>The four inputs</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Field</th><th>Default</th><th>Accepted</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Win rate %</td><td class="n">45</td><td class="n">1 – 99</td><td>The share of trades that win. Each trade is a win with this probability, independently of the others.</td></tr>
+      <tr><td>Reward : risk</td><td class="n">2</td><td class="n">≥ 0.1</td><td>How many times the risk a win pays. Every win pays exactly this; every loss costs exactly 1 risk (1R).</td></tr>
+      <tr><td>Risk per trade %</td><td class="n">1</td><td class="n">0.05 – 50</td><td>The share of <b>current</b> equity lost when a trade loses. It is applied to equity after each trade, so it compounds.</td></tr>
+      <tr><td>Trades</td><td class="n">200</td><td class="n">10 – 2,000</td><td>How many trades each path contains. Rounded to a whole number.</td></tr>
+    </tbody>
+  </table>
+  <p>A value outside the accepted range is pulled to the nearest limit before the run, without a message: type 0.01 in Risk per trade and the Lab uses 0.05%; type 5,000 trades and it uses 2,000. An empty field counts as 0, so it becomes the lower limit.</p>
+  <div class="call tip"><b class="t">Reward : risk is an average</b><p>Real trades do not all win the same amount. Use the <b>average win ÷ average loss</b> in R, which is exactly what <b>Use my journal</b> computes. Teach me also advises lowering it for costs: spread and slippage cut every win.</p></div>
+</section>
+
+<section class="ch" id="model">
+  <div class="ch-h"><span class="n">05</span><h3>How one path is built</h3></div>
+  <p>Every path starts at equity 1 (100% of the account) and plays the trades one by one. For each trade the Lab draws a random number: below the win rate it is a win, otherwise a loss.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 225" role="img" aria-label="One trade: from equity E, a win with probability p gives E times one plus risk times reward to risk, a loss with probability one minus p gives E times one minus risk">
+      <rect x="20" y="80" width="150" height="50" class="s-box"/><text x="95" y="102" text-anchor="middle" class="b s-tx">equity E</text><text x="95" y="120" text-anchor="middle" class="s s-tx3">before the trade</text>
+      <path d="M170 95 L330 45" class="s-arrow" marker-end="url(#ah)"/><path d="M170 115 L330 165" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="228" y="56" class="s m s-tx2">p = win rate</text><text x="222" y="170" class="s m s-tx2">1 − p</text>
+      <rect x="335" y="20" width="400" height="50" class="s-upbg"/><text x="350" y="42" class="b s-tx">▲ win: E × (1 + risk × R:R)</text><text x="350" y="60" class="s m s-tx2">1% risk, 2 R:R → E × 1.02 (+2%)</text>
+      <rect x="335" y="140" width="400" height="50" class="s-dnbg"/><text x="350" y="162" class="b s-tx">▼ loss: E × (1 − risk)</text><text x="350" y="180" class="s m s-tx2">1% risk → E × 0.99 (−1%)</text>
+      <text x="20" y="216" class="s s-tx3">then: track the peak, the deepest drop from it, and whether E ever fell below 0.5</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>One trade of one path. The new equity becomes the starting point of the next trade, so gains and losses compound.</figcaption></figure>
+  <ol>
+    <li>Repeat for every trade of the path (the Trades field).</li>
+    <li>After each trade, update the <b>peak</b> (highest equity so far, starting at 1), the <b>max drawdown</b> (largest fall from a peak, as a fraction of that peak), and a <b>ruin flag</b> set if equity is ever below 0.5.</li>
+    <li>Repeat for 1,000 paths. Each run uses new random numbers.</li>
+    <li>Sort the 1,000 final equities, the 1,000 max drawdowns, and at every trade the 1,000 equities at that trade; read the percentiles from the sorted lists (chapter 8).</li>
+  </ol>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 220" role="img" aria-label="How percentiles are read: at one trade number, the equities of all paths are sorted and the 5th, 25th, 50th, 75th and 95th are taken">
+      <path d="M40 180 H460 M40 180 V20" class="s-ln3"/>
+      <polyline points="40,120 100,110 160,118 220,96 280,92 340,80 400,70 460,60" class="lb-sp" style="stroke-opacity:.7"/>
+      <polyline points="40,120 100,126 160,112 220,118 280,104 340,108 400,96 460,90" class="lb-sp" style="stroke-opacity:.7"/>
+      <polyline points="40,120 100,130 160,140 220,132 280,146 340,138 400,128 460,132" class="lb-sp" style="stroke-opacity:.7"/>
+      <polyline points="40,120 100,104 160,96 220,84 280,72 340,56 400,48 460,36" class="lb-sp" style="stroke-opacity:.7"/>
+      <polyline points="40,120 100,118 160,124 220,110 280,116 340,118 400,112 460,110" class="lb-sp" style="stroke-opacity:.7"/>
+      <line x1="340" y1="20" x2="340" y2="180" class="s-ln3" stroke-dasharray="4 3"/>
+      <text x="340" y="198" text-anchor="middle" class="s m s-tx2">trade i</text><text x="40" y="198" class="s m s-tx3">trade 0</text>
+      <g class="s-tx"><circle cx="340" cy="56" r="3.5"/><circle cx="340" cy="80" r="3.5"/><circle cx="340" cy="108" r="3.5"/><circle cx="340" cy="118" r="3.5"/><circle cx="340" cy="138" r="3.5"/></g>
+      <path d="M470 100 H520" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="530" y="30" width="210" height="150" class="s-box"/>
+      <text x="545" y="52" class="s b s-tx3">ALL 1,000 AT TRADE i, SORTED</text>
+      <text x="545" y="76" class="s m s-tx">95th ······ upper band edge</text>
+      <text x="545" y="98" class="s m s-tx">75th ······ inner band top</text>
+      <text x="545" y="120" class="s m b s-tx">50th ······ median line</text>
+      <text x="545" y="142" class="s m s-tx">25th ······ inner band bottom</text>
+      <text x="545" y="164" class="s m s-tx">5th ······· lower band edge</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>The fan is built trade by trade: at each trade the 1,000 equities are sorted and five of them are kept. The same is done once for the final equities and the max drawdowns.</figcaption></figure>
+  <div class="call warn"><b class="t">What the model assumes</b><p>Every trade is independent of the last, the odds never change, every win pays exactly the reward : risk and every loss costs exactly the risk. There are no costs, no gaps through stops and no streaky behaviour beyond what chance produces. Chapter 18 explains what that leaves out.</p></div>
+</section>
+
+<section class="ch" id="fill">
+  <div class="ch-h"><span class="n">06</span><h3>Filling it from your trades</h3></div>
+  <p>Three ways in, besides typing the numbers yourself:</p>
+  <table class="g-t">
+    <thead><tr><th>Source</th><th>Where</th><th>What it fills</th><th>Needs</th></tr></thead>
+    <tbody>
+      <tr><td><b>Use my journal</b></td><td>Risk Lab button</td><td>All three come from the same trades: those closed with a stop loss, so with an R. Win rate % = share of them with R above zero (a break-even counts as a loss, as in the Lab; rounded to a whole %). Reward : risk = average R of the winners ÷ average R lost on the others (2 decimals). Risk per trade % = the median of what those trades really risked at their open, as % of the balance before each one (the order ticket's risk only if no trade carries its risk). Then it runs.</td><td>At least 5 closed trades with an R (opened with a stop loss) and a non-zero average loss. Otherwise a message: “Not enough data · Close at least 5 trades with stop losses first”.</td></tr>
+      <tr><td><b>Send to Risk Lab</b></td><td>Strategy Lab › Backtester, under the results</td><td>Win rate % from the backtest, Reward : risk = average R of its winners ÷ average R of its losers, Risk per trade % = the risk set in the backtest. Opens the Risk Lab and runs.</td><td>At least 5 backtest trades including at least one loser (“Not enough trades”).</td></tr>
+      <tr><td><b>Challenge odds on my trades</b></td><td>Risk Lab button</td><td>Nothing here: it opens Coach › Challenge, which runs its own Monte Carlo on your real closed trades against a prop-firm challenge’s rules.</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>After a fill, a message confirms the numbers used, for example “Loaded journal stats · 20 trades with a stop · 45% win · 2.00 R:R · risk 1% (median of 20 trades)”.</p>
+  <div class="call warn"><b class="t">One outlier moves reward : risk</b><p>The risk per trade is the median, so one odd trade does not move it, but reward : risk is an average: a single winner with a very small stop (R of +50 or more) can push it far above what you normally get. If the filled reward : risk looks too good, type the value you usually aim for and run again.</p></div>
+  <div class="call tip"><b class="t">How many trades count</b><p>Five trades is the minimum the button accepts, not enough to trust. A win rate from 20 trades can easily be 15 points away from the true one. Run the Lab with your journal numbers and again with a win rate 5–10 points lower: if the lower case is unacceptable, your current risk is too high for what you actually know.</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>Reading the outcomes</h2><p>Every figure: how it is computed, how to read it, what to do with it.</p></div></div>
+
+<section class="ch" id="exp">
+  <div class="ch-h"><span class="n">07</span><h3>Expectancy</h3></div>
+  <p>The average result of one trade, in R (multiples of the risk). It is computed directly from the inputs, not from the paths, so it is the same on every run.</p>
+  <div class="fml"><div>expectancy = win rate × R:R − (1 − win rate)</div><div class="c">shown as “+0.35R / trade”. Above 0: the rule has an edge on paper. At 0 or below: it does not, whatever the risk per trade.</div></div>
+  <div class="two">
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 760 240" role="img" aria-label="Break-even win rate against reward to risk: above the curve expectancy is positive, below it negative; the default 45 percent at 2 to 1 sits above">
+        <path d="M60.0,28.6 L78.9,39.3 97.7,48.7 116.6,57.1 135.4,64.7 154.3,71.4 173.1,77.6 192.0,83.1 210.9,88.2 229.7,92.9 248.6,97.1 267.4,101.1 286.3,104.8 305.1,108.2 324.0,111.3 342.9,114.3 361.7,117.1 380.6,119.6 399.4,122.1 418.3,124.4 437.1,126.5 456.0,128.6 474.9,130.5 493.7,132.3 512.6,134.1 531.4,135.7 550.3,137.3 569.1,138.8 588.0,140.2 606.9,141.6 625.7,142.9 644.6,144.1 663.4,145.3 682.3,146.4 701.1,147.5 720.0,148.6 L720 20 L60 20 Z" class="s-upbg"/>
+        <path d="M60.0,28.6 L78.9,39.3 97.7,48.7 116.6,57.1 135.4,64.7 154.3,71.4 173.1,77.6 192.0,83.1 210.9,88.2 229.7,92.9 248.6,97.1 267.4,101.1 286.3,104.8 305.1,108.2 324.0,111.3 342.9,114.3 361.7,117.1 380.6,119.6 399.4,122.1 418.3,124.4 437.1,126.5 456.0,128.6 474.9,130.5 493.7,132.3 512.6,134.1 531.4,135.7 550.3,137.3 569.1,138.8 588.0,140.2 606.9,141.6 625.7,142.9 644.6,144.1 663.4,145.3 682.3,146.4 701.1,147.5 720.0,148.6 L720 200 L60 200 Z" class="s-dnbg"/>
+        <polyline points="60.0,28.6 78.9,39.3 97.7,48.7 116.6,57.1 135.4,64.7 154.3,71.4 173.1,77.6 192.0,83.1 210.9,88.2 229.7,92.9 248.6,97.1 267.4,101.1 286.3,104.8 305.1,108.2 324.0,111.3 342.9,114.3 361.7,117.1 380.6,119.6 399.4,122.1 418.3,124.4 437.1,126.5 456.0,128.6 474.9,130.5 493.7,132.3 512.6,134.1 531.4,135.7 550.3,137.3 569.1,138.8 588.0,140.2 606.9,141.6 625.7,142.9 644.6,144.1 663.4,145.3 682.3,146.4 701.1,147.5 720.0,148.6" class="s-px" style="stroke-width:2"/>
+        <path d="M60 200 H720 M60 200 V20" class="s-ln3"/>
+        <text x="54" y="204" text-anchor="end" class="s m s-tx3">0%</text><text x="54" y="139" text-anchor="end" class="s m s-tx3">25%</text><text x="54" y="75" text-anchor="end" class="s m s-tx3">50%</text>
+        <text x="60" y="218" text-anchor="middle" class="s m s-tx3">0.5</text><text x="154" y="218" text-anchor="middle" class="s m s-tx3">1</text><text x="343" y="218" text-anchor="middle" class="s m s-tx3">2</text><text x="531" y="218" text-anchor="middle" class="s m s-tx3">3</text><text x="720" y="218" text-anchor="middle" class="s m s-tx3">4</text>
+        <text x="390" y="236" text-anchor="middle" class="s s-tx3">reward : risk</text>
+        <g class="s-tx"><circle cx="154.3" cy="71.4" r="3.5"/><circle cx="342.9" cy="114.3" r="3.5"/><circle cx="531.4" cy="135.7" r="3.5"/></g>
+        <text x="162" y="66" class="s m s-tx">1:1 → 50%</text><text x="350" y="130" class="s m s-tx">2:1 → 33.3%</text><text x="538" y="152" class="s m s-tx">3:1 → 25%</text>
+        <circle cx="342.9" cy="84.3" r="5" class="s-acc"/><text x="352" y="80" class="s b s-tx">45% at 2:1 (default) · +0.35R</text>
+        <text x="600" y="44" text-anchor="middle" class="b s-tx">▲ positive expectancy</text>
+        <text x="600" y="186" text-anchor="middle" class="b s-tx">▼ negative expectancy</text>
+      </svg>
+    </div><figcaption><b>Fig. 4</b>The break-even win rate for each reward : risk is 1 ÷ (1 + R:R). Above the line the rule wins on average; below it loses.</figcaption></figure>
+    <div>
+      <h4 style="margin-top:0">Break-even win rates</h4>
+      <table class="g-t">
+        <thead><tr><th>R:R</th><th>Break-even</th><th>At 45% win</th></tr></thead>
+        <tbody>
+          <tr><td class="n">0.8</td><td class="n">55.6%</td><td class="n neg">−0.19R</td></tr>
+          <tr><td class="n">1</td><td class="n">50.0%</td><td class="n neg">−0.10R</td></tr>
+          <tr><td class="n">1.5</td><td class="n">40.0%</td><td class="n pos">+0.13R</td></tr>
+          <tr><td class="n">2</td><td class="n">33.3%</td><td class="n pos">+0.35R</td></tr>
+          <tr><td class="n">3</td><td class="n">25.0%</td><td class="n pos">+0.80R</td></tr>
+        </tbody>
+      </table>
+      <p>At 45% and 1:1: 0.45 × 1 − 0.55 = <b>−0.10R</b>. At 45% and 2:1: 0.45 × 2 − 0.55 = <b>+0.35R</b>: over 200 trades that is +70R on paper.</p>
+    </div>
+  </div>
+  <div class="call key"><b class="t">Expectancy is the edge; risk only scales it</b><p>No risk per trade turns a negative expectancy into a positive one. If the expectancy is at or below zero, the useful question is how to improve the rule, not how much to risk.</p></div>
+</section>
+
+<section class="ch" id="final">
+  <div class="ch-h"><span class="n">08</span><h3>Median, 5th and 95th percentile</h3></div>
+  <p>The 1,000 final equities, sorted from worst to best, are read at three places and shown as a % change from the start:</p>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Read from the sorted 1,000</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td><b>Median result</b></td><td>the 500th</td><td>The typical outcome: half the paths end below, half above.</td></tr>
+      <tr><td><b>5th pct</b></td><td>the 50th from the bottom</td><td>Bad luck: 1 path in 20 ends worse than this.</td></tr>
+      <tr><td><b>95th pct</b></td><td>the 950th</td><td>Good luck: 1 path in 20 ends better than this.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">Exactly: a percentile f is the value at position ⌊f × 999⌋ of the sorted list (counting from 0), with no interpolation.</p>
+  <h4>Why the median, not the average</h4>
+  <p>With compounding, a few very lucky paths end enormously high and pull the average up. The median is not moved by them: it is what a typical trader with these odds ends with. The gap between the median and the 95th percentile shows how much of the upside depends on luck.</p>
+  <div class="call key"><b class="t">Plan on the 5th percentile</b><p>Teach me puts it plainly: decide on the 5th percentile and the drawdown odds, not on the median. If the 5th percentile is a loss you could not accept over this many trades, the risk is too high or the edge too thin.</p></div>
+  <div class="call ex"><b class="t">Run to run</b><p>Each run draws new random numbers, so the figures move a little between runs. With 1,000 paths a percentage like P(DD &gt; 20%) near 10% typically moves by about ±1 point; the median result by a few %. If two settings differ by less than that, run each a few times before concluding. Chapter 17 gives the exact values for the final-equity figures, without the noise.</p></div>
+</section>
+
+<section class="ch" id="prof">
+  <div class="ch-h"><span class="n">09</span><h3>Profitable paths</h3></div>
+  <p>The share of the 1,000 paths whose final equity is above the start (strictly above 1). It answers: <b>after this many trades, how often am I up at all?</b></p>
+  <table class="g-t">
+    <thead><tr><th>Setting (1% risk)</th><th>Trades</th><th>Expectancy</th><th>Profitable paths (typical)</th></tr></thead>
+    <tbody>
+      <tr><td>45% win, 2:1</td><td class="n">50</td><td class="n pos">+0.35R</td><td class="n">≈ 96%</td></tr>
+      <tr><td>45% win, 2:1</td><td class="n">200</td><td class="n pos">+0.35R</td><td class="n">≈ 99.9%</td></tr>
+      <tr><td>40% win, 2:1</td><td class="n">100</td><td class="n pos">+0.20R</td><td class="n">≈ 91%</td></tr>
+      <tr><td>55% win, 1:1</td><td class="n">200</td><td class="n pos">+0.10R</td><td class="n">≈ 91%</td></tr>
+      <tr><td>50% win, 1:1</td><td class="n">200</td><td class="n">0.00R</td><td class="n">≈ 47%</td></tr>
+      <tr><td>30% win, 2:1</td><td class="n">200</td><td class="n neg">−0.10R</td><td class="n">≈ 12%</td></tr>
+    </tbody>
+  </table>
+  <p>Two lessons. A small edge needs many trades before it shows reliably. And a rule with exactly zero expectancy ends up <b>less than half</b> the time, not half: compounding a gain of x and a loss of x leaves you below where you started (1.01 × 0.99 = 0.9999). This drag grows with the risk per trade (chapter 14).</p>
+  <div class="call warn"><b class="t">Profitable is not safe</b><p>At 45%, 2:1 and 20% risk per trade, about 93% of paths still end profitable, yet more than half of them fall below half the account on the way (chapter 11). Read this figure together with the drawdown and ruin figures, never alone.</p></div>
+</section>
+
+<section class="ch" id="dd">
+  <div class="ch-h"><span class="n">10</span><h3>Drawdown: Median max DD and P(DD &gt; 20%)</h3></div>
+  <p>A <b>drawdown</b> is a fall from the highest equity reached so far. The <b>max drawdown</b> of a path is its deepest one: the largest (peak − equity) ÷ peak at any trade. The peak starts at the starting equity.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 220" role="img" aria-label="Drawdown: an equity path rises to a peak, falls to a trough and recovers; the max drawdown is the fall from peak to trough as a share of the peak">
+      <path d="M40 190 H730" class="s-ln3"/>
+      <polyline points="40,150 90,140 140,128 190,110 230,90 270,70 300,60 330,82 360,100 390,118 420,130 450,124 480,110 510,96 540,80 570,64 600,56 640,48 680,52 720,40" class="s-px" style="stroke-width:2"/>
+      <line x1="300" y1="60" x2="460" y2="60" class="s-ln3" stroke-dasharray="4 3"/>
+      <circle cx="300" cy="60" r="4" class="s-tx"/><text x="300" y="48" text-anchor="middle" class="s b s-tx">peak</text>
+      <circle cx="420" cy="130" r="4" class="s-tx"/><text x="420" y="152" text-anchor="middle" class="s b s-tx">trough</text>
+      <path d="M440 62 V128" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <text x="450" y="178" class="s m b s-tx">max DD = (peak − trough) ÷ peak</text>
+      <rect x="570" y="56" width="140" height="14" class="s-box2"/><text x="640" y="67" text-anchor="middle" class="s s-tx2">back above the peak</text>
+      <text x="40" y="208" class="s s-tx3">trade 0</text><text x="730" y="208" text-anchor="end" class="s s-tx3">last trade</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The deepest fall from a running peak. A path that ends well can still have had a deep drawdown on the way.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Computed as</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td><b>Median max DD</b></td><td>The median of the 1,000 max drawdowns, shown negative (−9.1%).</td><td>The deepest fall a typical path goes through. Half the paths see worse.</td></tr>
+      <tr><td><b>P(DD &gt; 20%)</b></td><td>The share of paths whose max drawdown is above 20% at any point.</td><td>How often you would see the account at least a fifth below its best.</td></tr>
+    </tbody>
+  </table>
+  <h4>Why drawdown is the figure that decides</h4>
+  <p>Losses and gains are not symmetric: after a fall, the gain needed to get back is larger than the fall.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Gain needed to recover a loss: 10 percent needs 11.1, 20 needs 25, 30 needs 42.9, 40 needs 66.7, 50 needs 100, 60 needs 150">
+      <g class="s">
+        <text x="20" y="34" class="s b s-tx3">LOSS</text><text x="150" y="34" class="s b s-tx3">GAIN NEEDED TO RECOVER = loss ÷ (1 − loss)</text>
+        <text x="20" y="58" class="m s s-tx">▼ 10%</text><rect x="150" y="48" width="27" height="12" class="s-tx2"/><text x="183" y="58" class="m s s-tx">▲ 11.1%</text>
+        <text x="20" y="82" class="m s s-tx">▼ 20%</text><rect x="150" y="72" width="60" height="12" class="s-tx2"/><text x="216" y="82" class="m s s-tx">▲ 25%</text>
+        <text x="20" y="106" class="m s s-tx">▼ 30%</text><rect x="150" y="96" width="103" height="12" class="s-tx2"/><text x="259" y="106" class="m s s-tx">▲ 42.9%</text>
+        <text x="20" y="130" class="m s s-tx">▼ 40%</text><rect x="150" y="120" width="160" height="12" class="s-tx2"/><text x="316" y="130" class="m s s-tx">▲ 66.7%</text>
+        <text x="20" y="154" class="m s s-tx">▼ 50%</text><rect x="150" y="144" width="240" height="12" class="s-tx2"/><text x="396" y="154" class="m s s-tx">▲ 100%</text>
+        <text x="20" y="178" class="m s s-tx">▼ 60%</text><rect x="150" y="168" width="360" height="12" class="s-tx2"/><text x="516" y="178" class="m s s-tx">▲ 150%</text>
+      </g>
+      <text x="740" y="200" text-anchor="end" class="s s-tx3">bars to scale: 2.4 px per % of gain</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>Recovering a drawdown takes a larger gain than the loss. Past about 30% the climb back becomes long.</figcaption></figure>
+  <div class="call tip"><b class="t">Name your limit first</b><p>Decide the drawdown you would stop trading at, or the one a challenge or your own nerves allow (often 10% or 20%). Then lower the risk until the Median max DD sits well inside it and P(DD &gt; 20%) is small.</p></div>
+</section>
+
+<section class="ch" id="ruin">
+  <div class="ch-h"><span class="n">11</span><h3>Risk of ruin (−50%)</h3></div>
+  <p>The share of paths in which equity falls <b>below half the starting balance at any trade</b>. A path that touches −50% and later recovers still counts as ruined: the Lab treats losing half as the end of the road, because few traders keep going after it and the climb back needs +100%.</p>
+  <div class="fml"><div>risk of ruin = (paths with equity &lt; 0.5 at some trade) ÷ 1,000</div><div class="c">shown as a %; 0.0% means none of the 1,000 paths got there in this run, not that it is impossible.</div></div>
+  <h4>How many straight losses reach −50%</h4>
+  <p>Each loss multiplies equity by (1 − risk). After k losses in a row the account is at (1 − risk)<sup>k</sup>.</p>
+  <table class="g-t">
+    <thead><tr><th>Risk per trade</th><th>After 5 straight losses</th><th>After 10</th><th>Straight losses to fall below −50%</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1%</td><td class="n neg">−4.9%</td><td class="n neg">−9.6%</td><td class="n">69</td></tr>
+      <tr><td class="n">2%</td><td class="n neg">−9.6%</td><td class="n neg">−18.3%</td><td class="n">35</td></tr>
+      <tr><td class="n">5%</td><td class="n neg">−22.6%</td><td class="n neg">−40.1%</td><td class="n">14</td></tr>
+      <tr><td class="n">10%</td><td class="n neg">−41.0%</td><td class="n neg">−65.1%</td><td class="n">7</td></tr>
+    </tbody>
+  </table>
+  <p>Ruin rarely comes from one unbroken streak; it comes from a bad stretch: more losses than usual over a few dozen trades. The Lab counts all of those, which is why it can show a ruin risk well before a streak of 69 losses is plausible.</p>
+  <div class="call warn"><b class="t">Any figure above 0 deserves attention</b><p>At 45%, 2:1 over 200 trades, a typical run shows about 1.5% ruin at 5% risk, 16% at 10% and 53% at 20%, with a positive edge in every case. The edge is the same; only the risk changed.</p></div>
+</section>
+
+<section class="ch" id="fan">
+  <div class="ch-h"><span class="n">12</span><h3>The equity fan</h3></div>
+  <p>The chart on the right of the Lab. Horizontally: trades, from “trade 0” to the last trade. Vertically: equity as a % change from the start, on a <b>logarithmic</b> scale, so +100% and −50% are the same distance from 0% (both are one doubling).</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 790 270" role="img" aria-label="The equity fan for 45 percent win, 2 to 1, 1 percent risk, 200 trades: the median ends near plus 97 percent, the 5 to 95 percent band from about plus 38 to plus 173 percent">
+      <g class="lb-gr"><line x1="60" y1="215.3" x2="720" y2="215.3"/><line x1="60" y1="142.7" x2="720" y2="142.7"/><line x1="60" y1="91.2" x2="720" y2="91.2"/><line x1="60" y1="18.5" x2="720" y2="18.5"/></g>
+      <text x="54" y="219" text-anchor="end" class="s m s-tx3">0%</text><text x="54" y="146" text-anchor="end" class="s m s-tx3">+50%</text><text x="54" y="95" text-anchor="end" class="s m s-tx3">+100%</text><text x="54" y="22" text-anchor="end" class="s m s-tx3">+200%</text>
+      <polyline points="60.0,215.3 76.5,213.6 93.0,222.6 109.5,215.5 126.0,219.2 142.5,228.2 159.0,221.2 175.5,219.5 192.0,217.8 208.5,216.1 225.0,214.4 241.5,202.0 258.0,195.0 274.5,187.9 291.0,191.6 307.5,195.2 324.0,188.2 340.5,191.8 357.0,195.5 373.5,193.8 390.0,192.1 406.5,190.4 423.0,183.4 439.5,176.3 456.0,174.6 472.5,173.0 489.0,165.9 505.5,153.5 522.0,151.8 538.5,155.5 555.0,153.8 571.5,141.4 588.0,139.7 604.5,138.0 621.0,136.3 637.5,129.3 654.0,127.6 670.5,125.9 687.0,129.6 703.5,133.2 720.0,136.9" class="lb-sp" style="stroke-opacity:.6"/>
+      <polyline points="60.0,215.3 76.5,218.9 93.0,211.9 109.5,210.2 126.0,208.5 142.5,196.1 159.0,189.1 175.5,192.7 192.0,185.7 208.5,184.0 225.0,187.7 241.5,191.3 258.0,178.9 274.5,182.6 291.0,170.2 307.5,179.2 324.0,177.5 340.5,165.1 357.0,163.4 373.5,167.1 390.0,160.0 406.5,169.0 423.0,167.3 439.5,160.3 456.0,158.6 472.5,156.9 489.0,160.6 505.5,158.9 522.0,151.8 538.5,150.1 555.0,143.1 571.5,141.4 588.0,134.4 604.5,127.3 621.0,131.0 637.5,123.9 654.0,116.9 670.5,109.9 687.0,102.8 703.5,95.8 720.0,99.4" class="lb-sp" style="stroke-opacity:.6"/>
+      <polygon points="60.0,215.3 93.0,222.6 126.0,224.5 159.0,221.2 192.0,223.1 225.0,219.7 258.0,216.3 291.0,207.6 324.0,204.2 357.0,200.8 390.0,197.5 423.0,194.1 456.0,190.7 489.0,187.3 522.0,183.9 555.0,180.5 588.0,177.1 621.0,168.4 654.0,165.0 687.0,161.6 720.0,158.3 720.0,35.3 687.0,38.7 654.0,47.4 621.0,56.1 588.0,64.9 555.0,73.6 522.0,77.0 489.0,85.7 456.0,94.5 423.0,103.2 390.0,111.9 357.0,120.7 324.0,129.4 291.0,138.1 258.0,146.8 225.0,155.6 192.0,164.3 159.0,173.0 126.0,187.1 93.0,195.9 60.0,215.3" class="lb-b1"/>
+      <polygon points="60.0,215.3 93.0,217.2 126.0,213.9 159.0,210.5 192.0,201.7 225.0,198.3 258.0,195.0 291.0,191.6 324.0,182.8 357.0,179.5 390.0,170.7 423.0,167.3 456.0,164.0 489.0,155.2 522.0,151.8 555.0,148.5 588.0,139.7 621.0,136.3 654.0,127.6 687.0,124.2 720.0,120.8 720.0,72.7 687.0,76.1 654.0,79.5 621.0,88.2 588.0,97.0 555.0,100.3 522.0,109.1 489.0,117.8 456.0,121.2 423.0,129.9 390.0,138.7 357.0,142.0 324.0,150.8 291.0,159.5 258.0,162.9 225.0,171.6 192.0,180.4 159.0,189.1 126.0,197.8 93.0,206.5 60.0,215.3" class="lb-b2"/>
+      <polyline points="60.0,215.3 93.0,211.9 126.0,203.2 159.0,199.8 192.0,191.0 225.0,187.7 258.0,178.9 291.0,170.2 324.0,166.8 357.0,163.4 390.0,154.7 423.0,146.0 456.0,142.6 489.0,133.8 522.0,130.5 555.0,127.1 588.0,118.3 621.0,114.9 654.0,106.2 687.0,102.8 720.0,94.1" class="lb-md"/>
+      <text x="726" y="39" class="s m s-tx2">95th</text><text x="726" y="76" class="s m s-tx2">75th</text><text x="726" y="98" class="s m b s-tx">median</text><text x="726" y="124" class="s m s-tx2">25th</text><text x="726" y="162" class="s m s-tx2">5th</text>
+      <text x="60" y="246" class="s m s-tx3">trade 0</text><text x="720" y="246" text-anchor="end" class="s m s-tx3">trade 200</text>
+      <text x="240" y="60" class="s s-tx2">outer band: 5–95% of paths</text><path d="M330 66 L400 108" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="420" y="240" class="s s-tx2">inner band: 25–75%</text><path d="M470 228 L500 158" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="60" y="266" class="s s-tx3">Thin lines: sample paths. One run of 45% win, 2:1, 1% risk, 200 trades; finals: 5th +37.5%, median +96.7%, 95th +173.2%.</text>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>How to read the fan. The Lab draws the same marks, with a legend at the top right (median · 25–75% · 5–95%) and five gridlines labelled in %.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Mark</th><th>Is</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td>Median (thick line)</td><td>The 50th percentile of equity at each trade.</td><td>The typical road, trade by trade.</td></tr>
+      <tr><td>25–75% (darker band)</td><td>Where the middle half of the paths are at each trade.</td><td>The usual range of outcomes.</td></tr>
+      <tr><td>5–95% (lighter band)</td><td>Where 90% of the paths are at each trade.</td><td>The range once you allow for real bad or good luck.</td></tr>
+      <tr><td>Thin lines</td><td>The first 40 of the 1,000 paths.</td><td>What a single account actually feels like: ups, downs and flat stretches.</td></tr>
+    </tbody>
+  </table>
+  <div class="cards">
+    <div class="card"><h5>Width = luck</h5><p>A wide fan means the result depends more on the order of wins and losses than on the edge. Teach me: lower the risk per trade.</p></div>
+    <div class="card"><h5>The lower edge</h5><p>Where the 5% line sits below 0% and for how long: how long a bad-luck trader stays under water.</p></div>
+    <div class="card"><h5>The samples</h5><p>Even paths that end high zig-zag. Long flat or falling stretches are normal, not a sign the rule stopped working.</p></div>
+  </div>
+  <p class="mut">The bands are percentiles at each trade separately: the 5% line is not one path, and no single path follows the median line. The vertical range is set by the 5–95% band, so a sample path that strays further can run off the top or bottom of the chart.</p>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Using it</h2><p>Turning the outcomes into a risk per trade, with worked examples and two calculators.</p></div></div>
+
+<section class="ch" id="size">
+  <div class="ch-h"><span class="n">13</span><h3>Choosing risk per trade</h3></div>
+  <p>Keep the win rate, reward : risk and trades fixed, and change only the risk. Here is what that does with the defaults (45%, 2:1, 200 trades), averaged over many runs:</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="Median max drawdown by risk per trade at 45 percent, 2 to 1, 200 trades: 0.5 percent 4.6, 1 percent 9.1, 1.5 percent 13.5, 2 percent 17.7, 3 percent 25.9, 5 percent 40, 10 percent 67">
+      <text x="20" y="20" class="s b s-tx3">RISK / TRADE</text><text x="110" y="20" class="s b s-tx3">MEDIAN MAX DD</text><text x="560" y="20" class="s b s-tx3">P(DD &gt; 20%)</text><text x="660" y="20" class="s b s-tx3">RUIN</text>
+      <line x1="110" y1="28" x2="110" y2="250" class="s-ln3"/><line x1="146.4" y1="28" x2="146.4" y2="250" class="s-ln3" stroke-dasharray="3 3"/><text x="146" y="262" text-anchor="middle" class="s m s-tx3">10%</text><line x1="182.8" y1="28" x2="182.8" y2="250" class="s-ln3" stroke-dasharray="3 3"/><text x="183" y="262" text-anchor="middle" class="s m s-tx3">20%</text><text x="110" y="262" text-anchor="middle" class="s m s-tx3">0</text>
+      <g class="s">
+        <text x="20" y="48" class="m s s-tx">0.5%</text><rect x="110" y="38" width="16.7" height="14" class="s-dn" style="fill-opacity:.55"/><text x="132" y="49" class="m s s-tx">−4.6%</text><text x="560" y="49" class="m s s-tx">0%</text><text x="660" y="49" class="m s s-tx">0%</text>
+        <text x="20" y="78" class="m s s-tx">1%</text><rect x="110" y="68" width="33.1" height="14" class="s-dn" style="fill-opacity:.55"/><text x="149" y="79" class="m s s-tx">−9.1%</text><text x="560" y="79" class="m s s-tx">0.7%</text><text x="660" y="79" class="m s s-tx">0%</text>
+        <text x="20" y="108" class="m s s-tx">1.5%</text><rect x="110" y="98" width="49.1" height="14" class="s-dn" style="fill-opacity:.55"/><text x="165" y="109" class="m s s-tx">−13.5%</text><text x="560" y="109" class="m s s-tx">10%</text><text x="660" y="109" class="m s s-tx">0%</text>
+        <text x="20" y="138" class="m s s-tx">2%</text><rect x="110" y="128" width="64.4" height="14" class="s-dn" style="fill-opacity:.55"/><text x="180" y="139" class="m s s-tx">−17.7%</text><text x="560" y="139" class="m s s-tx">36%</text><text x="660" y="139" class="m s s-tx">0%</text>
+        <text x="20" y="168" class="m s s-tx">3%</text><rect x="110" y="158" width="94.3" height="14" class="s-dn" style="fill-opacity:.55"/><text x="210" y="169" class="m s s-tx">−25.9%</text><text x="560" y="169" class="m s s-tx">82%</text><text x="660" y="169" class="m s s-tx">0.1%</text>
+        <text x="20" y="198" class="m s s-tx">5%</text><rect x="110" y="188" width="145.6" height="14" class="s-dn" style="fill-opacity:.55"/><text x="262" y="199" class="m s s-tx">−40.0%</text><text x="560" y="199" class="m s s-tx">99.9%</text><text x="660" y="199" class="m s s-tx">1.5%</text>
+        <text x="20" y="228" class="m s s-tx">10%</text><rect x="110" y="218" width="243.9" height="14" class="s-dn" style="fill-opacity:.55"/><text x="360" y="229" class="m s s-tx">−67.0%</text><text x="560" y="229" class="m s s-tx">100%</text><text x="660" y="229" class="m s s-tx">16.1%</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 8</b>Drawdowns grow roughly in proportion to the risk per trade; the odds of a 20% drawdown jump from near zero to near certain between 1% and 5%. Same edge (+0.35R) on every row.</figcaption></figure>
+  <h4>A procedure</h4>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 330" role="img" aria-label="Flowchart for choosing risk per trade: check expectancy, run at a starting risk, compare the drawdown and ruin to your limit, lower or keep the risk, stress the win rate">
+      <rect x="20" y="20" width="200" height="50" class="s-box"/><text x="120" y="41" text-anchor="middle" class="s b s-tx">Fill the odds</text><text x="120" y="58" text-anchor="middle" class="s s-tx2">journal, backtest or typed</text>
+      <path d="M220 45 H270" class="s-arrow" marker-end="url(#ah)"/>
+      <polygon points="370,10 470,45 370,80 270,45" class="s-box2"/><text x="370" y="42" text-anchor="middle" class="s b s-tx">Expectancy</text><text x="370" y="57" text-anchor="middle" class="s s-tx2">above 0?</text>
+      <path d="M470 45 H540" class="s-arrow" marker-end="url(#ah)"/><text x="505" y="38" text-anchor="middle" class="s s-tx3">no</text>
+      <rect x="540" y="20" width="200" height="50" class="s-dnbg"/><text x="640" y="41" text-anchor="middle" class="s b s-tx">Stop: no edge</text><text x="640" y="58" text-anchor="middle" class="s s-tx2">improve the rule, not the size</text>
+      <path d="M370 80 V112" class="s-arrow" marker-end="url(#ah)"/><text x="380" y="100" class="s s-tx3">yes</text>
+      <rect x="270" y="112" width="200" height="50" class="s-box"/><text x="370" y="133" text-anchor="middle" class="s b s-tx">Run at your usual risk</text><text x="370" y="150" text-anchor="middle" class="s s-tx2">trades = your planning period</text>
+      <path d="M370 162 V188" class="s-arrow" marker-end="url(#ah)"/>
+      <polygon points="370,188 490,228 370,268 250,228" class="s-box2"/><text x="370" y="222" text-anchor="middle" class="s b s-tx">Median max DD, P(DD &gt; 20%),</text><text x="370" y="238" text-anchor="middle" class="s b s-tx">ruin inside your limit?</text>
+      <path d="M250 228 H190" class="s-arrow" marker-end="url(#ah)"/><text x="220" y="221" text-anchor="middle" class="s s-tx3">no</text>
+      <rect x="20" y="203" width="170" height="50" class="s-box"/><text x="105" y="224" text-anchor="middle" class="s b s-tx">Lower the risk</text><text x="105" y="241" text-anchor="middle" class="s s-tx2">e.g. halve it, run again</text>
+      <path d="M105 203 V150 H270" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M490 228 H540" class="s-arrow" marker-end="url(#ah)"/><text x="515" y="221" text-anchor="middle" class="s s-tx3">yes</text>
+      <rect x="540" y="203" width="200" height="50" class="s-box"/><text x="640" y="224" text-anchor="middle" class="s b s-tx">Stress the win rate</text><text x="640" y="241" text-anchor="middle" class="s s-tx2">run again 5–10 points lower</text>
+      <path d="M640 253 V280" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="540" y="280" width="200" height="44" class="s-upbg"/><text x="640" y="299" text-anchor="middle" class="s b s-tx">Still acceptable?</text><text x="640" y="315" text-anchor="middle" class="s s-tx2">keep this risk; if not, lower it</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>A procedure for choosing risk per trade with the Lab. The limit is yours: the drawdown you would stop at, or the one your challenge allows.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>If you see</th><th>It means</th><th>Try</th></tr></thead>
+    <tbody>
+      <tr><td>Expectancy ≤ 0</td><td>No edge on these numbers.</td><td>Nothing in the risk field fixes it.</td></tr>
+      <tr><td>5th pct below 0% over your planning period</td><td>1 trader in 20 with these odds is down after all those trades.</td><td>More trades to plan over, or accept it knowingly.</td></tr>
+      <tr><td>Median max DD near your limit</td><td>Half of all paths go past it.</td><td>Halve the risk: the drawdown roughly halves.</td></tr>
+      <tr><td>P(DD &gt; 20%) above a few %</td><td>A 20% fall is a realistic event, not a tail.</td><td>Lower the risk until it is small.</td></tr>
+      <tr><td>Risk of ruin above 0%</td><td>Some paths lose half the account.</td><td>Lower the risk; at that size the rule is a bet on the order of trades.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="growth">
+  <div class="ch-h"><span class="n">14</span><h3>Why more risk is not more growth</h3></div>
+  <p>The Lab’s median comes from compounding. With the model of chapter 5, the typical (median) path grows per trade by about</p>
+  <div class="fml"><div>g = p × ln(1 + risk × R:R) + (1 − p) × ln(1 − risk)</div><div class="c">p = win rate. The median final equity is about e<sup>g × trades</sup>. This is the arithmetic behind the figure; the Lab itself does not show g.</div></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="Median growth per trade against risk per trade for 45 percent and 2 to 1: it rises to a maximum near 17.5 percent risk and falls below zero beyond about 35.6 percent">
+      <path d="M60 140 H720" class="s-ln3"/><path d="M60 20 V210" class="s-ln3"/>
+      <rect x="68" y="20" width="24" height="120" class="s-upbg"/><text x="80" y="16" text-anchor="middle" class="s s-tx2">0.5–2%</text>
+      <polyline points="60.0,140.0 76.0,127.6 92.0,116.0 108.0,105.3 124.0,95.3 140.0,86.2 156.0,77.8 172.0,70.2 188.0,63.3 204.0,57.1 220.0,51.6 236.0,46.9 252.0,42.9 268.0,39.5 284.0,36.8 300.0,34.8 316.0,33.5 332.0,32.9 348.0,32.9 364.0,33.5 380.0,34.8 396.0,36.8 412.0,39.4 428.0,42.7 444.0,46.6 460.0,51.1 476.0,56.4 492.0,62.2 508.0,68.8 524.0,75.9 540.0,83.8 556.0,92.3 572.0,101.5 588.0,111.4 604.0,121.9 620.0,133.2 636.0,145.2 652.0,157.9 668.0,171.3 684.0,185.4 700.0,200.3" class="s-px" style="stroke-width:2"/>
+      <circle cx="340" cy="32.8" r="4" class="s-tx"/><text x="340" y="56" text-anchor="middle" class="s b s-tx">peak ≈ 17.5% risk</text>
+      <circle cx="629.6" cy="140" r="4" class="s-tx"/><text x="636" y="132" class="s s-tx">≈ 35.6%: g = 0</text>
+      <text x="54" y="144" text-anchor="end" class="s m s-tx3">0</text><text x="54" y="67" text-anchor="end" class="s m s-tx3">+2%</text><text x="54" y="181" text-anchor="end" class="s m s-tx3">−1%</text>
+      <text x="60" y="224" text-anchor="middle" class="s m s-tx3">0%</text><text x="220" y="224" text-anchor="middle" class="s m s-tx3">10%</text><text x="380" y="224" text-anchor="middle" class="s m s-tx3">20%</text><text x="540" y="224" text-anchor="middle" class="s m s-tx3">30%</text><text x="700" y="224" text-anchor="middle" class="s m s-tx3">40%</text>
+      <text x="470" y="186" class="s s-tx3">risk per trade →</text><text x="98" y="190" class="s s-tx2">← typical trading risk (shaded)</text>
+    </svg>
+  </div><figcaption><b>Fig. 10</b>Median growth per trade (log) against risk per trade, for 45% and 2:1. Growth rises with risk only up to a point, then falls; past about 35.6% the typical path shrinks despite the positive edge.</figcaption></figure>
+  <p>The peak sits at <b>risk = p − (1 − p) ÷ R:R</b> (the Kelly fraction): 0.45 − 0.55 ÷ 2 = 17.5% here. It is a ceiling, not a target. Near it the drawdowns are enormous (the Lab shows a median max DD above 90% at 20% risk), and it is only the peak if the win rate and R:R are exactly right; with a win rate a little lower the peak moves left and the same risk lands on the falling side.</p>
+  <div class="call key"><b class="t">Where traders usually sit</b><p>The shaded strip (0.5–2%) is far to the left of the peak. There, growth is a little lower than it could be in theory, and the drawdowns are a fraction of the size. That trade is what the Lab lets you see in numbers.</p></div>
+</section>
+
+<section class="ch" id="examples">
+  <div class="ch-h"><span class="n">15</span><h3>Worked examples</h3></div>
+  <p>Figures are typical values (averaged over many runs of the same maths as the Lab). A single run lands near them, not on them.</p>
+  <h4>A. The defaults: 45% win, 2:1, 1% risk, 200 trades</h4>
+  <div class="kpis k4">
+    <div class="kpi"><label>Median result</label><b class="pos">+96%</b></div>
+    <div class="kpi"><label>5th pct</label><b class="pos">+39%</b></div>
+    <div class="kpi"><label>Median max DD</label><b class="neg">−9.1%</b></div>
+    <div class="kpi"><label>Risk of ruin (−50%)</label><b>0.0%</b></div>
+  </div>
+  <p>Expectancy 0.45 × 2 − 0.55 = +0.35R. Median: about 90 wins and 110 losses: 1.02<sup>90</sup> × 0.99<sup>110</sup> ≈ 1.97, so +97%. Even bad luck (5th pct) ends about +39%; P(DD &gt; 20%) under 1%. A comfortable setting, if the 45% is real.</p>
+  <h4>B. Same odds, 5% risk</h4>
+  <div class="kpis k4">
+    <div class="kpi"><label>Median result</label><b class="pos">+1,784%</b></div>
+    <div class="kpi"><label>5th pct</label><b class="pos">+248%</b></div>
+    <div class="kpi"><label>Median max DD</label><b class="neg">−40%</b></div>
+    <div class="kpi"><label>Risk of ruin (−50%)</label><b>1.5%</b></div>
+  </div>
+  <p>The median looks spectacular, but a typical path goes through a 40% drawdown and almost every path (99.9%) through one above 20%. Fourteen straight losses halve the account. Few people keep following a rule through a 40% fall; the result on paper assumes you do.</p>
+  <h4>C. A coin flip at 1:1: 50% win, 1% risk, 200 trades</h4>
+  <p>Expectancy 0.50 × 1 − 0.50 = 0.00R. Median result about −1%, profitable paths about 47%, 5th pct about −21%, median max DD about −14.5%, P(DD &gt; 20%) about 22%. No edge, and still a 1-in-5 chance of a 20% drawdown: risk without reward.</p>
+  <h4>D. Just under break-even: 33% win, 2:1, 1% risk</h4>
+  <p>Break-even at 2:1 is 33.3%, so 0.33 × 2 − 0.67 = −0.01R. The Lab shows a median of about −4% and profitable paths about 41%. One point of win rate (or a little of every win lost to costs) is the whole difference between a small edge and none.</p>
+  <h4>E. Journal numbers: 40% win, 2:1, 100 trades</h4>
+  <table class="g-t">
+    <thead><tr><th>Risk per trade</th><th>Median result</th><th>5th pct</th><th>Median max DD</th><th>P(DD &gt; 20%)</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0.5%</td><td class="n pos">+10%</td><td class="n neg">−2%</td><td class="n neg">−4.9%</td><td class="n">0%</td></tr>
+      <tr><td class="n">1%</td><td class="n pos">+21%</td><td class="n neg">−5%</td><td class="n neg">−9.5%</td><td class="n">2%</td></tr>
+      <tr><td class="n">2%</td><td class="n pos">+43%</td><td class="n neg">−11%</td><td class="n neg">−18.4%</td><td class="n">41%</td></tr>
+    </tbody>
+  </table>
+  <p>Expectancy +0.20R. Over 100 trades about 9% of paths still end down at any of these risks (profitable paths ≈ 91%): that depends on the edge and the number of trades, not on the risk. What the risk changes is the depth: at 2% a 20% drawdown is close to a coin flip. With a 10% drawdown limit, 1% is already at the edge (median max DD −9.5%), so 0.5% is the setting that fits.</p>
+  <h4>F. High win rate, small wins: 60% win, 0.8:1, 2% risk</h4>
+  <p>Expectancy 0.60 × 0.8 − 0.40 = +0.08R. Median about +34%, but 5th pct about −11% and P(DD &gt; 20%) about 35%. A high win rate feels safe; the thin edge makes the result mostly luck over 200 trades.</p>
+</section>
+
+<section class="ch" id="try">
+  <div class="ch-h"><span class="n">16</span><h3>Try it: the stress test</h3></div>
+  <p>The same 1,000-path test as the Lab, with the same clamps, rules and outputs. Each press draws new random numbers, exactly as the Lab does.</p>
+  <div class="calc" id="mccalc">
+    <div class="cin">
+      <label class="sw">Win rate % <input id="mcW" type="number" value="45" min="1" max="99"></label>
+      <label class="sw">Reward : risk <input id="mcR" type="number" value="2" step="0.1" min="0.1"></label>
+      <label class="sw">Risk per trade % <input id="mcF" type="number" value="1" step="0.25" min="0.05"></label>
+      <label class="sw">Trades <input id="mcN" type="number" value="200" min="10" max="2000"></label>
+      <div style="padding:12px 0"><span class="seg" role="group" aria-label="Presets"><button type="button" data-p="45,2,1,200" aria-pressed="true">Defaults</button><button type="button" data-p="50,1,1,200" aria-pressed="false">Coin flip</button><button type="button" data-p="45,2,10,200" aria-pressed="false">10% risk</button></span></div>
+      <button type="button" class="lb-run" id="mcRun">Run 1,000 paths</button>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="mcMed">—</b><span class="tag nt">median result</span></div>
+      <div class="parts">
+        <span>Expectancy</span><b id="mcExp">—</b>
+        <span>5th pct</span><b id="mcP5">—</b>
+        <span>95th pct</span><b id="mcP95">—</b>
+        <span>Profitable paths</span><b id="mcProf">—</b>
+        <span>Median max DD</span><b id="mcDD">—</b>
+        <span>P(DD &gt; 20%)</span><b id="mcDD20">—</b>
+        <span>Risk of ruin (−50%)</span><b id="mcRuin">—</b>
+      </div>
+      <div class="lb-fan"><svg id="mcFan" viewBox="0 0 640 240" role="img" aria-label="Equity fan of the last run"></svg></div>
+      <p class="sub">Each trade: equity × (1 + risk × R:R) with probability win rate, else × (1 − risk). Percentile = sorted value at ⌊f × 999⌋. Ruin = equity below 0.5 at any trade; drawdown from the running peak. Log scale; bands 5–95% and 25–75%, median line, 40 sample paths.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="exact">
+  <div class="ch-h"><span class="n">17</span><h3>Try it: exact odds and streaks</h3></div>
+  <p>The final-equity figures of the Lab can be computed exactly, without random paths: the final equity depends only on how many trades won, and that count follows a binomial distribution. This calculator gives the values the 1,000 paths estimate, plus the streak arithmetic of chapter 11. Drawdown and ruin depend on the order of trades and need the stress test above.</p>
+  <div class="calc" id="excalc">
+    <div class="cin">
+      <label class="sw">Win rate % <input id="exW" type="number" value="45" min="1" max="99"></label>
+      <label class="sw">Reward : risk <input id="exR" type="number" value="2" step="0.1" min="0.1"></label>
+      <label class="sw">Risk per trade % <input id="exF" type="number" value="1" step="0.25" min="0.05"></label>
+      <label class="sw">Trades <input id="exN" type="number" value="200" min="10" max="2000"></label>
+      <label class="sw">Losses in a row <input id="exK" type="number" value="10" min="1" max="200"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="exMed">—</b><span class="tag nt">median result (exact)</span></div>
+      <div class="parts">
+        <span>Expectancy</span><b id="exExp">—</b>
+        <span>Break-even win rate at this R:R</span><b id="exBE">—</b>
+        <span>5th pct (exact)</span><b id="exP5">—</b>
+        <span>95th pct (exact)</span><b id="exP95">—</b>
+        <span>Profitable paths (exact)</span><b id="exProf">—</b>
+        <span>Median growth per trade</span><b id="exG">—</b>
+        <span id="exKl">After 10 losses in a row</span><b id="exKd">—</b>
+        <span>Gain then needed to recover</span><b id="exKr">—</b>
+        <span>Straight losses to fall below −50%</span><b id="exRuin">—</b>
+      </div>
+      <p class="sub">Final equity with W wins = (1 + risk × R:R)<sup>W</sup> × (1 − risk)<sup>trades − W</sup>, W binomial. Percentile = smallest W whose cumulative probability reaches it. Same input limits as the Lab. Streak: (1 − risk)<sup>k</sup>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">18</span><h3>Limits and caveats</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Your inputs are estimates</h5><p>The output is only as good as the win rate and R:R you give it. From a few dozen trades both are uncertain; stress them (chapter 13).</p></div>
+    <div class="card"><h5>Fixed wins and losses</h5><p>Every win pays exactly R:R and every loss exactly 1R. Real trades vary; a loss can exceed 1R through a gap or slippage.</p></div>
+    <div class="card"><h5>No costs</h5><p>Spread, commission and swap are not modelled. Lower the R:R (or the win rate) to account for them.</p></div>
+    <div class="card"><h5>Independent trades</h5><p>Each trade is drawn on its own. Real losses cluster: correlated positions, a market regime that stops suiting the rule, a bad week of decisions.</p></div>
+    <div class="card"><h5>Constant percentage risk</h5><p>Risk is a fixed share of current equity, so positions shrink after losses and grow after wins. A fixed dollar risk would give deeper drawdowns in % terms after losses.</p></div>
+    <div class="card"><h5>Ruin is a line, not the end</h5><p>“Ruin” is defined as falling below −50%. Accounts can of course lose more; margin calls and stop-outs are not modelled.</p></div>
+    <div class="card"><h5>Random each run</h5><p>1,000 paths leave sampling noise of about a point on most percentages; tiny differences between settings mean nothing.</p></div>
+    <div class="card"><h5>Not a forecast</h5><p>The Lab describes what given odds imply. It does not know the market and is not financial advice.</p></div>
+  </div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Every definition, formula and limit in one place.</p></div></div>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">19</span><h3>All definitions and formulas</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td>Input limits</td><td class="n">win 1–99% · R:R ≥ 0.1 · risk 0.05–50% · trades 10–2,000 (rounded); out-of-range values pulled to the limit</td></tr>
+      <tr><td>Paths</td><td>1,000 per run, each starting at equity 1; new random numbers on every run.</td></tr>
+      <tr><td>One trade</td><td class="n">win (probability p): E × (1 + risk × R:R) · loss: E × (1 − risk)</td></tr>
+      <tr><td>Expectancy</td><td class="n">p × R:R − (1 − p), in R per trade</td></tr>
+      <tr><td>Percentile f</td><td class="n">sorted[⌊f × 999⌋], no interpolation</td></tr>
+      <tr><td>Median result · 5th pct · 95th pct</td><td>Percentiles 50, 5 and 95 of final equity, as % change from the start.</td></tr>
+      <tr><td>Profitable paths</td><td class="n">share of paths with final equity &gt; 1</td></tr>
+      <tr><td>Max drawdown (one path)</td><td class="n">max over trades of 1 − E ÷ peak; peak = highest E so far, starting at 1</td></tr>
+      <tr><td>Median max DD</td><td>Median of the 1,000 max drawdowns, shown negative.</td></tr>
+      <tr><td>P(DD &gt; 20%)</td><td class="n">share of paths with max drawdown &gt; 0.20</td></tr>
+      <tr><td>Risk of ruin (−50%)</td><td class="n">share of paths with E &lt; 0.5 at any trade</td></tr>
+      <tr><td>Fan</td><td>At each trade, percentiles 5, 25, 50, 75, 95 of the 1,000 equities; log scale; first 40 paths drawn thin.</td></tr>
+      <tr><td>Use my journal</td><td>Win % = closed trades with net P&amp;L &gt; 0 ÷ closed trades; R:R = mean R of trades with R &gt; 0 ÷ mean |R| of trades with R ≤ 0; risk = the ticket’s risk %. Needs ≥ 5 trades with an R.</td></tr>
+      <tr><td>Send to Risk Lab (Backtester)</td><td>Backtest win %; mean R of winners ÷ mean |R| of losers; the backtest’s risk. Needs ≥ 5 trades and a loser.</td></tr>
+      <tr><td>Runs</td><td>On Run 1,000 paths or Enter, on a fill, and the first time the tab opens. A resize, a folded panel or a return to the tab redraws the same paths.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">20</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Monte Carlo</dt><dd>Answering a question about chance by playing it out many times with random numbers and looking at the spread of results.</dd>
+    <dt>Path</dt><dd>One random sequence of wins and losses, and the equity it produces trade by trade.</dd>
+    <dt>R</dt><dd>One unit of risk: what a trade loses if its stop is hit. A +2R trade made twice its risk.</dd>
+    <dt>Reward : risk (R:R)</dt><dd>The average win divided by the average loss, both in R.</dd>
+    <dt>Expectancy</dt><dd>The average result per trade, in R. Above zero is an edge.</dd>
+    <dt>Break-even win rate</dt><dd>The win rate at which expectancy is zero: 1 ÷ (1 + R:R).</dd>
+    <dt>Percentile</dt><dd>The value below which a given share of results falls: the 5th percentile is worse than 95% of paths.</dd>
+    <dt>Median</dt><dd>The 50th percentile: the middle result.</dd>
+    <dt>Drawdown</dt><dd>A fall from the highest equity reached so far, as a share of that peak.</dd>
+    <dt>Risk of ruin</dt><dd>Here: the chance of falling below half the starting balance at any point.</dd>
+    <dt>Compounding</dt><dd>Risking a share of current equity, so each result changes the size of the next.</dd>
+    <dt>Volatility drag</dt><dd>The loss from compounding swings: +x then −x leaves less than you started with.</dd>
+    <dt>Kelly fraction</dt><dd>The risk per trade that maximises median growth for given odds: p − (1 − p) ÷ R:R. A theoretical ceiling.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="related">
+  <div class="ch-h"><span class="n">21</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <a class="card g-link" href="vol.html"><h5>Volatility ›</h5><p>Turning one hour of ATR into a stop and a position size, so each trade really costs the risk % you test here.</p></a>
+    <a class="card g-link" href="corr.html"><h5>Correlation ›</h5><p>Correlated positions lose together: two trades at 1% on near-identical pairs are closer to one trade at 2%.</p></a>
+    <a class="card g-link" href="obs-exit.html"><h5>Exit lab ›</h5><p>Replays your closed trades under other exit policies; a change of exits changes the win rate and R:R you feed into the Risk Lab.</p></a>
+    <a class="card g-link" href="obs-scan.html"><h5>Edge check ›</h5><p>Grades live signals by their own track record on each pair: a way to judge whether a win rate is more than noise.</p></a>
+  </div>
+  <p>Inside the terminal: <b>Strategy Lab › Backtester</b> (its <b>Send to Risk Lab</b> button), <b>Coach › Journal</b> (the trades behind <b>Use my journal</b>) and <b>Coach › Challenge</b> (pass odds on your real trades against a challenge’s rules).</p>
+</section>
+
+<p class="g-foot">tradeBerry · Risk Lab guide. Examples use the Lab’s own arithmetic on example inputs. The Lab describes what given odds imply; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* Risk Lab stress test: the same maths as runLab() in panels.js (1,000 paths, clamps, percentiles, ruin, drawdown) */
+(function () {
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pct = (v, d, sign) => !isFinite(v) ? '—' : (v < 0 ? '−' : sign !== false && v > 0 ? '+' : '') + Math.abs(v).toFixed(d) + '%';
+  const sgn = (v, d) => (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d);
+  const tone = (el, v) => { el.classList.toggle('pos', v > 0); el.classList.toggle('neg', v < 0); };
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
+
+  function run() {
+    const p = clamp(+$('mcW').value / 100, .01, .99), rr = Math.max(.1, +$('mcR').value), risk = clamp(+$('mcF').value / 100, .0005, .5), N = clamp(Math.round(+$('mcN').value), 10, 2000);
+    const P = 1000, paths = [], finals = [], dds = []; let ruin = 0, dd20 = 0;
+    for (let k = 0; k < P; k++) {
+      let e = 1, peak = 1, mdd = 0, ruined = false; const snap = [];
+      for (let i = 0; i < N; i++) {
+        e *= Math.random() < p ? 1 + risk * rr : 1 - risk;
+        peak = Math.max(peak, e); mdd = Math.max(mdd, 1 - e / peak); if (e < .5) ruined = true;
+        snap.push(e);
+      }
+      paths.push(snap); finals.push(e); dds.push(mdd); if (ruined) ruin++; if (mdd > .2) dd20++;
+    }
+    const q = (arr, f) => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor(f * (s.length - 1))]; };
+    const col = new Float64Array(P), bands = [[1], [1], [1], [1], [1]], fs = [.05, .25, .5, .75, .95];
+    for (let i = 0; i < N; i++) { for (let k = 0; k < P; k++) col[k] = paths[k][i]; col.sort(); fs.forEach((f, j) => bands[j].push(col[Math.floor(f * (P - 1))])); }
+    const expR = p * rr - (1 - p), med = q(finals, .5) - 1, p5 = q(finals, .05) - 1, p95 = q(finals, .95) - 1;
+    $('mcMed').textContent = pct(med * 100, 1); tone($('mcMed'), med);
+    $('mcExp').textContent = sgn(expR, 2) + 'R / trade'; tone($('mcExp'), expR);
+    $('mcP5').textContent = pct(p5 * 100, 1); tone($('mcP5'), p5);
+    $('mcP95').textContent = pct(p95 * 100, 1); tone($('mcP95'), p95);
+    $('mcProf').textContent = pct(finals.filter(f => f > 1).length / P * 100, 1, false);
+    $('mcDD').textContent = pct(-q(dds, .5) * 100, 1); tone($('mcDD'), -q(dds, .5));
+    $('mcDD20').textContent = pct(dd20 / P * 100, 1, false);
+    $('mcRuin').textContent = pct(ruin / P * 100, 1, false);
+    fan(bands, paths.slice(0, 40), N);
+  }
+
+  function fan(bands, samples, N) {
+    const sv = $('mcFan'); while (sv.firstChild) sv.removeChild(sv.firstChild);
+    const W = 640, H = 240, L = 48, R = 12, T = 12, B = 22, n = N + 1;
+    const lo = Math.min(...bands[0]) * .97, hi = Math.max(...bands[4]) * 1.03, ll = Math.log(lo), lh = Math.log(hi);
+    const X = i => L + i / (n - 1) * (W - L - R), Y = v => H - B - (Math.log(v) - ll) / (lh - ll) * (H - T - B);
+    const step = Math.max(1, Math.ceil(n / 320)), idx = []; for (let i = 0; i < n; i += step) idx.push(i); if (idx[idx.length - 1] !== n - 1) idx.push(n - 1);
+    for (let g = 0; g < 5; g++) {
+      const v = Math.exp(ll + (lh - ll) * (g + .5) / 5), y = Y(v);
+      sv.appendChild(mk('line', { x1: L, y1: y, x2: W - R, y2: y, class: 'lb-gr' }));
+      const t = mk('text', { x: L - 6, y: y + 4, 'text-anchor': 'end', class: 'm s s-tx3' }); const d = (v - 1) * 100; t.textContent = (d < -.5 ? '−' : d > .5 ? '+' : '') + Math.abs(d).toFixed(0) + '%'; sv.appendChild(t);
+    }
+    const clipY = y => Math.max(T - 2, Math.min(H - B + 2, y));
+    samples.forEach(s => { const pts = idx.map(i => X(i).toFixed(1) + ',' + clipY(Y(i ? s[i - 1] : 1)).toFixed(1)); sv.appendChild(mk('polyline', { points: pts.join(' '), class: 'lb-sp' })); });
+    const area = (a, b, c) => { const up = idx.map(i => X(i).toFixed(1) + ',' + Y(a[i]).toFixed(1)), dn = idx.slice().reverse().map(i => X(i).toFixed(1) + ',' + Y(b[i]).toFixed(1)); sv.appendChild(mk('polygon', { points: up.concat(dn).join(' '), class: c })); };
+    area(bands[0], bands[4], 'lb-b1'); area(bands[1], bands[3], 'lb-b2');
+    sv.appendChild(mk('polyline', { points: idx.map(i => X(i).toFixed(1) + ',' + Y(bands[2][i]).toFixed(1)).join(' '), class: 'lb-md' }));
+    const t0 = mk('text', { x: L, y: H - 6, class: 'm s s-tx3' }); t0.textContent = 'trade 0'; sv.appendChild(t0);
+    const t1 = mk('text', { x: W - R, y: H - 6, 'text-anchor': 'end', class: 'm s s-tx3' }); t1.textContent = 'trade ' + (n - 1); sv.appendChild(t1);
+    const lg = mk('text', { x: W - R, y: T + 4, 'text-anchor': 'end', class: 's s-tx2' }); lg.textContent = 'median · 25–75% · 5–95%'; sv.appendChild(lg);
+  }
+
+  $('mcRun').addEventListener('click', run);
+  document.querySelectorAll('#mccalc input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') run(); }));
+  document.querySelectorAll('#mccalc .seg button').forEach(b => b.addEventListener('click', () => {
+    const [w, r, f, n] = b.dataset.p.split(','); $('mcW').value = w; $('mcR').value = r; $('mcF').value = f; $('mcN').value = n;
+    document.querySelectorAll('#mccalc .seg button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); run();
+  }));
+  run();
+})();
+
+/* Exact odds: the final equity depends only on the number of wins W ~ Binomial(trades, p) */
+(function () {
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pct = (v, d, sign) => !isFinite(v) ? '—' : (v < 0 ? '−' : sign !== false && v > 0 ? '+' : '') + Math.abs(v).toFixed(d) + '%';
+  const sgn = (v, d) => (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d);
+  const tone = (el, v) => { el.classList.toggle('pos', v > 0); el.classList.toggle('neg', v < 0); };
+  const big = v => Math.abs(v) >= 1e4 ? (v < 0 ? '−' : '+') + Math.round(Math.abs(v)).toLocaleString('en-US') + '%' : pct(v, 1);
+  function draw() {
+    const p = clamp(+$('exW').value / 100, .01, .99), rr = Math.max(.1, +$('exR').value), f = clamp(+$('exF').value / 100, .0005, .5), N = clamp(Math.round(+$('exN').value), 10, 2000);
+    const k = clamp(Math.round(+$('exK').value) || 1, 1, 200);
+    const lw = Math.log(1 + f * rr), ll = Math.log(1 - f);
+    // binomial probabilities in log space, then normalised
+    const lp = new Float64Array(N + 1); lp[0] = N * Math.log(1 - p);
+    for (let w = 0; w < N; w++) lp[w + 1] = lp[w] + Math.log(N - w) - Math.log(w + 1) + Math.log(p) - Math.log(1 - p);
+    let mx = -Infinity; for (const v of lp) mx = Math.max(mx, v);
+    const pr = Array.from(lp, v => Math.exp(v - mx)), tot = pr.reduce((a, b) => a + b, 0);
+    const quant = qf => { let c = 0; for (let w = 0; w <= N; w++) { c += pr[w] / tot; if (c >= qf - 1e-12) return w; } return N; };
+    const fin = w => Math.exp(w * lw + (N - w) * ll) - 1;
+    const med = fin(quant(.5)), p5 = fin(quant(.05)), p95 = fin(quant(.95));
+    let prof = 0; for (let w = 0; w <= N; w++) if (w * lw + (N - w) * ll > 0) prof += pr[w] / tot;
+    const expR = p * rr - (1 - p), g = p * lw + (1 - p) * ll, dk = Math.pow(1 - f, k);
+    $('exMed').textContent = big(med * 100); tone($('exMed'), med);
+    $('exExp').textContent = sgn(expR, 2) + 'R / trade'; tone($('exExp'), expR);
+    $('exBE').textContent = (100 / (1 + rr)).toFixed(1) + '%';
+    $('exP5').textContent = big(p5 * 100); tone($('exP5'), p5);
+    $('exP95').textContent = big(p95 * 100); tone($('exP95'), p95);
+    $('exProf').textContent = pct(prof * 100, 1, false);
+    $('exG').textContent = pct(g * 100, 3); tone($('exG'), g);
+    $('exKl').textContent = 'After ' + k + ' loss' + (k === 1 ? '' : 'es') + ' in a row';
+    $('exKd').textContent = pct((dk - 1) * 100, 1); tone($('exKd'), dk - 1);
+    $('exKr').textContent = big((1 / dk - 1) * 100);
+    $('exRuin').textContent = String(Math.floor(Math.log(.5) / Math.log(1 - f) + 1e-9) + 1);
+  }
+  document.querySelectorAll('#excalc input').forEach(i => i.addEventListener('input', draw)); draw();
+})();
+</script>
+</body>
+</html>

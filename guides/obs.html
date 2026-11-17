@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatory guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use the twelve research tools of the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> Observatory</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the Observatory is, and what it is not</a>
+  <a href="#anatomy"><span>02</span>Anatomy of a view</a>
+  <a href="#which"><span>03</span>Which tool answers my question?</a>
+  <a href="#memory"><span>04</span>What is remembered</a>
+  <span class="p">II · Statistics in one page</span>
+  <a href="#stats"><span>05</span>Statistics in one page</a>
+  <span class="p">III · The twelve tools</span>
+  <a href="#tools"><span>06</span>The twelve tools</a>
+  <span class="p">IV · Practice</span>
+  <a href="#flows"><span>07</span>Workflows that chain tools</a>
+  <a href="#situations"><span>08</span>Common situations</a>
+  <a href="#limits"><span>09</span>Limits and pitfalls</a>
+  <span class="p">V · Reference</span>
+  <a href="#ref"><span>10</span>All thresholds</a>
+  <a href="#sources"><span>11</span>Research references</a>
+  <a href="#glossary"><span>12</span>Glossary</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research</span>
+  <h1>Observatory</h1>
+  <p class="g-lede">Twelve research tools that look at the currency market in ways a price chart cannot: which pairs move together, whether recent moves had memory or were noise, how busy the market is by the hour, which currency is doing the moving, whether a signal has ever paid, and whether other exits would have served your own trades better. Each tool answers one question and tests its answer against chance. This page covers what the tools share: how a view is laid out, which tool answers which question, the statistics behind them and how to chain them. Each tool has its own guide (chapter 06).</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory</b></div>
+    <div><label>Shortcut</label><b><kbd>O</kbd> outside text fields</b></div>
+    <div><label>Covers</label><b>The 16 G8 FX pairs (CFDs only where a tool allows)</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the Observatory is, how every view is laid out, and which tool to open for which question.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the Observatory is, and what it is not</h3></div>
+  <p class="lead">The Observatory is a set of research tools in the Research workspace. Each entry in its list names a tool and the one question it answers. Three properties decide how you should use them.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg></div><h5>Currencies first</h5><p>The Observatory, Edge check and Baskets are built on the eight G8 currencies and their 16 pairs. CFDs are not part of them. A few tools also run on other instruments (see the table below).</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 18V9M11 18V5M16 18v-7"/></svg></div><h5>Tested against chance</h5><p>Every tool compares what it measures with what luck alone would produce: a noise band, shuffled copies, a Poisson band, a confidence interval, or a correction for testing many things at once.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div><h5>Descriptive</h5><p>The tools describe the recent window. “Persistent”, “busier than usual” or “EUR-led” say what happened, not what comes next. Only the Range cone gives odds about the future, and it reports how well those odds held last week.</p></div>
+  </div>
+  <h4>Which instruments each tool reads</h4>
+  <table class="g-t">
+    <thead><tr><th>Tool</th><th>Measures</th><th>Other instruments</th></tr></thead>
+    <tbody>
+      <tr><td>Constellation · Regime map · Tapestry · Edge check</td><td>Always the 16 G8 pairs, whatever is open</td><td>Not shown; the side panel says the open instrument is not in the tree</td></tr>
+      <tr><td>Baskets</td><td>A weighted index of G8 currencies</td><td>—</td></tr>
+      <tr><td>Déjà vu</td><td>The open pair, if it is one of the 16</td><td>A message and an <b>Open EUR/USD</b> button</td></tr>
+      <tr><td>Intrinsic time</td><td>The open FX pair (any FX pair)</td><td>CFDs get the same message and button</td></tr>
+      <tr><td>Drivers</td><td>The open pair, split into its two currencies</td><td>CFDs and pairs without a G8 currency: a message and four pair buttons</td></tr>
+      <tr><td>Recurrence · Volatility clock · Range cone</td><td>The open instrument</td><td>Work on CFDs too (points instead of pips)</td></tr>
+      <tr><td>Exit lab</td><td>Your closed trades</td><td>FX and CFD trades alike</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">The 16 pairs: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, USD/CAD, NZD/USD, EUR/GBP, EUR/JPY, GBP/JPY, AUD/JPY, EUR/CHF, EUR/AUD, GBP/CHF, CAD/JPY, AUD/NZD. The terminal keeps one week of 1-minute bars per instrument; every tool works inside that week.</p>
+  <div class="call warn"><b class="t">Not financial advice</b><p>The tools read prices and, for Exit lab, your own trade history. They do not know the news behind a move. Where a tool names a pair or a rule, it says so as a description of the past window, never as a recommendation.</p></div>
+</section>
+
+<section class="ch" id="anatomy">
+  <div class="ch-h"><span class="n">02</span><h3>Anatomy of a view</h3></div>
+  <p>Every tool shares one frame. Click a block to jump to its description.</p>
+  <figure><div class="fig-b">
+    <div class="pmap">
+      <a class="scan" href="#a-nav" data-n="1">Views list<small>12 tools · name and the question in one line</small></a>
+      <a class="head" href="#a-head" data-n="2">Header<small>tool name · scope · as of · controls · research basis</small></a>
+      <a href="#a-head" data-n="2">Name</a><a href="#a-head" data-n="2">Scope</a><a href="#a-asof" data-n="3">as of</a><a href="#a-ctrl" data-n="4">Controls</a><a href="#a-src" data-n="5">Research basis</a>
+      <a class="chart" href="#a-canvas" data-n="6">Canvas<small>the picture: tree, map, clock, cone…</small></a>
+      <a class="why" href="#a-cards" data-n="7">Right-hand cards<small>readings, verdicts, your positions</small></a>
+      <a class="read" href="#a-how" data-n="8">How to read this<small>one-line summary; click for the full note on method and limits</small></a>
+      <a class="lv" href="#a-tip" data-n="9">Hover tooltips</a><a class="plan" href="#a-click" data-n="10">Click to open a pair</a><a class="ind" href="#a-refresh" data-n="11">Refresh</a>
+      <a class="disc" href="#a-teach" data-n="12">Teach me · a guided tour of the open tool</a>
+    </div>
+  </div><figcaption><b>Fig. 1</b>The frame shared by the twelve views. On a phone the blocks stack in the same order.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>#</th><th>Part</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr id="a-nav"><td class="n">1</td><td>Views list</td><td>One button per tool: bold name, the question in small type under it. Rest the pointer on a button for 400 ms (or focus it with the keyboard) to read the tool’s full question.</td></tr>
+      <tr id="a-head"><td class="n">2</td><td>Name and scope</td><td>The tool’s name (hover it for its question) and what it measures: <code>G8 currencies · 16 pairs</code> for Constellation, Regime map, Tapestry and Edge check; <code>currency index</code> for Baskets; <code>your closed trades</code> for Exit lab; the open instrument for the others.</td></tr>
+      <tr id="a-asof"><td class="n">3</td><td>as of</td><td><code>as of Tue 14:05 UTC</code>: the time of the last bar used. When the market is closed it adds, for example, <code>FX closed · opens Sun 22:00 UTC</code> and the picture is the one at the close. EUR/USD stands for the 16 pairs in the G8 tools; Exit lab has no time.</td></tr>
+      <tr id="a-ctrl"><td class="n">4</td><td>Controls</td><td>Small segmented buttons (window, bar size, horizon…). Each has a tooltip saying exactly what it changes. Every chapter below lists them with their defaults.</td></tr>
+      <tr id="a-src"><td class="n">5</td><td>Research basis</td><td>The published method the tool follows; the link opens the source in a new tab. Chapter 11 lists them all.</td></tr>
+      <tr id="a-canvas"><td class="n">6</td><td>Canvas</td><td>The tool’s picture. Hover any element for its exact numbers.</td></tr>
+      <tr id="a-cards"><td class="n">7</td><td>Right-hand cards</td><td>The readings in words: verdicts, the open pair, your positions, notes. Highlighted values are the ones beyond a stated threshold.</td></tr>
+      <tr id="a-how"><td class="n">8</td><td>How to read this</td><td>A fold with a one-line summary; click it for the full note on the method, its inputs and its limits. Edge check, Range cone, Exit lab and Baskets explain themselves in their own panels instead.</td></tr>
+      <tr id="a-tip"><td class="n">9</td><td>Terms</td><td>The first use of a technical term in a text block has a dotted underline: hover it for a one-line definition. The glossary in chapter 12 collects them.</td></tr>
+      <tr id="a-click"><td class="n">10</td><td>Click to open</td><td>Clicking a pair anywhere in a view (a node, a dot, a pill, a table row; or Enter on it) opens it on the chart and in every panel of the terminal.</td></tr>
+      <tr id="a-refresh"><td class="n">11</td><td>Refresh</td><td>See Fig. 2.</td></tr>
+      <tr id="a-teach"><td class="n">12</td><td>Teach me</td><td>Account menu › Teach me, with the Observatory open, runs the tour of the open tool: the question, the header, each control, the research basis, every part of the view, and the “How to read this” fold.</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 150" role="img" aria-label="Refresh cycle: a check every 5 seconds, skipped when nothing changed, held while the pointer is over the view">
+      <path d="M30 60 H730" class="s-ln3"/>
+      <g class="m s s-tx3"><text x="30" y="40" text-anchor="middle" class="m s s-tx3">0 s</text><text x="160" y="40" text-anchor="middle" class="m s s-tx3">5 s</text><text x="290" y="40" text-anchor="middle" class="m s s-tx3">10 s</text><text x="420" y="40" text-anchor="middle" class="m s s-tx3">15 s</text><text x="550" y="40" text-anchor="middle" class="m s s-tx3">20 s</text><text x="680" y="40" text-anchor="middle" class="m s s-tx3">25 s</text></g>
+      <circle cx="30" cy="60" r="7" class="s-tx"/><circle cx="160" cy="60" r="7" class="s-box"/><circle cx="290" cy="60" r="7" class="s-tx"/>
+      <rect x="380" y="50" width="240" height="20" class="s-wnbg"/><circle cx="420" cy="60" r="7" class="s-box"/><circle cx="550" cy="60" r="7" class="s-box"/><circle cx="620" cy="60" r="7" class="s-tx"/><circle cx="680" cy="60" r="7" class="s-box"/>
+      <text x="30" y="94" text-anchor="middle" class="s s-tx">redraw</text><text x="30" y="108" text-anchor="middle" class="s s-tx3">new bar</text>
+      <text x="160" y="94" text-anchor="middle" class="s s-tx2">skipped</text><text x="160" y="108" text-anchor="middle" class="s s-tx3">nothing changed</text>
+      <text x="290" y="94" text-anchor="middle" class="s s-tx">redraw</text><text x="290" y="108" text-anchor="middle" class="s s-tx3">new bar</text>
+      <text x="500" y="94" text-anchor="middle" class="s s-wn">held while you hover or focus inside the view</text>
+      <text x="620" y="112" text-anchor="middle" class="s s-tx">drawn on leaving</text>
+      <text x="30" y="140" class="s s-tx3">Live tools: all except Exit lab (redraws on your actions) and Baskets (its own live update). Déjà vu redraws only on a new closed bar of its timeframe.</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>The refresh cycle: a check every 5 seconds, so a reading never changes under your pointer.</figcaption></figure>
+  <p class="mut">A closed market is drawn once and then left alone. Resizing the window redraws. If a view cannot be computed yet it says <code>Could not compute this view yet: …</code> with the reason.</p>
+</section>
+
+<section class="ch" id="which">
+  <div class="ch-h"><span class="n">03</span><h3>Which tool answers my question?</h3></div>
+  <p class="lead">Pick the tool by the question you have, not by the picture: each one is built to answer exactly its own question. The tools fall into six groups.</p>
+  <figure><div class="fig-b">
+    <div class="cards" style="margin:0">
+      <div class="card"><span class="k">Structure · how pairs relate</span><ul>
+        <li>Is my next trade the same bet as one I hold? → <a href="obs-const.html">Constellation</a></li>
+        <li>Who is up, who is down, since when? → <a href="obs-tap.html">Tapestry</a></li></ul></div>
+      <div class="card"><span class="k">Character · trend or noise</span><ul>
+        <li>Did moves run on, get undone, or look random? → <a href="obs-regime.html">Regime map</a></li>
+        <li>Does the market revisit the same states? → <a href="obs-rp.html">Recurrence</a></li></ul></div>
+      <div class="card"><span class="k">Time and activity · how busy</span><ul>
+        <li>How busy is it, counted in reversals? Where does this leg end? → <a href="obs-dc.html">Intrinsic time</a></li>
+        <li>Is this hour usually busy, and is today? → <a href="obs-clock.html">Volatility clock</a></li>
+        <li>How far can price go in the next hours? → <a href="obs-cone.html">Range cone</a></li></ul></div>
+      <div class="card"><span class="k">Causes · who is moving</span><ul>
+        <li>Which currency moves this pair? → <a href="obs-drv.html">Drivers</a></li>
+        <li>How do I trade a view on a currency group? → <a href="obs-bask.html">Baskets</a></li></ul></div>
+      <div class="card"><span class="k">History and odds · has it worked</span><ul>
+        <li>Has this shape happened before, and did that ever predict? → <a href="obs-deja.html">Déjà vu</a></li>
+        <li>Which live signals have actually paid here? → <a href="obs-scan.html">Edge check</a></li></ul></div>
+      <div class="card"><span class="k">Your own trades</span><ul>
+        <li>Would other exits have done better on my trades? → <a href="obs-exit.html">Exit lab</a></li></ul></div>
+    </div>
+  </div><figcaption><b>Fig. 3</b>The question map. Each link opens the tool’s own guide; chapter 07 chains them into routines.</figcaption></figure>
+</section>
+
+<section class="ch" id="memory">
+  <div class="ch-h"><span class="n">04</span><h3>What is remembered</h3></div>
+  <p>The open tool and most controls are saved with your account settings, so the Observatory reopens where you left it (Constellation the first time). Some settings are deliberately <b>soft</b>: they reset after a reload or an import, so a quick look does not change your next session.</p>
+  <table class="g-t">
+    <thead><tr><th>Kept</th><th>Reset after a reload</th><th>Only for this visit</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:400">The open tool · the window shared by <b>Constellation and Regime map</b> (one setting for both) · Intrinsic time’s fixed δ · Déjà vu’s bar, pattern and look-ahead · Recurrence’s state size and mode · Tapestry’s window and sort · Volatility clock’s This pair / All pairs · Edge check’s horizon, filter and alert · Range cone’s horizon and mode · Exit lab’s trades and unit · your baskets and every Baskets setting</td>
+      <td>Constellation’s return interval · Drivers’ window · Tapestry’s scale and currency filter · Intrinsic time’s Auto δ</td>
+      <td>The Regime table open or closed, and its sort · the selected Déjà vu match · the selected Recurrence row · the Exit lab sample trader · an open Edge check details row</td></tr>
+    </tbody>
+  </table>
+  <div class="call tip"><b class="t">One window, two tools</b><p>Changing 4H / 1D / 3D on the Constellation changes it on the Regime map too, and the reverse. Compare the two tools on the same window.</p></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Statistics in one page</h2><p>The handful of ideas the tools use to tell a real pattern from luck. Read it once; each tool chapter refers back here.</p></div></div>
+
+<section class="ch" id="stats">
+  <div class="ch-h"><span class="n">05</span><h3>Statistics in one page</h3></div>
+  <p class="lead">Two questions run through every tool: <b>how strong</b> is what I see, and <b>could chance alone</b> have produced it? The first is a measurement (ρ, Hurst, an average). The second compares that measurement with its noise: a standard error, a band from randomised copies, or a correction for testing many things at once.</p>
+
+  <h4 id="s-rho">Correlation ρ and correlation distance</h4>
+  <div class="two">
+    <div>
+      <p><b>ρ</b> (Pearson correlation) measures how two series of returns go up and down together at the same steps, from <b>−1</b> (always opposite) through <b>0</b> (unrelated) to <b>+1</b> (move as one). It says nothing about the size of the moves, only how they line up.</p>
+      <p>The Constellation turns ρ into a <b>correlation distance</b> <code>d = √(2(1−|ρ|))</code>: 0 for pairs that move as one, about 1.41 for unrelated ones. Because it uses |ρ|, a strong inverse link is also “close”: buying one and selling the other is the same trade.</p>
+      <table class="g-t"><thead><tr><th>|ρ|</th><th>d</th><th>The tool says</th></tr></thead><tbody>
+        <tr><td class="n">0.90</td><td class="n">0.45</td><td>Strongly: close to doubling the same bet</td></tr>
+        <tr><td class="n">0.70</td><td class="n">0.77</td><td>Strongly (from 0.7)</td></tr>
+        <tr><td class="n">0.50</td><td class="n">1.00</td><td>Moderately (0.4 to 0.7)</td></tr>
+        <tr><td class="n">0.00</td><td class="n">1.41</td><td>Weakly (under 0.4)</td></tr>
+      </tbody></table>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 200" role="img" aria-label="Three scatter plots of returns: rho plus 0.9, 0 and minus 0.9">
+        <rect x="8" y="22" width="104" height="104" class="s-box"/><rect x="128" y="22" width="104" height="104" class="s-box"/><rect x="248" y="22" width="104" height="104" class="s-box"/>
+        <g class="s-pos"><circle cx="26" cy="110" r="2.4"/><circle cx="34" cy="100" r="2.4"/><circle cx="40" cy="104" r="2.4"/><circle cx="46" cy="90" r="2.4"/><circle cx="52" cy="84" r="2.4"/><circle cx="58" cy="80" r="2.4"/><circle cx="62" cy="70" r="2.4"/><circle cx="68" cy="72" r="2.4"/><circle cx="74" cy="60" r="2.4"/><circle cx="80" cy="56" r="2.4"/><circle cx="86" cy="48" r="2.4"/><circle cx="92" cy="44" r="2.4"/><circle cx="98" cy="36" r="2.4"/><circle cx="56" cy="92" r="2.4"/><circle cx="72" cy="66" r="2.4"/></g>
+        <g class="s-tx3"><circle cx="146" cy="40" r="2.4"/><circle cx="160" cy="98" r="2.4"/><circle cx="170" cy="60" r="2.4"/><circle cx="182" cy="112" r="2.4"/><circle cx="190" cy="44" r="2.4"/><circle cx="200" cy="84" r="2.4"/><circle cx="214" cy="56" r="2.4"/><circle cx="222" cy="104" r="2.4"/><circle cx="152" cy="74" r="2.4"/><circle cx="176" cy="86" r="2.4"/><circle cx="206" cy="70" r="2.4"/><circle cx="196" cy="108" r="2.4"/><circle cx="164" cy="50" r="2.4"/><circle cx="216" cy="36" r="2.4"/><circle cx="186" cy="74" r="2.4"/></g>
+        <g class="s-neg"><circle cx="266" cy="38" r="2.4"/><circle cx="274" cy="48" r="2.4"/><circle cx="280" cy="44" r="2.4"/><circle cx="286" cy="58" r="2.4"/><circle cx="292" cy="64" r="2.4"/><circle cx="298" cy="68" r="2.4"/><circle cx="302" cy="78" r="2.4"/><circle cx="308" cy="76" r="2.4"/><circle cx="314" cy="88" r="2.4"/><circle cx="320" cy="92" r="2.4"/><circle cx="326" cy="100" r="2.4"/><circle cx="332" cy="104" r="2.4"/><circle cx="338" cy="112" r="2.4"/><circle cx="296" cy="56" r="2.4"/><circle cx="312" cy="82" r="2.4"/></g>
+        <text x="60" y="14" text-anchor="middle" class="b s s-tx">ρ +0.9</text><text x="180" y="14" text-anchor="middle" class="b s s-tx">ρ 0</text><text x="300" y="14" text-anchor="middle" class="b s s-tx">ρ −0.9</text>
+        <text x="60" y="142" text-anchor="middle" class="s s-tx2">same way · d 0.45</text><text x="180" y="142" text-anchor="middle" class="s s-tx2">unrelated · d 1.41</text><text x="300" y="142" text-anchor="middle" class="s s-tx2">opposite · d 0.45</text>
+        <text x="8" y="170" class="s s-tx3">Each dot: one minute, return of pair A across,</text><text x="8" y="184" class="s s-tx3">pair B up. Orange = ρ ≥ 0, blue = ρ &lt; 0.</text>
+      </svg>
+    </div><figcaption><b>Fig. 4</b>ρ is about how returns line up. Strong inverse (right) is as “close” as strong positive (left).</figcaption></figure>
+  </div>
+
+  <h4>Try it: read a link like the Constellation does</h4>
+  <p>Move ρ and say how you hold the two pairs. The texts are the ones the tool writes in its link tooltip and in “Your positions”.</p>
+  <div class="calc" id="rhoCalc">
+    <div class="cin">
+      <div style="padding-top:4px"><label for="rSl" style="font-size:14px">Correlation of the two pairs: <b class="mono" id="rSlV">+0.75</b></label>
+      <input type="range" id="rSl" min="-1" max="1" step="0.01" value="0.75"><div class="rv"><span>−1</span><span>−0.7</span><span>0</span><span>+0.7</span><span>+1</span></div></div>
+      <label class="sw" style="margin-top:10px">You hold them <span class="seg" data-k="h"><button type="button" data-v="1" aria-pressed="true">same way</button><button type="button" data-v="-1" aria-pressed="false">opposite ways</button></span></label>
+    </div>
+    <div class="cout">
+      <svg viewBox="0 0 400 60" aria-hidden="true" style="width:100%;height:auto;display:block">
+        <line id="rLn" x1="60" y1="30" x2="340" y2="30" class="s-lpos" style="stroke-width:3.95;stroke-opacity:.7"/>
+        <circle cx="50" cy="30" r="14" class="s-box"/><circle cx="350" cy="30" r="14" class="s-box"/>
+        <text x="50" y="58" text-anchor="middle" class="s s-tx2">pair A</text><text x="350" y="58" text-anchor="middle" class="s s-tx2">pair B</text>
+        <text id="rLb" x="200" y="22" text-anchor="middle" class="m s s-tx">ρ +0.75</text>
+      </svg>
+      <div class="parts"><span>Correlation distance d = √(2(1−|ρ|))</span><b id="rD">0.71</b><span>Line width 0.8 + |ρ| × 4.2</span><b id="rW">3.95</b></div>
+      <p style="margin:12px 0 4px" id="rTip">Strongly correlated: they tend to move the same way. A position on each is close to doubling the same bet.</p>
+      <p class="sub" id="rPos" style="font-size:13px;color:var(--tx2)">Your positions: correlated and held the same way, so they win and lose together — concentrated risk.</p>
+    </div>
+  </div>
+
+  <h4 id="s-se">Standard error and the t-statistic</h4>
+  <div class="two">
+    <div>
+      <p>An average from a small sample wobbles. Its <b>standard error</b> is the size of that wobble: <code>SE = sd ÷ √n</code>. Four times as many cases halve it.</p>
+      <p>The <b>t-statistic</b> <code>t = average ÷ SE</code> counts how many wobbles the average is away from zero. If there is nothing behind a result, |t| lands beyond 2 only about one time in twenty. That is why tools use “t &gt; 2” as the first bar, and why they never stop there: with many tests, one in twenty is a lot of lucky passes.</p>
+      <p>A <b>95% interval</b> is roughly the average ± 1.96 SE. Intrinsic time reports the average overshoot this way.</p>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 180" role="img" aria-label="Bell curve of t with nothing behind it; the tails beyond plus and minus 2 hold about 5 percent">
+        <path d="M20 140 C70 140 90 138 110 128 C135 112 150 40 180 40 C210 40 225 112 250 128 C270 138 290 140 340 140" class="s-ln3"/>
+        <path d="M20 140 C70 140 90 138 110 128 L110 140 Z" class="s-wnbg"/><path d="M250 128 C270 138 290 140 340 140 L250 140 Z" class="s-wnbg"/>
+        <path d="M20 140 H340" class="s-ln"/>
+        <path d="M110 140v6M180 140v6M250 140v6" class="s-ln3"/>
+        <text x="110" y="160" text-anchor="middle" class="m s s-tx3">−2</text><text x="180" y="160" text-anchor="middle" class="m s s-tx3">0</text><text x="250" y="160" text-anchor="middle" class="m s s-tx3">+2</text>
+        <text x="60" y="118" text-anchor="middle" class="s s-wn">≈ 2.3%</text><text x="300" y="118" text-anchor="middle" class="s s-wn">≈ 2.3%</text>
+        <text x="180" y="28" text-anchor="middle" class="s s-tx2">t of a result with nothing behind it</text>
+        <text x="180" y="176" text-anchor="middle" class="s s-tx3">beyond ±2 by luck: about 1 time in 20</text>
+      </svg>
+    </div><figcaption><b>Fig. 5</b>Why |t| &gt; 2 is a first bar, not proof: chance clears it about 5% of the time.</figcaption></figure>
+  </div>
+
+  <h4 id="s-fisher">Fisher z: is this ρ different from normal?</h4>
+  <p>ρ is squeezed near ±1, so a change from 0.80 to 0.74 is bigger than it looks. The <b>Fisher transform</b> <code>z = atanh(ρ)</code> stretches it onto a scale where the noise is about <code>1 ÷ √(n − 3)</code>. The Constellation compares a link’s ρ now with its ρ over the whole history kept, in standard errors of the difference, and widens that error by a factor <code>k</code> (never below 1) measured on the market’s own history.</p>
+  <div class="call ex"><b class="t">Worked example</b><p>Normal ρ <code>0.80</code> over 9,997 returns; now <code>0.74</code> over 1,437 (the 1D window). z: 1.099 → 0.951, Δz = 0.148. SE = k × √(1/1434 − 1/9994) = 1.5 × 0.0244 = 0.0366. Δz ÷ SE = <b>4.0</b>: beyond 3, so the link is marked <code>broke 0.80 → 0.74</code>. Had it been 0.77 now: 2.1 standard errors, not marked.</p></div>
+
+  <h4 id="s-ci">Hit rates, the Wilson interval and Bonferroni</h4>
+  <div class="two">
+    <div>
+      <p>“Right 29 times out of 40” is 72.5%, but 40 tries is a small sample. The <b>Wilson interval</b> gives the range where the true hit rate lies; if it contains 50%, the method is no better than a coin.</p>
+      <p>When a tool offers many settings, one of them will look good by luck. <b>Bonferroni</b> widens every interval as if all settings were tried: Déjà vu offers 27 settings, so it uses z = 3.11 (a two-sided 5% ÷ 27) instead of 1.96.</p>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 380 170" role="img" aria-label="Interval for 29 of 40 at one setting and widened for 27 settings, against the 50 percent line">
+        <path d="M40 120 H340" class="s-ln"/>
+        <g class="m s s-tx3"><text x="40" y="136" text-anchor="middle" class="m s s-tx3">30%</text><text x="115" y="136" text-anchor="middle" class="m s s-tx3">50%</text><text x="190" y="136" text-anchor="middle" class="m s s-tx3">70%</text><text x="265" y="136" text-anchor="middle" class="m s s-tx3">90%</text></g>
+        <path d="M115 22 V124" class="s-ln3" stroke-dasharray="4 3"/><text x="115" y="16" text-anchor="middle" class="s s-tx2">coin flip</text>
+        <rect x="141.9" y="40" width="100.2" height="14" class="s-box2"/><circle cx="199.4" cy="47" r="4" class="s-tx"/>
+        <text x="248" y="51" class="s s-tx2">one setting: 57–84%</text>
+        <rect x="107.2" y="78" width="151.4" height="14" class="s-wnbg" style="stroke:var(--warn)"/><circle cx="199.4" cy="85" r="4" class="s-tx"/>
+        <text x="264" y="89" class="s s-wn">27 settings: 48–88%</text>
+        <text x="40" y="160" class="s s-tx3">29 of 40 right = 72.5%. Widened, the interval reaches 50%: “No edge”.</text>
+      </svg>
+    </div><figcaption><b>Fig. 6</b>The same record, judged honestly for the number of settings on offer.</figcaption></figure>
+  </div>
+
+  <h4 id="s-pois">Counts and the Poisson band</h4>
+  <p>If events arrive at an average pace, the count in a fixed window still varies. For a pace that predicts <b>λ</b> events, the <b>Poisson</b> distribution gives the range a window lands in 19 times in 20 by chance. Intrinsic time uses it for its heartbeat: at 3.2 events per hour, 6 hours predict λ = 19.2, and anything from <b>11 to 28</b> events is normal variation; 31 is busier than chance alone gives.</p>
+
+  <h4 id="s-band">Noise bands: randomised copies and shuffles</h4>
+  <div class="two">
+    <div>
+      <p>Instead of a textbook formula, several tools build their own reference from your data:</p>
+      <ul>
+        <li><b>Sign-randomised copies</b> (Regime map): each return keeps its size and its time of day, but its sign is flipped at random. Busy and quiet hours stay; any memory of direction is gone. 160 copies, and the band holds 90% of them (5th to 95th percentile).</li>
+        <li><b>Shuffled copies</b> (Recurrence, Baskets’ stretch, Edge check’s null rates): the same returns in random order: same sizes, no time structure.</li>
+      </ul>
+      <p>A reading <b>outside the band</b> is unusual for noise with the same sizes and rhythm. With 16 pairs and a 90% band, one or two pairs fall outside by chance alone at any moment.</p>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 400 190" role="img" aria-label="Histogram of the Hurst exponent of 160 sign-randomised copies with the 90 percent band and a measured value outside it">
+        <rect x="84" y="20" width="192" height="130" style="fill:var(--tx2);fill-opacity:.10"/>
+        <g class="s-tx3" style="fill-opacity:.7">
+          <rect x="36" y="146" width="22" height="4"/><rect x="60" y="140" width="22" height="10"/><rect x="84" y="130" width="22" height="20"/><rect x="108" y="116" width="22" height="34"/><rect x="132" y="102" width="22" height="48"/><rect x="156" y="96" width="22" height="54"/><rect x="180" y="100" width="22" height="50"/><rect x="204" y="108" width="22" height="42"/><rect x="228" y="122" width="22" height="28"/><rect x="252" y="134" width="22" height="16"/><rect x="276" y="142" width="22" height="8"/><rect x="300" y="144" width="22" height="6"/>
+        </g>
+        <path d="M84 20 V150 M276 20 V150" class="s-ln3" stroke-dasharray="4 3"/>
+        <path d="M30 150 H392" class="s-ln3"/>
+        <text x="84" y="166" text-anchor="middle" class="m s s-tx3">0.46</text><text x="180" y="166" text-anchor="middle" class="m s s-tx3">0.50</text><text x="276" y="166" text-anchor="middle" class="m s s-tx3">0.54</text>
+        <text x="180" y="14" text-anchor="middle" class="s s-tx2">90% of the 160 copies</text>
+        <path d="M384 60 V150" class="s-px"/><text x="390" y="52" text-anchor="end" class="b s s-tx">measured 0.585</text><text x="384" y="166" text-anchor="middle" class="m s s-tx3">0.585</text>
+        <text x="30" y="184" class="s s-tx3">Hurst of the copies (bars) · band = 5th–95th percentile</text>
+      </svg>
+    </div><figcaption><b>Fig. 7</b>A noise band built from the pair’s own returns. 0.585 lies beyond it: “persistent” for this window.</figcaption></figure>
+  </div>
+
+  <h4 id="s-mt">Many tests at once: Benjamini–Hochberg and Bonferroni</h4>
+  <div class="two">
+    <div>
+      <p>Test 80 signal–pair combinations with nothing behind any of them, and about four will pass |t| &gt; 2. Two corrections stop those from being called discoveries:</p>
+      <ul>
+        <li><b>Bonferroni</b>: divide the threshold by the number of tests. Strict and simple. Déjà vu (27 settings) and Exit lab (8 rules: p below 0.05 ÷ 8) use it.</li>
+        <li><b>Benjamini–Hochberg</b> (false discovery rate): sort the p-values, find the largest rank i whose p ≤ i ÷ N × q, and keep the first i. It keeps the share of lucky passes among the survivors under q. Edge check uses q = 10%.</li>
+      </ul>
+      <p>The <b>p-value</b> is the chance of a result at least this strong if nothing were behind it.</p>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 230" role="img" aria-label="Benjamini-Hochberg on ten sorted p-values: four lie under the rising line">
+        <path d="M40 40 V200 H340" class="s-ln3"/>
+        <path d="M40 200 L340 40" class="s-ln3" stroke-dasharray="5 4"/><text x="336" y="26" text-anchor="end" class="s s-tx2">BH line i ÷ N × 10%</text>
+        <path d="M40 184 H340" class="s-lwn" stroke-dasharray="2 3"/><text x="336" y="180" text-anchor="end" class="s s-wn">Bonferroni 10% ÷ 10</text>
+        <g class="s-tx"><circle cx="70" cy="196.8" r="4"/><circle cx="100" cy="190.4" r="4"/><circle cx="130" cy="182.4" r="4"/><circle cx="160" cy="145.6" r="4"/></g>
+        <g style="fill:none;stroke:var(--tx3);stroke-width:1.4"><circle cx="190" cy="100.8" r="4"/><circle cx="220" cy="56" r="4"/><circle cx="250" cy="40" r="4"/><circle cx="280" cy="40" r="4"/><circle cx="310" cy="40" r="4"/><circle cx="340" cy="40" r="4"/></g>
+        <text x="280" y="58" text-anchor="middle" class="s s-tx3">p above 0.10</text>
+        <g class="m s s-tx3"><text x="34" y="204" text-anchor="end" class="m s s-tx3">0</text><text x="34" y="124" text-anchor="end" class="m s s-tx3">0.05</text><text x="34" y="44" text-anchor="end" class="m s s-tx3">0.10</text></g>
+        <text x="70" y="216" text-anchor="middle" class="m s s-tx3">1</text><text x="160" y="216" text-anchor="middle" class="m s s-tx3">4</text><text x="340" y="216" text-anchor="middle" class="m s s-tx3">10</text>
+        <text x="190" y="228" text-anchor="middle" class="s s-tx3">rank of the p-value</text>
+        <text x="200" y="152" class="b s s-tx">4 survive BH</text>
+      </svg>
+    </div><figcaption><b>Fig. 8</b>Ten tests: BH keeps 4 (filled), Bonferroni at the same 10% only the first 2.</figcaption></figure>
+  </div>
+
+  <h4 id="s-wf">Walk-forward and conformal bands: test on what was not used</h4>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 150" role="img" aria-label="Walk-forward: choose on the older half, score on the newer half; conformal: fit on the first half of the week, score on the second">
+      <text x="10" y="22" class="b s-tx">Walk-forward (Exit lab)</text>
+      <rect x="200" y="10" width="270" height="22" class="s-box2"/><text x="335" y="25" text-anchor="middle" class="s s-tx">older half: choose the best rule</text>
+      <rect x="470" y="10" width="270" height="22" class="s-inbg" style="stroke:var(--info)"/><text x="605" y="25" text-anchor="middle" class="s s-tx">newer half: score it, against your exits</text>
+      <text x="10" y="72" class="b s-tx">Conformal (Range cone)</text>
+      <rect x="200" y="60" width="270" height="22" class="s-box2"/><text x="335" y="75" text-anchor="middle" class="s s-tx">first half of the week: fit k68, k95</text>
+      <rect x="470" y="60" width="270" height="22" class="s-inbg" style="stroke:var(--info)"/><text x="605" y="75" text-anchor="middle" class="s s-tx">second half: how often inside?</text>
+      <text x="10" y="122" class="b s-tx">Déjà vu check</text>
+      <rect x="200" y="110" width="400" height="22" class="s-box2"/><text x="400" y="125" text-anchor="middle" class="s s-tx">history known at a past moment: search</text>
+      <rect x="600" y="110" width="140" height="22" class="s-inbg" style="stroke:var(--info)"/><text x="670" y="125" text-anchor="middle" class="s s-tx">what followed</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>Out-of-sample tests. Picking the best in hindsight always finds a winner; only the blue part counts as evidence.</figcaption></figure>
+  <p>A <b>conformal</b> band widens or narrows a model’s band by how often it missed in the past, so that its stated odds (68%, 95%) hold as a past frequency. It is not a guarantee.</p>
+
+  <h4 id="s-mem">Memory and randomness: Hurst and permutation entropy</h4>
+  <div class="cards">
+    <div class="card"><h5>Hurst exponent</h5><p>The memory of the price path in the window. Sums of k returns grow like k<sup>H</sup>: <b>0.5</b> is a random walk, <b>above</b> its moves ran on more than chance, <b>below</b> they were undone more than chance. It describes the window, not the future.</p></div>
+    <div class="card"><h5>Permutation entropy</h5><p>How random the <i>order</i> of the moves is. Take 4 consecutive returns, note their up/down ranking (24 possible patterns) and measure how evenly the patterns occur. Near <b>1</b> = noise; lower = some patterns repeat. Short samples of pure noise sit a little below 1.</p></div>
+    <div class="card"><h5>Epps effect</h5><p>On real FX data, correlations measured on very short returns come out weaker, because pairs are not quoted at the same instants. The Constellation shows mean |ρ| at 1, 5 and 15 minutes so you can see whether the interval matters.</p></div>
+  </div>
+</section>
+
+<div class="g-part"><span class="n">III</span><div><h2>The twelve tools</h2><p>Each tool has its own guide: what you see, the controls, how it is computed, how to read it and how to use it.</p></div></div>
+
+<section class="ch" id="tools">
+  <div class="ch-h"><span class="n">06</span><h3>The twelve tools</h3></div>
+  <p class="lead">Open the guide of the tool you use. In the terminal, the <b>Guide</b> button at the end of the tool strip opens the guide of the Observatory tool on screen.</p>
+  <h4>Structure</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-const.html"><h5>Constellation ›</h5><p>Which pairs move together right now. A tree of the strongest correlations between the 16 pairs: adjacent = directly correlated; further along a branch is not implied.</p></a>
+    <a class="card g-link" href="obs-tap.html"><h5>Tapestry ›</h5><p>All 16 pairs on one screen: who is up, who is down, and since when.</p></a>
+  </div>
+  <h4>Character</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-regime.html"><h5>Regime map ›</h5><p>Has each pair's recent path been persistent, anti-persistent or like noise over 1–32 minutes? Every pair is placed by its memory (Hurst) and its randomness (entropy), against the band where the same returns with random signs land. It describes the window; it does not forecast.</p></a>
+    <a class="card g-link" href="obs-rp.html"><h5>Recurrence ›</h5><p>Does the market revisit the same states? Each pixel compares two moments; lines and blocks show repeating sequences and stuck phases.</p></a>
+  </div>
+  <h4>Time and activity</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-dc.html"><h5>Intrinsic time ›</h5><p>How busy is the market, measured in reversals instead of minutes. One event per move of δ against the last extreme.</p></a>
+    <a class="card g-link" href="obs-clock.html"><h5>Volatility clock ›</h5><p>How active the market usually is at each time of day, and how today compares.</p></a>
+    <a class="card g-link" href="obs-cone.html"><h5>Range cone ›</h5><p>How far price can go in the next hours, by time of day and the current pace, checked against its own past accuracy.</p></a>
+  </div>
+  <h4>Causes</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-drv.html"><h5>Drivers ›</h5><p>Which currency moves the pair. The pair split into its two currencies, each measured against all eight.</p></a>
+    <a class="card g-link" href="obs-bask.html"><h5>Baskets ›</h5><p>Trade a view on a currency group, not on one pair: a weighted index of currencies, its closest pair and its execution as legs.</p></a>
+  </div>
+  <h4>History and odds</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-deja.html"><h5>Déjà vu ›</h5><p>Has the last stretch of this pair happened before? The closest shapes in the history of all 16 pairs, what followed them, and whether that ever predicted anything here.</p></a>
+    <a class="card g-link" href="obs-scan.html"><h5>Edge check ›</h5><p>Which live signals have actually paid on this pair. Every signal carries its own track record and a test of whether it beats luck.</p></a>
+  </div>
+  <h4>Your own trades</h4>
+  <div class="cards">
+    <a class="card g-link" href="obs-exit.html"><h5>Exit lab ›</h5><p>Would other exit rules have done better on your own closed trades? Your trades replayed with nine exit rules.</p></a>
+  </div>
+</section>
+
+<!-- ================= PART IX ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Practice</h2><p>Chaining the tools before a trade, when testing an idea, and after a week of trading.</p></div></div>
+
+<section class="ch" id="flows">
+  <div class="ch-h"><span class="n">07</span><h3>Workflows that chain tools</h3></div>
+  <h4>Before adding a position</h4>
+  <ol class="tl">
+    <li><span class="ph">Overlap</span><div><b><a href="obs-const.html">Constellation</a> · 1D, then 4H</b><span>Open the pair. Is a neighbour already in your book? Does Your positions say concentrated risk? If so, the new trade is the same bet: size them as one.</span></div></li>
+    <li><span class="ph">Reason</span><div><b><a href="obs-drv.html">Drivers</a> · 4H</b><span>Which currency moved it? If the other currency is the driver, your reason for the trade may be the wrong one. Check the cleaner expression.</span></div></li>
+    <li><span class="ph">Character</span><div><b><a href="obs-regime.html">Regime map</a></b><span>Persistent, inside the band or anti-persistent over the window? Match the tactic: trend-following is better served by a persistent window, fading by an anti-persistent one.</span></div></li>
+    <li><span class="ph">Timing</span><div><b><a href="obs-clock.html">Volatility clock</a></b><span>Is activity about to rise? Next two hours above 1.2×: give stops room. How many next-hour 1σ is your stop?</span></div></li>
+    <li><span class="ph">Levels</span><div><b><a href="obs-cone.html">Range cone</a> · your holding time</b><span>Read the promise check, then the levels: stop outside 68%, target not beyond 95%, and the Touched odds of both. Set ticket stop and target from the cone if you agree.</span></div></li>
+    <li><span class="ph">Watch</span><div><b><a href="obs-dc.html">Intrinsic time</a></b><span>Alert at reversal on the δ you trade: if it fires, the current leg is over by this definition.</span></div></li>
+    <li><span class="ph">Decide</span><div><b>Ticket</b><span>Review the size, stop, target and costs; nothing in the Observatory sends an order.</span></div></li>
+  </ol>
+  <h4>Testing an idea</h4>
+  <ol class="tl">
+    <li><span class="ph">Record</span><div><b><a href="obs-scan.html">Edge check</a> · the horizon you hold for</b><span>Has the signal paid on this pair? Only Robust counts. Compare the passes with the number expected by luck.</span></div></li>
+    <li><span class="ph">Analogues</span><div><b><a href="obs-deja.html">Déjà vu</a></b><span>Did shapes like the current one ever predict anything here? Read the verdict before the fan. Change one setting and see if the answer holds.</span></div></li>
+    <li><span class="ph">Size</span><div><b><a href="obs-cone.html">Range cone</a></b><span>Even an edge says nothing about distance: use the cone for stop and target, and the analogues’ spread as a second reference.</span></div></li>
+    <li><span class="ph">Forward</span><div><b>Trade small, write it down</b><span>A survivor is a hypothesis. The test that counts is on data that did not exist when you chose it.</span></div></li>
+  </ol>
+  <h4>After a week of trading</h4>
+  <ol class="tl">
+    <li><span class="ph">Exits</span><div><b><a href="obs-exit.html">Exit lab</a> · R = my stop</b><span>Verdict first, then the walk-forward card. No reliable difference: keep your exits.</span></div></li>
+    <li><span class="ph">Habits</span><div><b>Where you lose · Exit efficiency</b><span>Which exit type lost the most? Under 30% efficiency, profits were often given back.</span></div></li>
+    <li><span class="ph">Map</span><div><b>Stop × target map</b><span>Is there a broad good area, or one bright cell? Prefer the area.</span></div></li>
+    <li><span class="ph">Apply</span><div><b>Use, then test forward</b><span>Only a rule that passed the walk-forward is worth loading into the ticket with Use; trade it forward before adopting it.</span></div></li>
+    <li><span class="ph">Book</span><div><b><a href="obs-const.html">Constellation</a> · 3D</b><span>Did your positions carry the same risk all week? Read Your currency exposure.</span></div></li>
+  </ol>
+</section>
+
+<section class="ch" id="situations">
+  <div class="ch-h"><span class="n">08</span><h3>Common situations</h3></div>
+  <div class="mx">
+    <div class="c"><div class="s">Same bet twice<div class="tags"><span class="tag nt">ρ 0.82</span><span class="tag dn">concentrated risk</span></div></div><div class="m">Two positions on strongly correlated pairs, held so they win and lose together.</div><div class="u">Size them as one trade: their stops are likely to be hit together.</div></div>
+    <div class="c"><div class="s">A hedge broke<div class="tags"><span class="tag nt">unusual · broke</span></div></div><div class="m">A link you rely on to offset risk is weaker than normal.</div><div class="u">The usual hedge may not work right now; check it on 1D and 3D.</div></div>
+    <div class="c"><div class="s">Clean trend window<div class="tags"><span class="tag nt">persistent</span><span class="tag nt">PE below band</span><span class="tag nt">EUR-led</span></div></div><div class="m">Moves ran on more than chance, and one currency carried them.</div><div class="u">A description that favours trend tactics; still a past window, not a forecast.</div></div>
+    <div class="c"><div class="s">Choppy and busy<div class="tags"><span class="tag nt">anti-persistent</span><span class="tag wn">heartbeat busier</span></div></div><div class="m">Moves undone more than chance, many small reversals.</div><div class="u">Avoid tight stops; small reversals are frequent.</div></div>
+    <div class="c"><div class="s">Busy hours ahead<div class="tags"><span class="tag nt">next 2h &gt; 1.2×</span></div></div><div class="m">The coming slots are usually wider than the day’s average.</div><div class="u">Give stops room, or enter before activity rises if you need movement.</div></div>
+    <div class="c"><div class="s">Looks like a signal<div class="tags"><span class="tag nt">t &gt; 2 · luck?</span></div></div><div class="m">It paid last week, but does not survive the correction.</div><div class="u">Treat it as luck until it earns a Robust record.</div></div>
+    <div class="c"><div class="s">Analogues point up<div class="tags"><span class="tag nt">8 of 12 rose</span><span class="tag nt">No edge</span></div></div><div class="m">A majority, but the method has no record on this pair.</div><div class="u">Read the direction as noise; use only the spread.</div></div>
+    <div class="c"><div class="s">Cone too narrow<div class="tags"><span class="tag wn">Too narrow last week</span></div></div><div class="m">Real moves ran wider than the cone promised.</div><div class="u">Treat its edges as soft; widen stops or cut size.</div></div>
+    <div class="c"><div class="s">A rule won in hindsight<div class="tags"><span class="tag nt">hindsight +5.4 R</span><span class="tag nt">no reliable difference</span></div></div><div class="m">The table found a winner; the walk-forward did not confirm it.</div><div class="u">Keep your exits; do not switch on the table alone.</div></div>
+  </div>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">09</span><h3>Limits and pitfalls</h3></div>
+  <div class="cards">
+    <div class="card"><h5>One week of history</h5><p>The terminal keeps a week of 1-minute bars. Every measure, band and record lives inside it; a week is one sample of market conditions.</p></div>
+    <div class="card"><h5>Description, not forecast</h5><p>Persistent, busier, EUR-led, Robust: each says what happened in the window. Only the Range cone gives odds, and it reports how they held.</p></div>
+    <div class="card"><h5>Many tests, some luck</h5><p>With 16 pairs, 120 links or 80 signal–pair tests, some results clear any bar by chance. That is why the tools count expected luck.</p></div>
+    <div class="card"><h5>Pairs share currencies</h5><p>Five pairs carry the yen, seven the dollar. Results on several pairs are rarely independent evidence.</p></div>
+    <div class="card"><h5>Closed markets</h5><p>A reading taken before a close or a weekend describes the past session. Check “as of” before acting.</p></div>
+    <div class="card"><h5>Prices only</h5><p>No news, positioning or order flow. A release can override every number on the page.</p></div>
+  </div>
+  <div class="call warn"><b class="t">The tools never trade for you</b><p>Buttons such as Alert at reversal, Set ticket stop, Use, Trade &lt;pair&gt; instead or Open chart fill an alert or the ticket and send nothing. Only the Baskets Trade view sends orders, and only when you press its Buy or Sell button.</p></div>
+</section>
+
+<!-- ================= PART X ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Every threshold, every source and every term in one place.</p></div></div>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">10</span><h3>All thresholds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Tool</th><th>Figure</th><th>Constants and thresholds</th></tr></thead>
+    <tbody>
+      <tr><td>All</td><td>Refresh · gaps</td><td>Check every 5 s, held while hovering · two bars more than 300 s apart are a gap: no return spans it · history one week of 1-minute bars</td></tr>
+      <tr><td>Constellation</td><td>Tree</td><td>Windows 240 · 1,440 · 4,320 bars · returns 1, 5, 15 min · d = √(2(1−|ρ|)) · 15 links for 16 pairs</td></tr>
+      <tr><td></td><td>Drawing</td><td>Width 0.8 + 4.2|ρ| · opacity 0.25 + 0.6|ρ| · radius 9 + 13 × vol ÷ max · colour over the last 240 bars, full at 25 bp</td></tr>
+      <tr><td></td><td>Cards</td><td>Strongly ≥ 0.7 · moderately ≥ 0.4 · positions |ρ| &gt; 0.7 · stability ≥ 12 of 15 · hub ≥ 3rd-highest count and ≥ 2 · unusual |Δz| ÷ SE &gt; 3, n ≥ 30, history ≥ 1.5 windows (up to 10,080 bars), 8 pills · Epps spread ≤ 0.05 · “still” under half non-zero returns</td></tr>
+      <tr><td>Tapestry</td><td>Bands · theme</td><td>3 bands: max |v| ÷ 3 (common) or σ√bars ÷ 3 (per pair) · mixed under 3 in 4 pairs agreeing · gap &gt; 3 h = closed · calendar keeps 8 releases</td></tr>
+      <tr><td>Regime map</td><td>Measures</td><td>Hurst k = 1…32, ≥ 12 sums per level, ≥ 48 returns · PE order 4 on 5-minute returns, 5 offsets, ≥ 24 patterns, ≥ 145 bars · noise band 160 sign-randomised copies, 5th–95th percentile</td></tr>
+      <tr><td></td><td>Time in zone</td><td>Same window ending 1…24 hours ago, one per hour</td></tr>
+      <tr><td>Recurrence</td><td>Plot</td><td>260 bars · embedding 3 · recurrence rate 10% · lines ≥ 2 · 120 shuffles · bands 90% and 5% ÷ 3 per side · thin under 200 states</td></tr>
+      <tr><td></td><td>Regime now</td><td>Last 24 states · rank ≤ 10% / ≥ 90% · size 1.1× / 0.9× · needs 48 states · now resembles: ≥ 4 states apart, next 8 bars</td></tr>
+      <tr><td>Intrinsic time</td><td>Events</td><td>δ 0.05 · 0.10 · 0.20 · 0.50% · Auto ≈ 1.5 events per hour (1–2) · at least 4 events · first event discarded</td></tr>
+      <tr><td></td><td>Figures</td><td>Heartbeat 6 h, central 95% of Poisson(rate × 6) · overshoot mean ± 1.96 SE · chart last 80 events · scaling law δ, 2δ, 4δ against 4 (thin under 10)</td></tr>
+      <tr><td>Volatility clock</td><td>Profile</td><td>96 slots of 15 min · median of previous days · colours &gt; 1.3× and &lt; 0.7× average · rollover 17:00 New York</td></tr>
+      <tr><td></td><td>Now · next hour</td><td>Busy &gt; 1.3 · quiet &lt; 0.7 · needs 15 one-minute bars · σ = petal × √(π/2) · 2σ tail check on ≥ 40 past hours (under 3% / over 7%) · next two hours: 8 slots, capped 2.5×, &gt; 1.2 / &lt; 0.8</td></tr>
+      <tr><td>Range cone</td><td>Model</td><td>Winsorised at median ± 5 MAD · 96 slots · pace over 120 min, f = clamp(0.6 fRaw + 0.4, 0.25, 4), fades over 360 open minutes · K 1 and 1.96 · pace busy &gt; 1.3, quiet &lt; 0.8</td></tr>
+      <tr><td></td><td>Grading</td><td>A forecast every 60 bars from bar 240 · n_eff = n × 60 ÷ max(60, horizon) ≥ 20 · t95 = max(2, 200√(.0475 ÷ n_eff)) · t68 = max(4, 200√(.2176 ÷ n_eff)) · Touched: 4,000 paths in 15-minute steps</td></tr>
+      <tr><td>Drivers</td><td>Verdict</td><td>Leader share &gt; 60% and leg &gt; 1 bp · equal up to 55% · turn: last hour, pair &gt; 3 bp · usual: up to 30 earlier windows, ≥ 4 needed</td></tr>
+      <tr><td>Baskets</td><td>Index · analysis</td><td>4,321 one-minute bars · EMA20 · stretch needs 60 candles, ±2σ, back within 20 bars, 20 shuffles · proxy useful from |ρ| 0.8 · overlap ±0.7</td></tr>
+      <tr><td></td><td>Trade</td><td>Risk 0.05–5% (0.5%) · size 0.1–20 (1) · auto stop max(5, ½ daily vol) bp, target 1.5× · disaster stops 3× · replication ±2% · flags: risk &gt; 2%, stop &lt; 0.35 day, cost &gt; 15% of stop · overlap ≥ $500</td></tr>
+      <tr><td>Déjà vu</td><td>Search · verdict</td><td>Bars 5m · 15m · 1H · patterns 16 · 32 · 64 · look-ahead 6 · 12 · 24 · 27 settings · 4,000 bars · 12 matches · up to 40 tests, ≥ 20 for a verdict, ≥ 6 matches each · Wilson z = 3.11</td></tr>
+      <tr><td>Edge check</td><td>Records</td><td>700 closed 15-minute bars (≥ 150) · signals from bar 96 · horizons 4 · 8 · 16 bars · n ≥ 8 · |t| 2 · halves ≥ 4 cases · BH q = 10% · alert checked every 3 s</td></tr>
+      <tr><td></td><td>Signals</td><td>24h = 96 bars · 2σ over 20 closes · EMA20/EMA50 · RSI(14) 25/75 · squeeze ≤ 10% quantile of 20-bar volatility</td></tr>
+      <tr><td>Exit lab</td><td>Replay · verdict</td><td>Cap 200 trades · needs 5 · 15 min of price after entry · volatility R = 1.5 × 15-min volatility · 1,440 open minutes · walk-forward ≥ 8 trades · p &lt; 0.05 ÷ 8 · odd result above 1 R a trade · exit type under 3 trades: too few · map stops 0.5, 1, 1.5, 2R × targets 1, 1.5, 2, 3×, none</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="sources">
+  <div class="ch-h"><span class="n">11</span><h3>Research references</h3></div>
+  <p>The Research basis link of each tool. Links open in a new tab.</p>
+  <table class="g-t">
+    <thead><tr><th>Tool</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Constellation</td><td><a href="https://arxiv.org/abs/cond-mat/9802256" target="_blank" rel="noopener">Mantegna (1999), hierarchical structure in financial markets</a></td></tr>
+      <tr><td>Regime map</td><td><a href="https://link.aps.org/doi/10.1103/PhysRevLett.88.174102" target="_blank" rel="noopener">Bandt &amp; Pompe (2002), permutation entropy</a></td></tr>
+      <tr><td>Intrinsic time</td><td><a href="https://arxiv.org/abs/0809.1040" target="_blank" rel="noopener">Glattfelder, Dupuis &amp; Olsen (2011), 12 empirical scaling laws in FX</a></td></tr>
+      <tr><td>Déjà vu</td><td><a href="https://jfin-swufe.springeropen.com/articles/10.1186/s40854-025-00863-z" target="_blank" rel="noopener">Nearest-neighbour forecasting of exchange rates (Financial Innovation, 2025)</a></td></tr>
+      <tr><td>Recurrence</td><td><a href="https://iopscience.iop.org/article/10.1209/0295-5075/4/9/004" target="_blank" rel="noopener">Eckmann, Kamphorst &amp; Ruelle (1987), recurrence plots</a></td></tr>
+      <tr><td>Drivers</td><td><a href="https://www.ssrn.com/abstract=1139447" target="_blank" rel="noopener">Lustig, Roussanov &amp; Verdelhan (2011), common risk factors in currency markets</a></td></tr>
+      <tr><td>Volatility clock</td><td><a href="https://public.econ.duke.edu/~boller/Published_Papers/jf_98.pdf" target="_blank" rel="noopener">Andersen &amp; Bollerslev (1998), intraday activity patterns in DM–dollar volatility</a></td></tr>
+      <tr><td>Tapestry</td><td><a href="https://idl.uw.edu/papers/horizon" target="_blank" rel="noopener">Heer, Kong &amp; Agrawala (2009), Sizing the Horizon</a></td></tr>
+      <tr><td>Baskets</td><td><a href="https://www.ice.com/insights/indexation-and-etfs/managing-us-dollar-risk-in-uncertain-times" target="_blank" rel="noopener">ICE U.S. Dollar Index methodology (DXY weights)</a></td></tr>
+      <tr><td>Edge check</td><td><a href="https://www.nber.org/papers/w20592" target="_blank" rel="noopener">Harvey, Liu &amp; Zhu (2016), multiple testing</a></td></tr>
+      <tr><td>Range cone</td><td><a href="https://ideas.repec.org/a/eee/empfin/v4y1997i2-3p115-158.html" target="_blank" rel="noopener">Andersen &amp; Bollerslev (1997), intraday periodicity and volatility persistence</a></td></tr>
+      <tr><td>Exit lab</td><td><a href="https://dspace.mit.edu/entities/publication/bb69ca4b-0cdc-487f-831d-63b2e84fafee" target="_blank" rel="noopener">Kaminski &amp; Lo (2014), When do stop-loss rules stop losses?</a></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">12</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>95% CI</dt><dd>The range where the true hit rate lies with 95% confidence. If it contains 50%, the method is no better than a coin.</dd>
+    <dt>Analogues</dt><dd>Past stretches, on any of the 16 pairs, whose shape is closest to the last bars of this pair.</dd>
+    <dt>Anti-persistent</dt><dd>Over the window, at scales of 1 to 32 minutes, moves were undone more often than chance would undo them (Hurst below the noise band). A description of the past window, not a forecast.</dd>
+    <dt>Basis point (bp)</dt><dd>0.01%. 25 bp = 0.25%.</dd>
+    <dt>Basket</dt><dd>In Drivers: an equal-weighted group of all eight currencies, the reference each currency is measured against. In Baskets: a group of currencies, weighted, traded as one index through its pair legs.</dd>
+    <dt>Benjamini–Hochberg</dt><dd>A correction for testing many signals at once, so that few of the “significant” ones are flukes.</dd>
+    <dt>Bonferroni</dt><dd>Dividing the significance threshold by the number of tests or settings tried: 27 for Déjà vu, 8 rules for Exit lab.</dd>
+    <dt>Coastline</dt><dd>The length of the zigzag: every leg from extreme to extreme added up, in % of price. How far the price travelled, whatever the net move.</dd>
+    <dt>Conformal band</dt><dd>The cone widened or narrowed by how often it missed last week; its odds are a past frequency, not a guarantee.</dd>
+    <dt>Correlation distance</dt><dd>d = √(2(1−|ρ|)): 0 for pairs that move as one, about 1.4 for unrelated ones.</dd>
+    <dt>δ</dt><dd>The reversal size that counts as an event, in % of price.</dd>
+    <dt>Determinism</dt><dd>Share of recurrences that line up into diagonals: sequences of states that repeat. Compared with the same data shuffled.</dd>
+    <dt>Directional change</dt><dd>Price has reversed by δ from its last extreme: a new leg is confirmed.</dd>
+    <dt>Efficiency ratio</dt><dd>Net move divided by the whole path travelled: 100% = a straight line, near 0% = back and forth.</dd>
+    <dt>EMA20 · EMA50</dt><dd>Exponential moving averages of the last 20 and 50 bars, recent bars weighing more.</dd>
+    <dt>Epps effect</dt><dd>Correlations measured on very short returns come out weaker, because pairs are not quoted at the same instants.</dd>
+    <dt>False discovery rate</dt><dd>With many signals tested, some pass by luck. The Benjamini–Hochberg correction keeps the share of lucky passes under the stated rate.</dd>
+    <dt>Fisher z</dt><dd>atanh(ρ): a rescaling of ρ on which sampling noise is about 1 ÷ √(n − 3), used to compare a link now with its normal.</dd>
+    <dt>Heartbeat</dt><dd>Events in the last 6 hours of trading against the average pace: above 1 busier than usual. Highlighted only outside the range chance alone gives (a Poisson count at the average pace).</dd>
+    <dt>Horizon chart</dt><dd>A line folded into coloured bands: darker = further from the start of the window. 16 pairs fit in the space of one chart.</dd>
+    <dt>Hurst exponent</dt><dd>The memory of the price path in the window. Above 0.5 its moves ran on more than chance, below 0.5 they were undone more than chance, 0.5 is a random walk. It describes the window; it is not a forecast.</dd>
+    <dt>Intrinsic time</dt><dd>Time counted in reversals of δ instead of minutes: a busy hour holds many steps, a quiet one few.</dd>
+    <dt>Laminarity</dt><dd>Share of recurrences in vertical blocks: the market stuck in one state (consolidation).</dd>
+    <dt>Legs</dt><dd>Drivers: the two currencies of the pair, each measured against the basket of all eight. Baskets: the pair trades that together make up the basket position. Intrinsic time: the moves between two confirmed reversals.</dd>
+    <dt>MAE · MFE</dt><dd>Maximum adverse / favourable excursion: the worst open loss / the best open profit while the trade was held.</dd>
+    <dt>Max DD</dt><dd>Maximum drawdown: the deepest fall from a peak of the running total.</dd>
+    <dt>Minimum spanning tree</dt><dd>The fewest, strongest links that still connect every pair: 15 links for 16 pairs.</dd>
+    <dt>Noise band</dt><dd>Where the same returns land with their signs randomised (same sizes, same busy and quiet hours, no memory of direction): 90% of those copies fall inside it.</dd>
+    <dt>Overshoot</dt><dd>How far price kept going after a reversal was confirmed, in multiples of δ. Research finds about 1× δ on average.</dd>
+    <dt>p-value</dt><dd>The chance of a result at least this strong if nothing were behind it.</dd>
+    <dt>Permutation entropy</dt><dd>How random the order of the moves is: near 1 = noise, lower = some up-down patterns repeated in the window (Bandt &amp; Pompe). Short samples of pure noise sit a little below 1.</dd>
+    <dt>Persistent</dt><dd>Over the window, at scales of 1 to 32 minutes, moves ran on more often than chance would carry them (Hurst above the noise band). A description, not a forecast.</dd>
+    <dt>Poisson band</dt><dd>The range of counts a window lands in 19 times in 20 when events arrive at a steady average pace.</dd>
+    <dt>Proxy</dt><dd>The single pair that tracks the basket most closely.</dd>
+    <dt>R</dt><dd>The risk of a trade, entry to stop. Results in R make trades of different sizes comparable.</dd>
+    <dt>Recurrence · recurrence rate</dt><dd>Two moments whose states are closer than the threshold: the market looked the same at both. The threshold is set so that the closest 10% of all pairs of states count.</dd>
+    <dt>ρ</dt><dd>From −1 to +1. +1: the two move as one; −1: always opposite; 0: unrelated.</dd>
+    <dt>RSI(14)</dt><dd>Relative strength index, 0–100: average up-moves against down-moves over 14 bars.</dd>
+    <dt>Shuffled</dt><dd>The same returns in random order: same sizes, no time structure. The reference for “is there structure here”.</dd>
+    <dt>σ</dt><dd>Standard deviation: the typical size of a move. 2σ is an unusually large distance.</dd>
+    <dt>Standard error</dt><dd>The typical wobble of an average from sample to sample: sd ÷ √n.</dd>
+    <dt>States</dt><dd>Three consecutive returns, divided by their usual size: the shape and relative size of a short stretch, not the price.</dd>
+    <dt>t-statistic</dt><dd>An average divided by its standard error. Beyond ±2 a single test would rarely be chance.</dd>
+    <dt>Walk-forward</dt><dd>The rule is chosen on older trades and checked on newer ones it never saw: a fairer test than picking the best in hindsight.</dd>
+    <dt>Wilson interval</dt><dd>A confidence interval for a hit rate that stays sensible on small samples; Déjà vu widens it to z = 3.11 for its 27 settings.</dd>
+    <dt>Win rate</dt><dd>Share of trades that closed in profit.</dd>
+  </dl>
+</section>
+
+<p class="g-foot">tradeBerry · Observatory guide. Figures marked as illustrations use example values; worked examples follow the tools’ own arithmetic. The tools describe past prices and your past trades; a pattern in the past window does not predict the next move. Nothing here is financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* The ρ explorer (chapter 05): the Constellation's link width and texts (obs.js) for a chosen ρ and holding */
+(function () {
+  const sl = document.getElementById('rSl'), st = { h: 1 };
+  const f2 = v => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(2);
+  function draw() {
+    const r = +sl.value, a = Math.abs(r), pos = r >= 0;
+    const ln = document.getElementById('rLn');
+    ln.setAttribute('class', pos ? 's-lpos' : 's-lneg');
+    ln.style.strokeWidth = (0.8 + a * 4.2).toFixed(2); ln.style.strokeOpacity = (0.25 + a * 0.6).toFixed(2);
+    document.getElementById('rSlV').textContent = f2(r);
+    document.getElementById('rLb').textContent = 'ρ ' + f2(r);
+    document.getElementById('rD').textContent = Math.sqrt(2 * (1 - a)).toFixed(2);
+    document.getElementById('rW').textContent = (0.8 + a * 4.2).toFixed(2);
+    const w = a >= 0.7 ? 'Strongly' : a >= 0.4 ? 'Moderately' : 'Weakly';
+    const k = pos ? ' correlated: they tend to move the same way.' : ' inversely correlated: they tend to move opposite ways.';
+    const bet = a >= 0.7 ? (pos ? ' A position on each is close to doubling the same bet.' : ' Buying one and selling the other is close to doubling the same bet.') : ' They share part of their moves.';
+    document.getElementById('rTip').textContent = w + k + bet;
+    let p;
+    if (a > 0.7) {
+      const prod = st.h * r, how = st.h > 0 ? 'the same way' : 'opposite ways';
+      p = prod > 0 ? 'Your positions: correlated and held ' + how + ', so they win and lose together — concentrated risk.'
+                   : 'Your positions: correlated and held ' + how + ', so one offsets the other — a hedge, not added risk.';
+    } else p = 'Your positions: held pairs are not strongly linked — risk is spread.';
+    document.getElementById('rPos').textContent = p;
+  }
+  document.querySelectorAll('#rhoCalc .seg').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    st[g.dataset.k] = +b.dataset.v; g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw();
+  }));
+  sl.addEventListener('input', draw); draw();
+})();
+</script>
+</body>
+</html>

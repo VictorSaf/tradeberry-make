@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drivers guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Drivers in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Drivers</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Drivers</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#what-you-see"><span>02</span>What you see</a>
+  <a href="#controls"><span>03</span>Controls</a>
+  <a href="#how-it-is-computed"><span>04</span>How it is computed</a>
+  <a href="#how-to-read-it-the-verdict"><span>05</span>How to read it: the verdict</a>
+  <a href="#cleaner-expression"><span>06</span>Cleaner expression</a>
+  <a href="#more"><span>07</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Drivers</h1>
+  <p class="g-lede">If the quote currency did the moving, a view on the base currency is the wrong reason for this trade. Each currency is measured against an equal-weighted basket of all eight, so a pair’s move splits exactly into a <b>base leg</b> and a <b>quote leg</b>.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Drivers</b></div>
+    <div><label>Covers</label><b>The open FX pair</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“Which currency moves the pair. The pair split into its two currencies, each measured against all eight.”</p></div>
+  
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">02</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 190" role="img" aria-label="EUR/USD over 4 hours: plus 32 bp split into a EUR leg of plus 26 bp and a USD leg effect of plus 6 bp">
+      <path d="M200 20 V160" class="s-ln3"/><text x="200" y="176" text-anchor="middle" class="m s s-tx3">0</text>
+      <text x="10" y="44" class="b s-tx">EUR leg</text><text x="10" y="58" class="s s-tx3">EUR vs the basket</text>
+      <rect x="200" y="32" width="364" height="22" style="fill:var(--ind1);fill-opacity:.8"/><text x="572" y="48" class="m b s s-tx">▲ +26.0 bp</text>
+      <text x="10" y="94" class="b s-tx">USD leg</text><text x="10" y="108" class="s s-tx3">effect on the pair</text>
+      <rect x="200" y="82" width="84" height="22" style="fill:var(--info);fill-opacity:.8"/><text x="292" y="98" class="m b s s-tx">▲ +6.0 bp</text><text x="360" y="98" class="s s-tx2">USD −6.0 vs the basket: a weaker quote lifts the pair</text>
+      <text x="10" y="144" class="b s-tx">EUR/USD</text><text x="10" y="158" class="s s-tx3">= the two legs</text>
+      <rect x="200" y="132" width="364" height="22" style="fill:var(--ind1);fill-opacity:.8"/><rect x="564" y="132" width="84" height="22" style="fill:var(--info);fill-opacity:.8"/><text x="656" y="148" class="m b s s-tx">▲ +32.0 bp</text>
+      <text x="200" y="14" class="s s-tx3">illustration · last 4 hours of trading · share of EUR 26 ÷ (26 + 6) = 81% &gt; 60% → EUR-led</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The exact split. Base leg + quote leg = the pair’s log move, so “who moved it” has a precise answer.</figcaption></figure>
+  <p>Under the verdict: a table of <b>Legs by window</b> (1H, 4H, 1D, 3D, as far as the history reaches: base leg, quote leg, pair in bp and pips, led by), a chart of the two legs and the pair <b>cumulative over the last 24 trading hours</b> (hover for the values at any moment), and on the right the <b>Currency board</b> and the <b>Widest strength gap</b>.</p>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">03</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>window</td><td class="n">1H · <b>4H</b> · 1D</td><td>The span the board, the verdict and the earlier windows it is compared with are measured over (a weekend is skipped). 1H is the noisiest; the history holds only a few earlier 1-day windows. Not kept after a reload.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-it-is-computed">
+  <div class="ch-h"><span class="n">04</span><h3>How it is computed</h3></div>
+
+  <div class="fml">
+    <div>value of C   ln(C in USD) from each USD pair’s 1-minute closes   <span class="c">USD = 0</span></div>
+    <div>basket       mean of the 8 log-values</div>
+    <div>leg of C     Δ ln C − Δ basket over the window</div>
+    <div>base leg     leg(base) · quote leg = −leg(quote) · base leg + quote leg = pair move</div>
+    <div>leader       share = |base| ÷ (|base| + |quote|) · a leader when one side &gt; 60% and its leg &gt; 1 bp</div>
+    <div class="c">A currency outside the eight (an exotic with one G8 leg) is measured against USD through its USD pair, shown under “Outside the eight · not in the basket”, and left out of the basket, the strongest, the weakest and the gap.</div>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="how-to-read-it-the-verdict">
+  <div class="ch-h"><span class="n">05</span><h3>How to read it: the verdict</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Story</th><th>When</th><th>The sentence</th></tr></thead>
+    <tbody>
+      <tr><td>&lt;C&gt;-led</td><td>One side &gt; 60% and &gt; 1 bp</td><td>“Over the last 4 hours of trading, EUR/USD is mostly a EUR story: 81% of the move comes from EUR strength against the basket.”</td></tr>
+      <tr><td>Shared</td><td>No leader</td><td>Up to 55%: “both legs … contribute about equally … a shared move.” Above: “the move is shared: X brings s% of it, under the 60% that names a leader.”</td></tr>
+      <tr><td>Offsetting</td><td>Legs of opposite signs</td><td>“… the two legs pulled in opposite directions … They [partly] offset, leaving the pair z.”</td></tr>
+      <tr><td>Small</td><td>Both legs within 1 bp</td><td>“… too small to say which currency moved it.”</td></tr>
+    </tbody>
+  </table>
+  <p>Two more lines can follow. <b>A turn</b>: on the 4H and 1D windows, if a different currency led the last hour and the pair moved more than 3 bp in it: “In the last hour of trading JPY took over …”. <b>The usual leader</b>: earlier windows of the same length (up to 30, at least 4 needed), e.g. “Before this window: usually EUR, which led 9 of the 14 earlier 4-hour windows of trading; USD led 3, neither 2.”</p>
+</section>
+
+<section class="ch" id="cleaner-expression">
+  <div class="ch-h"><span class="n">06</span><h3>Cleaner expression</h3></div>
+  <div class="two">
+    <div>
+      <p>When one currency led, the tool names the pair that isolates it best now: the leader against the currency that moved least against the basket.</p>
+      <div class="call ex"><b class="t">From the board on the right</b><p>“EUR led: <b>EUR/CHF</b> isolates it best now — its other currency, CHF, moved least against the basket over the last 4 hours of trading (−1.0 bp), so that pair moves mostly with EUR. Describes the window, not a trade idea.”</p></div>
+      <p>The <b>widest strength gap</b> on the same board is EUR against JPY: <code>EUR/JPY</code>, EUR stronger than JPY by 47.0 bp. “A past gap is not a forecast of the next move.”</p>
+    </div>
+    <figure><div class="fig-b" style="padding:12px">
+      <div class="mock">
+        <div class="mh"><span>Currency board · last 4h of trading vs basket</span><span></span></div>
+        <div class="scan-r"><b>EUR</b><span class="trk"><i style="left:50%;width:50%;background:var(--up)"></i></span><span class="mono up">+26.0</span><em class="up">▲ stronger</em></div>
+        <div class="scan-r"><b>GBP</b><span class="trk"><i style="left:50%;width:17.3%;background:var(--up)"></i></span><span class="mono up">+9.0</span><em class="up">▲ stronger</em></div>
+        <div class="scan-r"><b>AUD</b><span class="trk"><i style="left:50%;width:7.7%;background:var(--up)"></i></span><span class="mono up">+4.0</span><em class="up">▲ stronger</em></div>
+        <div class="scan-r"><b>CHF</b><span class="trk"><i style="left:48.1%;width:1.9%;background:var(--dn)"></i></span><span class="mono dn">−1.0</span><em class="dn">▼ weaker</em></div>
+        <div class="scan-r"><b>CAD</b><span class="trk"><i style="left:44.2%;width:5.8%;background:var(--dn)"></i></span><span class="mono dn">−3.0</span><em class="dn">▼ weaker</em></div>
+        <div class="scan-r"><b>USD</b><span class="trk"><i style="left:38.5%;width:11.5%;background:var(--dn)"></i></span><span class="mono dn">−6.0</span><em class="dn">▼ weaker</em></div>
+        <div class="scan-r"><b>NZD</b><span class="trk"><i style="left:34.6%;width:15.4%;background:var(--dn)"></i></span><span class="mono dn">−8.0</span><em class="dn">▼ weaker</em></div>
+        <div class="scan-r"><b>JPY</b><span class="trk"><i style="left:9.6%;width:40.4%;background:var(--dn)"></i></span><span class="mono dn">−21.0</span><em class="dn">▼ weaker</em></div>
+      </div>
+    </div><figcaption><b>Fig. 2</b>Illustration of the board in bp: the eight sum to zero, because the basket is their average.</figcaption></figure>
+  </div>
+  <div class="cards">
+    <div class="card"><h5>Check your reason</h5><p>You buy EUR/USD because you like the euro. If the verdict says USD-led, the trade is really a dollar trade.</p></div>
+    <div class="card"><h5>Look for one dominant leg</h5><p>In Legs by window, a window where one leg dominates names the story. Where the cumulative lines separate is when one currency took over.</p></div>
+    <div class="card"><h5>Express it cleanly</h5><p>Click the cleaner-expression pill to open that pair: it carries the driver with less noise from the second currency.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>Drivers splits a currency pair; a CFD, or a pair with neither currency among the eight, shows a message and buttons for EUR/USD, USD/JPY, GBP/USD and AUD/USD instead. Everything describes the window; a strong currency in the past hours is not a forecast.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">07</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Drivers guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

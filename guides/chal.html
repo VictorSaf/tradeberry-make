@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Challenge guide · tradeBerry</title>
+<meta name="description" content="How the Challenge tab works in tradeBerry: prop-firm style rules, practice attempts, and the readiness odds computed on your own closed trades.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* Challenge guide: the calculators' controls, ladder rows and result bars, on the guide tokens */
+.calc .cin input[type=number]{width:96px}
+.calc .cin select{font:13px var(--sans);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:5px 6px;max-width:190px}
+.cb-run{font:600 13px var(--sans);padding:8px 14px;margin-top:12px;background:var(--s2);color:var(--tx);border:1px solid var(--acc);cursor:pointer}
+.cb-run:hover{background:color-mix(in srgb,var(--acc) 18%,var(--s2))}
+.cb-lad{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+.cb-lad th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);font-weight:600;background:var(--s2);border:1px solid var(--line);padding:6px 8px}
+.cb-lad td{border:1px solid var(--line);padding:6px 8px;font-family:var(--mono);color:var(--tx2)}
+.cb-lad td:last-child{font-family:var(--sans)}
+.cb-stack{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center;font-size:12px;color:var(--tx3);margin:6px 0}
+.cb-stack>div{display:flex;height:18px;border:1px solid var(--line);overflow:hidden;background:var(--bg)}
+.cb-stack i{display:block;height:100%;font:600 10.5px/18px var(--mono);font-style:normal;white-space:nowrap;overflow:hidden;padding-left:4px;color:var(--bg)}
+.cb-stack i.p{background:var(--up)}.cb-stack i.n{background:color-mix(in srgb,var(--tx3) 40%,transparent);color:var(--tx)}
+.cb-stack i.d{background:var(--dn)}.cb-stack i.m{background:var(--s1);box-shadow:inset 0 0 0 1px var(--dn);color:var(--dn)}
+@media (max-width:560px){.cb-lad{display:block;overflow-x:auto}}
+/* the five-column preset comparison wraps inside its cells instead of widening the page */
+#presets .g-t{font-size:13px}#presets .g-t td.n{white-space:normal}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Coach <i>/</i> Challenge</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the tab is</a>
+  <a href="#minute"><span>02</span>The tab in one minute</a>
+  <a href="#map"><span>03</span>Map of the tab</a>
+  <span class="p">II · The rules</span>
+  <a href="#presets"><span>04</span>The four presets</a>
+  <a href="#target"><span>05</span>Profit target and phases</a>
+  <a href="#daily"><span>06</span>The daily loss limit</a>
+  <a href="#max"><span>07</span>Max loss: static or trailing</a>
+  <a href="#days"><span>08</span>Days and consistency</a>
+  <a href="#custom"><span>09</span>Your firm’s own rules</a>
+  <span class="p">III · The practice attempt</span>
+  <a href="#start"><span>10</span>Starting an attempt</a>
+  <a href="#judge"><span>11</span>How an attempt is judged</a>
+  <a href="#card"><span>12</span>Reading the attempt card</a>
+  <a href="#guard"><span>13</span>Guard rails on the ticket</a>
+  <a href="#end"><span>14</span>How an attempt ends</a>
+  <span class="p">IV · Readiness odds</span>
+  <a href="#sample"><span>15</span>Which trades are used</a>
+  <a href="#mc"><span>16</span>20,000 random attempts</a>
+  <a href="#verdict"><span>17</span>Checks and verdict</a>
+  <a href="#odds"><span>18</span>Reading the odds</a>
+  <a href="#decide"><span>19</span>Before you pay for one</a>
+  <span class="p">V · Reference</span>
+  <a href="#limits"><span>20</span>Limits and caveats</a>
+  <a href="#ref"><span>21</span>All values and messages</a>
+  <a href="#glossary"><span>22</span>Glossary</a>
+  <a href="#related"><span>23</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Coach</span>
+  <h1>Challenge</h1>
+  <p class="g-lede">A rehearsal room for prop-firm evaluations. Pick a set of rules (profit target, daily loss limit, max loss, minimum days, consistency), run a practice attempt on your own account under those rules, and see the odds that your real closed trades would pass or breach them, with and without an edge. It is built to answer one question honestly: should you pay for a real challenge yet?</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Coach › Challenge</b></div>
+    <div><label>Presets</label><b>4 generic rule sets + yours</b></div>
+    <div><label>Odds</label><b>20,000 attempts on your trades</b></div>
+    <div><label>Needs</label><b>30 trades over 10 days</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the tab does, what to read first, where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the tab is, and what it is not</h3></div>
+  <p class="lead">A prop-firm challenge is a paid test: reach a profit target without breaking a loss limit, and the firm funds you. The Challenge tab copies the mechanics of such tests so you can practise them and measure yourself against them before paying.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></div><h5>Practice attempt</h5><p>The rules run live on your account from the moment you press <b>Start practice attempt</b>. Equity is checked on every market update; touching a floor ends the attempt and closes every position.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 18V9M10 18V5M14 18v-7M18 18v-4"/></svg></div><h5>Readiness odds</h5><p>Your own closed trades, re-ordered at random 20,000 times against the same rules. The result is a pass / breach / neither split, as you traded and with your edge removed.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 12l2 2 4-4"/></svg></div><h5>Discipline checks</h5><p>Six checks on things you control (stops, size, tilt, daily breaches, practice). Any failing check gives <b>Not ready</b>; the best verdict is <b>Borderline</b>. The tab never says “Ready”.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why the best verdict is only “Borderline”</b><p>A pass in a few weeks can come from discipline plus luck. The tab can check your discipline, but it cannot prove an edge from a few dozen trades, so it always shows you the odds with zero edge next to your own. A real challenge is a paid bet; the tab’s job is to tell you its price honestly.</p></div>
+  <div class="call warn"><b class="t">Not real money, not advice</b><p>The practice attempt runs on your tradeBerry account; nothing is sent to any prop firm. The presets are generic readings of published rules, not any firm’s official terms. Nothing here is financial advice.</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The tab in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Rules</h5><p>Choose a <b>Preset</b>, or <b>+ Use my firm’s current rules…</b>. The line beside it sums them up.</p></div>
+    <div><h5>Readiness</h5><p>Read the verdict and the <b>With zero edge</b> row: the pass rate if your trades have no edge.</p></div>
+    <div><h5>Fix what fails</h5><p>Not ready lists up to three reasons. Each one is under your control.</p></div>
+    <div><h5>Practise</h5><p><b>Start practice attempt</b>, flat. Watch <b>Daily room</b> and <b>Max room</b>, not only the target.</p></div>
+    <div><h5>Decide</h5><p>“About N paid attempts per pass” × the fee is what a pass costs you at zero edge.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the tab</h3></div>
+  <p>Four cards: <b>Rules</b> across the top, <b>Practice attempt</b> and <b>Readiness</b> side by side (stacked on narrow screens), and the <b>Attempt log</b> at the bottom. While an attempt runs, two more readouts appear outside the tab: a pill in the top bar and a strip in the order ticket.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 420" role="img" aria-label="Layout of the Challenge tab: Rules card, Practice attempt card with key figures and limits table, Readiness card with verdict, controls, odds table and bars, and the Attempt log">
+      <rect x="1" y="1" width="758" height="80" class="s-box"/>
+      <text x="12" y="18" class="s b s-tx3">RULES</text>
+      <text x="12" y="44" class="s s-tx2">Preset</text><rect x="52" y="31" width="200" height="20" class="s-box2"/><text x="60" y="45" class="s s-tx">2-step · static drawdown ▾</text>
+      <text x="266" y="45" class="s m s-tx2">10% → 5% target · 5% daily · 10% static · 4 days min</text>
+      <text x="12" y="70" class="s s-tx3">▸ About these rules (rules as published from 2026-10-12 · checked 2026-10-19)</text>
+
+      <rect x="1" y="90" width="430" height="226" class="s-box"/>
+      <text x="12" y="107" class="s b s-tx3">PRACTICE ATTEMPT</text>
+      <text x="12" y="128" class="b s-tx">Phase 1 of 2 · Day 3</text><text x="420" y="128" text-anchor="end" class="s s-tx3">started …</text>
+      <g>
+        <text x="12" y="148" class="s s-tx3">PROFIT TARGET</text><text x="12" y="166" class="m b s-tx">+$1,900</text><text x="72" y="166" class="s s-tx3">of $10,000</text>
+        <text x="142" y="148" class="s s-tx3">DAILY ROOM</text><text x="142" y="166" class="m b s-tx">$4,200</text>
+        <text x="236" y="148" class="s s-tx3">MAX ROOM</text><text x="236" y="166" class="m b s-tx">$11,100</text>
+        <text x="330" y="148" class="s s-tx3">FLOOR</text><text x="330" y="166" class="m s-tx2">$96,900</text>
+      </g>
+      <rect x="12" y="176" width="408" height="16" class="s-box2"/>
+      <g class="s b s-tx3"><text x="16" y="188" class="s b s-tx3">LIMIT</text><text x="102" y="188" class="s b s-tx3">USED</text><text x="164" y="188" class="s b s-tx3">ALLOWED</text><text x="236" y="188" class="s b s-tx3">ROOM</text><text x="292" y="188" class="s b s-tx3">FLOOR</text><text x="356" y="188" class="s b s-tx3">STATUS</text></g>
+      <g class="s">
+        <text x="16" y="208" class="s s-tx">Daily loss</text><text x="102" y="208" class="s m s-tx2">$800</text><text x="164" y="208" class="s m s-tx2">$5,000</text><text x="236" y="208" class="s m b s-tx">$4,200</text><text x="292" y="208" class="s m s-tx3">$96,900</text><text x="356" y="208" class="s b s-tx2">● OK</text>
+        <text x="16" y="228" class="s s-tx">Max loss</text><text x="102" y="228" class="s m s-tx2">$0</text><text x="164" y="228" class="s m s-tx2">$10,000</text><text x="236" y="228" class="s m b s-tx">$11,100</text><text x="292" y="228" class="s m s-tx3">$90,000</text><text x="356" y="228" class="s b s-tx2">● OK</text>
+        <text x="16" y="248" class="s s-tx">Profit target</text><text x="102" y="248" class="s m s-tx2">+$1,900</text><text x="164" y="248" class="s m s-tx2">$10,000</text><text x="236" y="248" class="s m b s-tx">$8,100</text><text x="292" y="248" class="s m s-tx3">—</text><text x="356" y="248" class="s b s-tx2">● OK</text>
+        <text x="16" y="268" class="s s-tx">Trading days</text><text x="102" y="268" class="s m s-tx2">3</text><text x="164" y="268" class="s m s-tx2">min 4</text><text x="236" y="268" class="s m s-tx3">—</text><text x="292" y="268" class="s m s-tx3">—</text><text x="356" y="268" class="s b s-tx2">1 to go</text>
+      </g>
+      <text x="12" y="290" class="s s-tx3">Checked every market update · day resets at 00:00 Europe/Prague</text>
+      <rect x="12" y="296" width="84" height="16" class="s-box2" style="stroke:var(--acc)"/><text x="54" y="308" text-anchor="middle" class="s s-tx">Stop attempt</text>
+
+      <rect x="439" y="90" width="320" height="226" class="s-box"/>
+      <text x="450" y="107" class="s b s-tx3">READINESS</text>
+      <text x="450" y="128" class="b s-tx">● Borderline — practise more …</text>
+      <text x="450" y="146" class="s s-tx2">Your risk fits these rules; your edge is unproven …</text>
+      <text x="450" y="168" class="s s-tx2">Risk per trade</text><rect x="526" y="156" width="74" height="18" class="s-box2"/><text x="532" y="169" class="s s-tx">As traded ▾</text>
+      <text x="608" y="168" class="s s-tx2">Horizon</text><rect x="650" y="156" width="100" height="18" class="s-box2"/><text x="656" y="169" class="s s-tx">60 trading days ▾</text>
+      <rect x="450" y="182" width="300" height="16" class="s-box2"/>
+      <text x="454" y="194" class="s b s-tx3">SCENARIO</text><text x="548" y="194" class="s b s-tx3">PASS</text><text x="616" y="194" class="s b s-tx3">BREACH</text><text x="690" y="194" class="s b s-tx3">NEITHER</text>
+      <text x="454" y="214" class="s s-tx">As traded</text><text x="548" y="214" class="s m b s-tx">62%</text><text x="616" y="214" class="s m b s-tx">31%</text><text x="690" y="214" class="s m b s-tx">7%</text>
+      <text x="454" y="234" class="s s-tx">With zero edge</text><text x="548" y="234" class="s m b s-tx">37%</text><text x="616" y="234" class="s m b s-tx">54%</text><text x="690" y="234" class="s m b s-tx">9%</text>
+      <text x="450" y="258" class="s s-tx3">As traded</text><rect x="530" y="249" width="137" height="12" class="s-up"/><rect x="667" y="249" width="16" height="12" class="s-box2"/><rect x="683" y="249" width="67" height="12" class="s-bg" style="stroke:var(--dn)"/>
+      <text x="450" y="278" class="s s-tx3">Zero edge</text><rect x="530" y="269" width="81" height="12" class="s-up"/><rect x="611" y="269" width="21" height="12" class="s-box2"/><rect x="632" y="269" width="118" height="12" class="s-bg" style="stroke:var(--dn)"/>
+      <text x="450" y="298" class="s s-tx2">With zero edge: about 3 paid attempts per pass …</text>
+      <text x="450" y="312" class="s s-tx3">▸ Method</text>
+
+      <rect x="1" y="324" width="758" height="74" class="s-box"/>
+      <text x="12" y="341" class="s b s-tx3">ATTEMPT LOG</text>
+      <rect x="12" y="348" width="736" height="16" class="s-box2"/>
+      <text x="16" y="360" class="s b s-tx3">STARTED</text><text x="150" y="360" class="s b s-tx3">RULES</text><text x="360" y="360" class="s b s-tx3">RESULT</text><text x="500" y="360" class="s b s-tx3">PHASE</text><text x="570" y="360" class="s b s-tx3">DAYS</text><text x="640" y="360" class="s b s-tx3">RETURN</text>
+      <text x="16" y="382" class="s m s-tx2">…</text><text x="150" y="382" class="s s-tx">1-step · end-of-day trailing</text><text x="360" y="382" class="s s-tx">Breached · daily</text><text x="500" y="382" class="s m s-tx2">1</text><text x="570" y="382" class="s m s-tx2">4</text><text x="640" y="382" class="s m s-dn">−3.41%</text>
+      <text x="10" y="414" class="s s-tx3">Illustration with example values. Max-loss breaches are the outlined red segment; daily-limit breaches the filled red one.</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The tab with a running attempt. The figures in the readiness card come from the calculator in chapter 18 with its default inputs.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Where</th><th>What you see</th><th>Chapter</th></tr></thead>
+    <tbody>
+      <tr><td>Rules</td><td><b>Preset</b> menu, a one-line summary, and <b>About these rules</b> (every rule in a sentence, the notes, the source and the dates).</td><td class="n">04–09</td></tr>
+      <tr><td>Practice attempt</td><td>Empty state with <b>Start practice attempt</b>; while running: phase and day, four key figures, the limits table, <b>Stop attempt</b>. After the end: a breach or pass banner.</td><td class="n">10–14</td></tr>
+      <tr><td>Readiness</td><td>Verdict, <b>Risk per trade</b> and <b>Horizon</b> menus, the odds table and bars, the sample line, <b>Method</b>.</td><td class="n">15–19</td></tr>
+      <tr><td>Attempt log</td><td>Your last 20 finished attempts.</td><td class="n">14</td></tr>
+      <tr><td>Top bar pill</td><td><span class="tag nt">CHALLENGE · P1 · day 3</span>, or the daily share used once it reaches 50%. Click it to open the tab.</td><td class="n">12</td></tr>
+      <tr><td>Order ticket strip</td><td>Daily room, max room and distance to target, above the ticket’s warnings. Click it to open the tab.</td><td class="n">12</td></tr>
+      <tr><td>Strategy Lab › Risk Lab</td><td>The <b>Challenge odds on my trades</b> button opens this tab.</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>The rules</h2><p>Every rule type the tab can model: what it measures, from where, and when it bites.</p></div></div>
+
+<section class="ch" id="presets">
+  <div class="ch-h"><span class="n">04</span><h3>The four presets</h3></div>
+  <p>The presets are generic, versioned readings of rules that prop firms publish. They carry no firm names on purpose: each one states its source in a sentence, the date the rules were published from and the date they were checked. Firms change their rules often; <b>About these rules</b> says so and asks you to check the current page before you pay.</p>
+  <table class="g-t">
+    <thead><tr><th>Rule</th><th>2-step · static drawdown</th><th>1-step · end-of-day trailing</th><th>2-step · profitable days</th><th>Intraday trailing</th></tr></thead>
+    <tbody>
+      <tr><td>Profit target</td><td class="n">+10% → +5%</td><td class="n">+10%</td><td class="n">+10% → +5%</td><td class="n">+10%</td></tr>
+      <tr><td>Daily loss</td><td class="n">5% of initial</td><td class="n">3% of initial</td><td class="n">5% of initial</td><td class="n">none</td></tr>
+      <tr><td>Daily measured from</td><td>balance at day start</td><td>balance at day start</td><td>higher of balance and equity at day start</td><td>—</td></tr>
+      <tr><td>Max loss</td><td class="n">10% static</td><td class="n">10% end-of-day trailing</td><td class="n">10% static</td><td class="n">6% intraday trailing</td></tr>
+      <tr><td>Trails on</td><td>—</td><td>balance</td><td>—</td><td>equity (floating P&amp;L included)</td></tr>
+      <tr><td>Floor stops at start balance</td><td>—</td><td>yes</td><td>—</td><td>yes</td></tr>
+      <tr><td>Minimum trading days</td><td class="n">4</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+      <tr><td>Profitable days</td><td>—</td><td>—</td><td class="n">3 days ≥ 0.5%</td><td>—</td></tr>
+      <tr><td>Consistency</td><td>—</td><td class="n">best day ≤ 50%</td><td>—</td><td class="n">best day ≤ 30%</td></tr>
+      <tr><td>Day resets</td><td class="n">00:00 Europe/Prague</td><td class="n">00:00 Europe/Prague</td><td class="n">00:00 Europe/Prague</td><td class="n">17:00 America/Chicago</td></tr>
+      <tr><td>Published from · checked</td><td class="n">2026-10-12 · 2026-10-19</td><td class="n">2026-10-12 · 2026-10-19</td><td class="n">2026-10-19 · 2026-10-19</td><td class="n">2026-10-19 · 2026-10-19</td></tr>
+      <tr><td>Summary line</td><td class="mono">10% → 5% target · 5% daily · 10% static · 4 days min</td><td class="mono">10% target · 3% daily · 10% end-of-day trailing · best day ≤ 50%</td><td class="mono">10% → 5% target · 5% daily · 10% static · 3 days ≥ 0.5%</td><td class="mono">10% target · no daily limit · 6% intraday trailing · best day ≤ 30%</td></tr>
+    </tbody>
+  </table>
+  <p>The sources, as the tab states them: rules a large prop firm published for its 2-step and its 1-step evaluation (page modified 12.10.2026); rules a prop firm published for its high-stakes 2-step program (read 19.10.2026); and, for Intraday trailing, a generic intraday trailing drawdown modelled on instant-funding and futures evaluations, with numbers of tradeBerry’s own.</p>
+  <div class="call tip"><b class="t">Notes marked “our generic reading”</b><p>Where a firm’s text could be read two ways, the preset says which reading it uses, for example “The daily limit is measured from the balance at the start of the day — our generic reading.” Every preset also carries: “The profit target counts closed balance with no open positions; the limits count equity, floating P&amp;L included — our generic reading.”</p></div>
+</section>
+
+<section class="ch" id="target">
+  <div class="ch-h"><span class="n">05</span><h3>Profit target and phases</h3></div>
+  <p>The <b>profit target</b> is a percentage of the <b>initial capital</b>: the balance the attempt started with. It is counted on <b>closed balance with no open positions</b>. Floating profit does not count: you reach a target by closing trades, and the phase completes only when you are flat.</p>
+  <p>A 2-step rule set has two phases. Each phase is <b>a fresh account of the initial capital</b>: phase 2 starts from the balance phase 1 ended with, but its target and limits are measured on the initial capital, and the profit of phase 1 does not count toward it. (Code notes cite FTMO and FundedNext as firms that structure phases this way; no endorsement.)</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="Two phases on a $100,000 2-step static account: phase 1 from 100,000 with floor 90,000 and target 110,000; phase 2 from 110,000 with floor 100,000 and target 115,000">
+      <text x="12" y="24" class="b s-tx">Phase 1</text><text x="80" y="24" class="s s-tx3">starts at the initial capital</text>
+      <line x1="105.7" y1="70" x2="562.9" y2="70" class="s-ln3"/>
+      <rect x="105.7" y="62" width="228.6" height="16" class="s-dnbg"/><rect x="334.3" y="62" width="228.6" height="16" class="s-upbg"/>
+      <line x1="105.7" y1="56" x2="105.7" y2="84" class="s-ldn" stroke-width="2"/><line x1="334.3" y1="56" x2="334.3" y2="84" class="s-px"/><line x1="562.9" y1="56" x2="562.9" y2="84" class="s-lup" stroke-width="2"/>
+      <text x="105.7" y="50" text-anchor="middle" class="s m s-tx">90,000</text><text x="334.3" y="50" text-anchor="middle" class="s m s-tx">100,000</text><text x="562.9" y="50" text-anchor="middle" class="s m s-tx">110,000</text>
+      <text x="105.7" y="98" text-anchor="middle" class="s s-tx3">✕ max floor</text><text x="334.3" y="98" text-anchor="middle" class="s s-tx3">start</text><text x="562.9" y="98" text-anchor="middle" class="s s-tx3">✓ target +10%</text>
+      <text x="220" y="74" text-anchor="middle" class="s s-tx2">−10,000 room</text><text x="448.6" y="74" text-anchor="middle" class="s s-tx2">+10,000 to go</text>
+      <text x="12" y="134" class="b s-tx">Phase 2</text><text x="80" y="134" class="s s-tx3">starts where phase 1 ended; measured on the initial 100,000</text>
+      <line x1="334.3" y1="180" x2="677.1" y2="180" class="s-ln3"/>
+      <rect x="334.3" y="172" width="228.6" height="16" class="s-dnbg"/><rect x="562.9" y="172" width="114.2" height="16" class="s-upbg"/>
+      <line x1="334.3" y1="166" x2="334.3" y2="194" class="s-ldn" stroke-width="2"/><line x1="562.9" y1="166" x2="562.9" y2="194" class="s-px"/><line x1="677.1" y1="166" x2="677.1" y2="194" class="s-lup" stroke-width="2"/>
+      <text x="334.3" y="160" text-anchor="middle" class="s m s-tx">100,000</text><text x="562.9" y="160" text-anchor="middle" class="s m s-tx">110,000</text><text x="677.1" y="160" text-anchor="middle" class="s m s-tx">115,000</text>
+      <text x="334.3" y="208" text-anchor="middle" class="s s-tx3">✕ max floor</text><text x="562.9" y="208" text-anchor="middle" class="s s-tx3">start</text><text x="677.1" y="208" text-anchor="middle" class="s s-tx3">✓ +5% of 100,000</text>
+      <text x="448.6" y="184" text-anchor="middle" class="s s-tx2">−10,000 room</text><text x="620" y="184" text-anchor="middle" class="s s-tx2">+5,000</text>
+      <path d="M562.9 104 C 562.9 120, 562.9 140, 562.9 152" class="s-arrow" marker-end="url(#ah)" stroke-dasharray="3 3"/>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>2-step · static drawdown on $100,000. Phase 2 does not start at 100,000 again, but its target (+$5,000) and its room (−$10,000) are sized on the initial 100,000.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Formula in the code</th><th>$100,000 example, phase 2 from 110,000</th></tr></thead>
+    <tbody>
+      <tr><td>Capital the % apply to</td><td>phase 1: its start balance; later phases: the initial capital</td><td class="n">100,000</td></tr>
+      <tr><td>Target reached</td><td class="mono">balance ≥ phase start + target% × capital</td><td class="mono">≥ 110,000 + 5,000 = 115,000</td></tr>
+      <tr><td>Static max floor</td><td class="mono">phase start − max% × capital</td><td class="n">110,000 − 10,000 = 100,000</td></tr>
+      <tr><td>Daily amount (base initial)</td><td class="n">daily% × capital</td><td class="n">5% × 100,000 = 5,000</td></tr>
+    </tbody>
+  </table>
+  <p>When the target is reached but something else is still missing (days, profitable days, consistency, or open positions), a note says <b>Target reached — </b> followed by what is still needed, and adds “Limits still apply until the phase is complete.” The limits keep counting: you can still breach after reaching the target.</p>
+</section>
+
+<section class="ch" id="daily">
+  <div class="ch-h"><span class="n">06</span><h3>The daily loss limit</h3></div>
+  <p>The daily limit says how far <b>equity</b> (floating P&amp;L and swap included) may fall during one trading day. Three settings define it:</p>
+  <table class="g-t">
+    <thead><tr><th>Setting</th><th>Options</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Daily loss %</td><td class="n">0.5–20%, or none</td><td>The size of the allowed fall.</td></tr>
+      <tr><td>Daily measured on</td><td><b>initial capital</b> · <b>day start</b></td><td>The amount is a % of the initial capital (all presets), or of the day-start value (custom rules only).</td></tr>
+      <tr><td>Daily from</td><td><b>balance at day start</b> · <b>higher of balance and equity</b></td><td>The anchor the fall is measured from. With an open profit carried into the day, “higher of” sets the floor higher.</td></tr>
+      <tr><td>Day resets in / at hour</td><td>Europe/Prague, Europe/London, America/New_York, America/Chicago, UTC · hour 0–23</td><td>When a new trading day starts: the anchor is re-read and the daily warnings re-arm. Daylight saving is handled.</td></tr>
+    </tbody>
+  </table>
+  <div class="fml">
+    <div>anchor = balance at day start   (or max(balance, equity) at day start)</div>
+    <div>daily amount = daily% × initial capital   (or daily% × the day-start value)</div>
+    <div>daily floor = anchor − daily amount</div>
+    <div>breach when equity ≤ daily floor</div>
+  </div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 220" role="img" aria-label="One trading day: equity falls from 101,800 to about 96,500 and recovers. The floor 96,800 measured from the higher of balance and equity is touched; the floor 96,000 measured from balance is not">
+      <line x1="80" y1="20" x2="80" y2="195" class="s-ln"/><line x1="80" y1="195" x2="700" y2="195" class="s-ln"/>
+      <text x="74" y="40" text-anchor="end" class="s m s-tx3">101,800</text><text x="74" y="60" text-anchor="end" class="s m s-tx3">101,000</text><text x="74" y="162" text-anchor="end" class="s m s-tx3">96,800</text><text x="74" y="182" text-anchor="end" class="s m s-tx3">96,000</text>
+      <line x1="80" y1="37" x2="700" y2="37" class="s-ln3" stroke-dasharray="2 3"/><line x1="80" y1="56.4" x2="700" y2="56.4" class="s-ln3" stroke-dasharray="2 3"/>
+      <line x1="80" y1="158.4" x2="700" y2="158.4" class="s-lwn" stroke-width="1.6"/><line x1="80" y1="177.9" x2="700" y2="177.9" class="s-lin" stroke-width="1.6" stroke-dasharray="6 4"/>
+      <polyline points="80,37 157.5,44.3 235,75.9 312.5,105 364.2,129.3 415.8,148.7 454.6,165.7 493.3,146.3 570.8,119.6 648.3,102.6 700,95.4" class="s-px"/>
+      <text x="438" y="152" text-anchor="middle" class="b s-dn">✕</text>
+      <text x="740" y="33" text-anchor="end" class="s s-tx2">higher of balance and equity at day start</text>
+      <text x="740" y="52" text-anchor="end" class="s s-tx2">balance at day start</text>
+      <text x="560" y="154" class="s s-wn">floor 96,800 · 5,000 below 101,800</text>
+      <text x="560" y="173" class="s s-in">floor 96,000 · 5,000 below 101,000</text>
+      <text x="84" y="212" class="s s-tx3">00:00 reset</text><text x="700" y="212" text-anchor="end" class="s s-tx3">next reset</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>The day started with a balance of 101,000 and an open position worth +800 (equity 101,800). With “higher of balance and equity” the floor is 96,800 and the dip to 96,500 ✕ breaches it; measured from the balance (96,000) the same day survives.</figcaption></figure>
+  <div class="call ex"><b class="t">Worked example · 2-step · static drawdown, $100,000</b><p>Yesterday you closed at 103,000 and you are flat at midnight Prague time. Today’s anchor is 103,000 and the daily amount is 5% × 100,000 = 5,000, so the daily floor is <b>98,000</b>. The max floor is still 90,000. The higher floor, 98,000, is the one that binds today.</p></div>
+  <div class="call warn"><b class="t">Open positions count</b><p>The limit is measured on equity, not balance. A position showing −$3,000 that you intend to “let come back” uses $3,000 of the day’s room right now.</p></div>
+</section>
+
+<section class="ch" id="max">
+  <div class="ch-h"><span class="n">07</span><h3>Max loss: static, end-of-day trailing, intraday trailing</h3></div>
+  <p>The max loss limit bounds the fall over the whole phase. Its amount is always <b>max% × the capital</b>; what changes is where the floor sits:</p>
+  <table class="g-t">
+    <thead><tr><th>Mode</th><th>Floor</th><th>When the floor moves</th><th>Strictness</th></tr></thead>
+    <tbody>
+      <tr><td>static</td><td class="n">phase start − amount</td><td>Never during the phase.</td><td>Most forgiving: profit widens your room.</td></tr>
+      <tr><td>end-of-day trailing</td><td class="n">high-water − amount</td><td>At each day reset, the high-water mark rises to the balance (or equity, per <b>Trails on</b>) if it is higher.</td><td>Profit kept overnight raises the floor.</td></tr>
+      <tr><td>intraday trailing</td><td class="n">high-water − amount</td><td>On every check. With <b>Trails on: equity</b>, an open profit raises the floor even if it is never closed.</td><td>Strictest: a winner that comes back costs you room.</td></tr>
+    </tbody>
+  </table>
+  <p><b>Floor stops at start balance</b> (lock): once the trailing floor reaches the phase’s start balance it stops rising. From then on the max limit behaves like a static floor at the start balance. Both trailing presets use the lock.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="The same equity path over nine days with three floors: static stays at 90,000; end-of-day trailing steps up at each day end and locks at 100,000; intraday trailing follows the equity peaks and locks at 100,000. When equity falls to 100,000 on day 9 both trailing floors are breached, the static one is not">
+      <line x1="60" y1="20" x2="60" y2="230" class="s-ln"/><line x1="60" y1="230" x2="720" y2="230" class="s-ln"/>
+      <text x="54" y="39" text-anchor="end" class="s m s-tx3">112k</text><text x="54" y="87" text-anchor="end" class="s m s-tx3">106k</text><text x="54" y="135" text-anchor="end" class="s m s-tx3">100k</text><text x="54" y="183" text-anchor="end" class="s m s-tx3">94k</text><text x="54" y="215" text-anchor="end" class="s m s-tx3">90k</text>
+      <g class="s-ln" stroke-dasharray="1 4"><line x1="60" y1="36" x2="720" y2="36"/><line x1="60" y1="84" x2="720" y2="84"/><line x1="60" y1="132" x2="720" y2="132"/><line x1="60" y1="180" x2="720" y2="180"/></g>
+      <line x1="60" y1="212" x2="720" y2="212" class="s-ln3" stroke-width="2"/>
+      <path d="M60 212 H126 V196 H192 V180 H258 V156 H390 V140 H456 V132 H720" class="s-lin" stroke-width="2" stroke-dasharray="6 4"/>
+      <polyline points="60,212 93,200 126,196 165.6,164 241.5,164 258,156 350,156 357,152 390,140 403,132 720,132" class="s-lwn" stroke-width="2"/>
+      <polyline points="60,132 93,120 126,116 165.6,84 192,100 225,92 258,76 291,84 324,92 357,72 390,60 429.6,36 456,44 489,52 522,68 555,92 588,108 621,124 642.8,132" class="s-px"/>
+      <polyline points="642.8,132 654,136" class="s-px" stroke-dasharray="2 3"/>
+      <text x="642.8" y="126" text-anchor="middle" class="b s-dn">✕</text>
+      <text x="716" y="150" text-anchor="end" class="s s-tx2">day 9: equity 100,000</text>
+      <text x="470" y="206" class="s s-tx2">static floor 90,000 (no breach)</text>
+      <g class="s s-tx3"><text x="126" y="246" text-anchor="middle" class="s s-tx3">1</text><text x="192" y="246" text-anchor="middle" class="s s-tx3">2</text><text x="258" y="246" text-anchor="middle" class="s s-tx3">3</text><text x="324" y="246" text-anchor="middle" class="s s-tx3">4</text><text x="390" y="246" text-anchor="middle" class="s s-tx3">5</text><text x="456" y="246" text-anchor="middle" class="s s-tx3">6</text><text x="522" y="246" text-anchor="middle" class="s s-tx3">7</text><text x="588" y="246" text-anchor="middle" class="s s-tx3">8</text><text x="654" y="246" text-anchor="middle" class="s s-tx3">9</text></g>
+      <text x="390" y="264" text-anchor="middle" class="s s-tx3">end of trading day</text>
+    </svg>
+    <div class="legend"><span class="s-tx"><i style="background:var(--tx)"></i>equity</span><span class="in"><i class="d"></i>end-of-day trailing floor (balance)</span><span class="wn"><i></i>intraday trailing floor (equity)</span><span class="mut"><i style="background:var(--tx3)"></i>static floor</span></div>
+  </div><figcaption><b>Fig. 4</b>One equity path, three max-loss modes, all 10% of $100,000 with the lock. Static never moves. End-of-day trailing steps up at each day’s close. Intraday trailing follows even the intraday peaks (106,000 on day 2, 112,000 on day 6). Both trailing floors lock at 100,000, so the fall to 100,000 on day 9 ✕ breaches them; the static account still has 10,000 of room.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Moment</th><th>Equity</th><th>Static</th><th>End-of-day trailing</th><th>Intraday trailing</th></tr></thead>
+    <tbody>
+      <tr><td>Start</td><td class="n">100,000</td><td class="n">90,000</td><td class="n">90,000</td><td class="n">90,000</td></tr>
+      <tr><td>Day 2, open profit peaks</td><td class="n">106,000</td><td class="n">90,000</td><td class="mono">92,000 (day 1 close 102,000)</td><td class="n">96,000</td></tr>
+      <tr><td>Day 3 close</td><td class="n">107,000</td><td class="n">90,000</td><td class="n">94,000 → 97,000 at reset</td><td class="n">97,000</td></tr>
+      <tr><td>Day 6, peak</td><td class="n">112,000</td><td class="n">90,000</td><td class="n">99,000</td><td class="mono">min(102,000, 100,000) = 100,000</td></tr>
+      <tr><td>Day 6 close</td><td class="n">111,000</td><td class="n">90,000</td><td class="mono">min(101,000, 100,000) = 100,000</td><td class="n">100,000</td></tr>
+      <tr><td>Day 9</td><td class="n">100,000</td><td class="n">90,000 · room 10,000</td><td class="n">✕ breached</td><td class="n">✕ breached</td></tr>
+    </tbody>
+  </table>
+  <div class="call key"><b class="t">The intraday trailing trap</b><p>On the <b>Intraday trailing</b> preset (6%), a trade that runs to +$4,000 floating and is closed at break-even leaves your floor $4,000 higher than before: your room shrank by $4,000 without a single loss. The tab applies the run-up before the drawdown inside a trade in its odds for the same reason (chapter 16).</p></div>
+</section>
+
+<section class="ch" id="days">
+  <div class="ch-h"><span class="n">08</span><h3>Trading days, profitable days, consistency</h3></div>
+  <p>These rules never breach an attempt. They only hold back the completion of a phase: until they are met, a reached target waits.</p>
+  <table class="g-t">
+    <thead><tr><th>Rule</th><th>Counts</th><th>Met when</th><th>Still-needed text</th></tr></thead>
+    <tbody>
+      <tr><td>Min trading days</td><td>Days with at least one fill (an open or a close), in the rules’ day reset.</td><td class="n">days ≥ min</td><td class="n">2 more trading days</td></tr>
+      <tr><td>Profitable days</td><td>Days whose closed P&amp;L is ≥ the set % of the capital.</td><td class="n">such days ≥ n</td><td class="n">1 more profitable day</td></tr>
+      <tr><td>Consistency</td><td>The best day’s closed P&amp;L against the phase’s total profit.</td><td class="mono">profit &gt; 0 and best day ≤ limit% × profit</td><td class="mono">best day is 60% of profit (limit 50%)</td></tr>
+      <tr><td>Flat</td><td>Open positions.</td><td class="n">none open</td><td class="n">close your open positions</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Six days of closed P&amp;L: +6,000, +1,500, −500, +2,000, +1,000, +2,000. After day 5 the profit is 10,000 and the best day is 60 percent of it; after day 6 the profit is 12,000 and the best day is 50 percent">
+      <line x1="60" y1="150" x2="560" y2="150" class="s-ln3"/>
+      <rect x="80" y="60" width="50" height="90" class="s-up"/><text x="105" y="54" text-anchor="middle" class="s m s-tx">+6,000</text>
+      <rect x="160" y="127.5" width="50" height="22.5" class="s-up"/><text x="185" y="121" text-anchor="middle" class="s m s-tx">+1,500</text>
+      <rect x="240" y="150" width="50" height="7.5" class="s-dn"/><text x="265" y="172" text-anchor="middle" class="s m s-tx">−500</text>
+      <rect x="320" y="120" width="50" height="30" class="s-up"/><text x="345" y="114" text-anchor="middle" class="s m s-tx">+2,000</text>
+      <rect x="400" y="135" width="50" height="15" class="s-up"/><text x="425" y="129" text-anchor="middle" class="s m s-tx">+1,000</text>
+      <rect x="480" y="120" width="50" height="30" class="s-up" style="fill-opacity:.55"/><text x="505" y="114" text-anchor="middle" class="s m s-tx">+2,000</text>
+      <line x1="60" y1="75" x2="460" y2="75" class="s-lwn" stroke-dasharray="5 4"/><line x1="60" y1="60" x2="560" y2="60" class="s-lin" stroke-dasharray="5 4"/>
+      <text x="575" y="52" class="s s-in">after day 6: 50% of 12,000</text><text x="575" y="65" class="s s-tx2">best day 50% ✓ met</text>
+      <text x="575" y="80" class="s s-wn">after day 5: 50% of 10,000</text><text x="575" y="93" class="s s-tx2">best day 60% · not yet</text>
+      <g class="s s-tx3"><text x="105" y="190" text-anchor="middle" class="s s-tx3">day 1</text><text x="185" y="190" text-anchor="middle" class="s s-tx3">day 2</text><text x="265" y="190" text-anchor="middle" class="s s-tx3">day 3</text><text x="345" y="190" text-anchor="middle" class="s s-tx3">day 4</text><text x="425" y="190" text-anchor="middle" class="s s-tx3">day 5</text><text x="505" y="190" text-anchor="middle" class="s s-tx3">day 6</text></g>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>Consistency on 1-step · end-of-day trailing (best day ≤ 50%). The +10,000 target is reached after day 5, but one day made 60% of it; the phase completes after another profitable day brings the share to 50%.</figcaption></figure>
+  <div class="call tip"><b class="t">Consistency is not a breach</b><p>As the preset notes say: “Breaking the consistency rule is not a breach: you keep trading until the best day is ≤ 50% of the profit.” The catch: more trading means more exposure to the loss limits while you wait.</p></div>
+  <p>Profitable days on <b>2-step · profitable days</b>: 3 days with a closed profit of at least 0.5% of the capital, i.e. $500 on $100,000. A +$450 day is a trading day, but not a profitable one.</p>
+</section>
+
+<section class="ch" id="custom">
+  <div class="ch-h"><span class="n">09</span><h3>Your firm’s own rules</h3></div>
+  <p>The last item in the <b>Preset</b> menu, <b>+ Use my firm’s current rules…</b>, opens a form pre-filled from the selected preset: “Copy your firm’s current page into these fields. Every value is checked against a sensible range.” After <b>Save rules</b>, the rules appear in the menu as <b>Custom: &lt;name&gt;</b>, with “Entered by you” as their source and today as their dates. Only one custom rule set is kept; saving again replaces it.</p>
+  <table class="g-t">
+    <thead><tr><th>Field</th><th>Range</th><th>Empty means</th></tr></thead>
+    <tbody>
+      <tr><td>Name</td><td class="n">1–40 characters</td><td>—</td></tr>
+      <tr><td>Phase 1 target %</td><td class="n">0.5–50</td><td>—</td></tr>
+      <tr><td>Phase 2 target % (empty = one phase)</td><td class="n">0.5–50</td><td>one phase</td></tr>
+      <tr><td>Daily loss % (empty = none)</td><td class="n">0.5–20</td><td>no daily limit</td></tr>
+      <tr><td>Daily measured on</td><td>initial capital · day start</td><td>—</td></tr>
+      <tr><td>Daily from</td><td>balance at day start · higher of balance and equity</td><td>—</td></tr>
+      <tr><td>Max loss %</td><td class="n">1–30</td><td>—</td></tr>
+      <tr><td>Max loss mode</td><td>static · end-of-day trailing · intraday trailing</td><td>—</td></tr>
+      <tr><td>Trails on</td><td>balance · equity (ignored when static)</td><td>—</td></tr>
+      <tr><td>Floor stops at start balance</td><td>yes · no</td><td>—</td></tr>
+      <tr><td>Min trading days</td><td class="n">0–60</td><td>—</td></tr>
+      <tr><td>Profitable days (empty = none)</td><td class="n">0–30</td><td>none</td></tr>
+      <tr><td>Profitable day ≥ %</td><td class="n">0–5</td><td>—</td></tr>
+      <tr><td>Consistency % (empty = none)</td><td class="n">10–100</td><td>none</td></tr>
+      <tr><td>Day resets in · at hour</td><td>5 time zones · 0–23</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>While a value is out of range, the save button reads <b>Fix the values to save</b> and the message lists the ranges. <b>Cancel</b> closes the form. Rules cannot be changed while an attempt runs: the menu is disabled with “Stop the attempt to change rules”.</p>
+  <div class="call warn"><b class="t">Map the firm’s words carefully</b><p>“Maximum daily loss 5% of the initial balance, based on the balance at the start of the day” is <b>Daily measured on: initial capital</b> and <b>Daily from: balance at day start</b>. “Trailing drawdown that stops at the starting balance” is a trailing mode with <b>Floor stops at start balance: yes</b>. When a firm’s page is unclear, model the stricter reading.</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>The practice attempt</h2><p>Running the rules live on your account: start, checks, readouts, guard rails, endings.</p></div></div>
+
+<section class="ch" id="start">
+  <div class="ch-h"><span class="n">10</span><h3>Starting an attempt</h3></div>
+  <p>The empty card says <b>No practice attempt running</b> and explains: it runs on your demo account from its balance at start, equity is checked on every market update, the daily limit resets at the preset’s hour, and nothing is real money.</p>
+  <table class="g-t">
+    <thead><tr><th>Condition</th><th>The start button reads</th><th>Extra button</th></tr></thead>
+    <tbody>
+      <tr><td>Open positions</td><td class="mono">Close your 2 open positions to start</td><td><b>Go to positions</b></td></tr>
+      <tr><td>Pending orders</td><td class="mono">Cancel your 1 pending order to start</td><td><b>Go to orders</b></td></tr>
+      <tr><td>Balance zero</td><td>The balance is zero: reset the account in Help to start.</td><td>—</td></tr>
+      <tr><td>Read-only tab (account open in another tab)</td><td>disabled; use <b>Take over here</b></td><td>—</td></tr>
+      <tr><td>All clear</td><td class="n">Start practice attempt</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>On start, the balance becomes the <b>initial capital</b>, the high-water mark and the first day’s anchor. A toast confirms “Practice attempt started” with the rules’ name. If the market <b>Speed</b> is above 60×, it is capped at 60× for the attempt: rules are checked every 250 ms, and at 300× that would be 75 market seconds between checks, enough to miss a breach.</p>
+  <div class="call key"><b class="t">Where the rules run</b><p>On an account connected to the execution server, the attempt is started, stopped and evaluated by the server, not in your browser; the tab shows the state the server reports and the same messages. Your rule choice, custom rules and readiness options are saved on the server too.</p></div>
+  <div class="call tip"><b class="t">An attempt starts flat by design</b><p>Positions opened before the start would carry unknown risk into a fresh account, so the tab refuses. Example trades loaded from Help (the demo history) also void a running attempt: “Attempt voided: the account was replaced (demo loaded or cleared).”</p></div>
+</section>
+
+<section class="ch" id="judge">
+  <div class="ch-h"><span class="n">11</span><h3>How an attempt is judged, step by step</h3></div>
+  <p>The check runs on every market update, right after that update’s stops, targets and margin stop-outs have been processed. Each pass goes through the same steps:</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 540" role="img" aria-label="Flowchart of one check: new day roll, trailing update, floors, breach test, warnings, target test, completion test, next phase or pass">
+      <g>
+        <rect x="70" y="10" width="360" height="36" class="s-box2"/><text x="250" y="26" text-anchor="middle" class="b s-tx">Market update</text><text x="250" y="40" text-anchor="middle" class="s s-tx3">after its stops, targets and margin checks</text>
+        <rect x="70" y="62" width="360" height="36" class="s-box" stroke-dasharray="4 3"/><text x="250" y="84" text-anchor="middle" class="s-tx">New trading day (reset hour passed)?</text>
+        <rect x="470" y="62" width="280" height="36" class="s-box"/><text x="610" y="78" text-anchor="middle" class="s s-tx">Store yesterday’s closed P&amp;L if it had fills</text><text x="610" y="91" text-anchor="middle" class="s s-tx3">EOD trailing: raise high-water · new anchor</text>
+        <rect x="70" y="114" width="360" height="36" class="s-box"/><text x="250" y="136" text-anchor="middle" class="s-tx">Intraday trailing: high-water = max(high-water, equity)</text>
+        <rect x="70" y="166" width="360" height="36" class="s-box"/><text x="250" y="182" text-anchor="middle" class="s-tx">Floors: daily = anchor − amount; max = per mode</text><text x="250" y="196" text-anchor="middle" class="s s-tx3">the higher one binds</text>
+        <rect x="70" y="218" width="360" height="36" class="s-box" stroke-dasharray="4 3"/><text x="250" y="240" text-anchor="middle" class="s-tx">Equity ≤ daily floor or max floor?</text>
+        <rect x="470" y="218" width="280" height="36" class="s-dnbg" style="stroke:var(--dn)"/><text x="610" y="234" text-anchor="middle" class="b s s-dn">✕ BREACHED · close every position</text><text x="610" y="247" text-anchor="middle" class="s s-tx2">daily if both: the higher floor was hit first</text>
+        <rect x="70" y="270" width="360" height="36" class="s-box"/><text x="250" y="286" text-anchor="middle" class="s-tx">Warnings at 50% and 80% of each room</text><text x="250" y="300" text-anchor="middle" class="s s-tx3">once per day and rule · 80% of daily starts a cool-down</text>
+        <rect x="70" y="322" width="360" height="36" class="s-box" stroke-dasharray="4 3"/><text x="250" y="344" text-anchor="middle" class="s-tx">Closed balance ≥ phase target?</text>
+        <rect x="470" y="322" width="280" height="36" class="s-box"/><text x="610" y="344" text-anchor="middle" class="s s-tx">Keep trading · next update</text>
+        <rect x="70" y="374" width="360" height="36" class="s-box" stroke-dasharray="4 3"/><text x="250" y="390" text-anchor="middle" class="s-tx">Min days, profitable days, consistency met</text><text x="250" y="404" text-anchor="middle" class="s s-tx3">and no open positions?</text>
+        <rect x="470" y="374" width="280" height="36" class="s-box"/><text x="610" y="390" text-anchor="middle" class="s s-tx">“Target reached — Still needed: …”</text><text x="610" y="403" text-anchor="middle" class="s s-tx3">limits still apply</text>
+        <rect x="70" y="426" width="360" height="36" class="s-box" stroke-dasharray="4 3"/><text x="250" y="448" text-anchor="middle" class="s-tx">Was it the last phase?</text>
+        <rect x="470" y="426" width="280" height="36" class="s-upbg" style="stroke:var(--up)"/><text x="610" y="448" text-anchor="middle" class="b s s-up">✓ PASSED · All phases passed</text>
+        <rect x="70" y="478" width="360" height="36" class="s-upbg" style="stroke:var(--up)"/><text x="250" y="494" text-anchor="middle" class="b s s-up">✓ Phase passed</text><text x="250" y="508" text-anchor="middle" class="s s-tx2">next phase: fresh account of the initial capital</text>
+      </g>
+      <g>
+        <path d="M250 46 V60" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 98 V112" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 150 V164" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 202 V216" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 254 V268" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 306 V320" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 358 V372" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 410 V424" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M250 462 V476" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M430 80 H468" class="s-arrow" marker-end="url(#ah)"/><text x="436" y="75" class="s s-tx3">yes</text>
+        <path d="M610 98 V106 H260" class="s-arrow" marker-end="url(#ah)"/>
+        <path d="M430 236 H468" class="s-arrow" marker-end="url(#ah)"/><text x="436" y="231" class="s s-tx3">yes</text>
+        <path d="M430 340 H468" class="s-arrow" marker-end="url(#ah)"/><text x="436" y="335" class="s s-tx3">no</text>
+        <path d="M430 392 H468" class="s-arrow" marker-end="url(#ah)"/><text x="436" y="387" class="s s-tx3">no</text>
+        <path d="M430 444 H468" class="s-arrow" marker-end="url(#ah)"/><text x="436" y="439" class="s s-tx3">yes</text>
+        <text x="256" y="266" class="s s-tx3">no</text><text x="256" y="370" class="s s-tx3">yes</text><text x="256" y="422" class="s s-tx3">yes</text><text x="256" y="474" class="s s-tx3">no</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>One check of a running attempt. Touching a floor is already a breach (equity ≤ floor, not &lt;). If both floors are reached in the same update, the higher floor counts as the one hit first.</figcaption></figure>
+  <div class="cards">
+    <div class="card"><h5>Equity for limits</h5><p>Floating P&amp;L and swap included; the live price model has no commission on top.</p></div>
+    <div class="card"><h5>Balance for targets</h5><p>Closed balance only, and only when flat. An open winner is not a pass.</p></div>
+    <div class="card"><h5>Days in the rules’ clock</h5><p>Trading days, profitable days and the daily anchor all use the preset’s reset time zone and hour, not your computer’s midnight.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="card">
+  <div class="ch-h"><span class="n">12</span><h3>Reading the attempt card</h3></div>
+  <p>The heading is the status line: <b>Phase 1 of 2 · Day 3</b>, then when the attempt started. Below it, four key figures, then the limits table.</p>
+  <div class="kpis k4">
+    <div class="kpi"><label>Profit target</label><b>+$1,900</b><span>of $10,000 · closed balance − phase start</span></div>
+    <div class="kpi"><label>Daily room</label><b>$4,200</b><span>equity − daily floor</span></div>
+    <div class="kpi"><label>Max room</label><b>$11,100</b><span>equity − max floor</span></div>
+    <div class="kpi"><label>Floor</label><b>$96,900</b><span>the higher of the two floors</span></div>
+  </div>
+  <h4>The limits table</h4>
+  <table class="g-t">
+    <thead><tr><th>Row</th><th>Used</th><th>Allowed</th><th>Room</th><th>Floor</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Daily loss</td><td>anchor − equity, with a bar</td><td>the daily amount</td><td>equity − daily floor</td><td>daily floor</td><td>● OK · ▲ Warning (≥ 50%) · ✕ Breached</td></tr>
+      <tr><td>Max loss</td><td>(floor + amount) − equity</td><td>the max amount</td><td>equity − max floor</td><td>max floor; a note under trailing modes: “Floor trails end of day, high-water $…”</td><td>same</td></tr>
+      <tr><td>Profit target</td><td>closed profit, signed</td><td>the target in $</td><td>left to target</td><td>—</td><td>● OK · ✓ Met</td></tr>
+      <tr><td>Trading days</td><td>days so far</td><td class="n">min 4</td><td>—</td><td>—</td><td>✓ Met · “1 to go”</td></tr>
+      <tr><td>Profitable days</td><td>qualifying days</td><td class="n">3 at ≥ 0.5%</td><td>—</td><td>—</td><td>✓ Met · “2 to go”</td></tr>
+      <tr><td>Consistency</td><td>best day share</td><td class="n">≤ 50% of profit</td><td>—</td><td>—</td><td>✓ Met · “Not yet — keep trading”</td></tr>
+    </tbody>
+  </table>
+  <p>The bar under <b>Used</b> fills with the share of the room used; it turns amber at 50%. On a narrow card each row becomes a small block with its labels; nothing is dropped. Notes appear above the figures when relevant: phase 2 “counts as a fresh $100,000 account”, <b>Target reached — …</b>, and the cool-down note after 80% of the daily room.</p>
+  <p>Under the table: how often rules are checked (“Checked every market update — 0.25 market seconds apart at 1×”), the reset time and the time to the next reset (“next reset in 5 h 12 min”). If your browser does not know the preset’s time zone, a line says days reset at 00:00 UTC instead.</p>
+  <h4>Outside the tab</h4>
+  <table class="g-t">
+    <thead><tr><th>Readout</th><th>Text</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td>Top bar pill</td><td class="n">CHALLENGE · P1 · day 3</td><td>Running; amber outline when either room is ≥ 50% used.</td></tr>
+      <tr><td>Top bar pill</td><td class="n">CHALLENGE · daily 63% used</td><td>Running, daily room ≥ 50% used.</td></tr>
+      <tr><td>Top bar pill</td><td class="n">CHALLENGE · breached</td><td>For one hour of market time after a breach.</td></tr>
+      <tr><td>Ticket strip</td><td class="mono">Challenge · Daily room $4,200 · Max room $11,100 · $8,100 to target</td><td>Running (shorter on a phone: daily room and to target).</td></tr>
+      <tr><td>Coach insight</td><td>“Challenge day 3: $4,200 of room before the daily limit, $8,100 to target.”</td><td>Running.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="guard">
+  <div class="ch-h"><span class="n">13</span><h3>Guard rails on the ticket</h3></div>
+  <p>During an attempt the order ticket knows your room. It adds three kinds of protection, based on the money at risk to each stop:</p>
+  <table class="g-t">
+    <thead><tr><th>Situation</th><th>What happens</th><th>Text</th></tr></thead>
+    <tbody>
+      <tr><td>Risk of this order + risk already on open positions and pending orders ≥ room</td><td class="dn">Blocked</td><td class="mono">Would breach the challenge daily limit at the stop</td></tr>
+      <tr><td>No stop loss</td><td class="wn">Warning + pre-mortem</td><td>Challenge: no stop loss — one trade can breach the attempt.</td></tr>
+      <tr><td>Risk ≥ 50% of the room left</td><td class="wn">Warning + pre-mortem</td><td>Challenge: this trade risks 60% of the room left before the daily limit.</td></tr>
+      <tr><td>Within the cool-down after 80% of the daily room</td><td class="wn">Pre-mortem on every trade</td><td>Challenge cool-down: … left after using 80% of today’s loss limit</td></tr>
+    </tbody>
+  </table>
+  <p>“Risk already on” counts each open position from the current price to its stop (a stop in profit counts zero) and each pending order from its price to its stop. Positions and orders without a stop are not counted; the no-stop warning covers them. Baskets are not checked here. The cool-down lasts the tilt guard’s cool-down setting (15 minutes by default) and starts with the toast “Challenge: 80% of today’s loss limit used”.</p>
+  <div class="call key"><b class="t">What the block means for a breach</b><p>If every trade has a stop and fills at it, the ticket will not let a stop-out reach the floor: the trade whose stop would touch it is blocked. Breaches then come from what a stop does not cover: gaps over the weekend or a session close, slippage, swap, a trade without a stop, or several trades losing together beyond what was counted.</p></div>
+  <h4>Try it: how many losing trades fit in today’s room</h4>
+  <p>The same arithmetic as the ticket: room = equity − the higher floor; the next order is flagged when its risk is ≥ 50% of the room and blocked when it is ≥ the room. This assumes a fixed $ risk per trade, one trade at a time, every loss a full stop, flat at the day start, and no new high-water mark yet.</p>
+  <div class="calc" id="rmcalc">
+    <div class="cin">
+      <label class="sw">Rules <select id="rmP"><option value="2s-static">2-step · static drawdown</option><option value="1s-eod">1-step · end-of-day trailing</option><option value="2s-pdays">2-step · profitable days</option><option value="intraday">Intraday trailing</option></select></label>
+      <label class="sw">Initial capital $ <input id="rmC" type="number" value="100000" min="1000" step="1000"></label>
+      <label class="sw">Risk per trade % of capital <input id="rmR" type="number" value="1" min="0.05" max="20" step="0.05"></label>
+      <label class="sw">Lost on earlier days $ <input id="rmE" type="number" value="0" min="0" step="100"></label>
+      <label class="sw">Lost so far today $ <input id="rmT" type="number" value="0" min="0" step="100"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="rmN">4</b><span class="tag nt">losing trades the ticket accepts today</span></div>
+      <div class="parts">
+        <span>Daily floor</span><b id="rmDF">—</b>
+        <span>Max floor</span><b id="rmMF">—</b>
+        <span>Room now (binding limit)</span><b id="rmRoom">—</b>
+        <span>Risk per trade</span><b id="rmRisk">—</b>
+      </div>
+      <table class="cb-lad"><thead><tr><th>Next trade</th><th>Room</th><th>Daily used</th><th>Ticket</th></tr></thead><tbody id="rmLad"></tbody></table>
+      <p class="sub">Daily used = (anchor − equity) ÷ daily amount; the toasts fire at 50% and 80% (80% also starts the cool-down). Blocked = risk ≥ room. Pre-mortem = risk ≥ 50% of room.</p>
+    </div>
+  </div>
+  <div class="call ex"><b class="t">Worked example · defaults</b><p>2-step · static, $100,000, 1% = $1,000 a trade. Daily room $5,000. Trades 1–3 pass freely; after 3 losses the daily room is $2,000, so trade 4 risks 50% of it and gets a pre-mortem; after 4 losses (80% used, cool-down) the room is $1,000 and trade 5 is blocked. Lower the risk to 0.5% and nine losing trades fit.</p></div>
+</section>
+
+<section class="ch" id="end">
+  <div class="ch-h"><span class="n">14</span><h3>How an attempt ends</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Ending</th><th>Trigger</th><th>The card shows</th><th>Log result</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag dn">✕ Breached</span></td><td>Equity touched the daily or max floor.</td><td>“Breached — daily loss limit”: equity, floor, time in the rules’ zone, day and phase; the <b>Breach day</b> list; <b>Review in Behaviour</b>, <b>Start a new attempt</b>.</td><td class="n">Breached · daily / max</td></tr>
+      <tr><td><span class="tag up">✓ Passed</span></td><td>The last phase completed.</td><td>“All phases passed in 9 trading days”, each phase’s return and days, <b>Start a new attempt</b>, <b>See the readiness odds</b>.</td><td class="n">Passed</td></tr>
+      <tr><td><span class="tag nt">Stopped</span></td><td>You pressed <b>Stop attempt</b> and confirmed.</td><td>“Attempt stopped by you on day 4.” Open positions stay open.</td><td class="n">Stopped</td></tr>
+      <tr><td><span class="tag nt">Void</span></td><td>The account was replaced (demo history loaded or cleared).</td><td>“Attempt voided: the account was replaced (demo loaded or cleared).”</td><td class="n">Void</td></tr>
+    </tbody>
+  </table>
+  <h4>The breach stop-out</h4>
+  <p>A breach closes every open position at once, marked <b>Stop-out (challenge breach)</b>. A position whose market is closed (session over, weekend, no quotes) cannot fill: it waits and closes at the first check after its market opens, at that price, gap included. The banner and a later toast (“Challenge stop-out completed”) say so. The log’s return is updated after those closes.</p>
+  <p>The <b>Breach day</b> list shows up to 12 trades closed that day, with the warnings each carried (for example “Within 10 min of a loss”, “No stop loss”), then “2 of 5 trades that day carried warnings.” The Coach insights show the same once: “Challenge breached on the daily limit — 2 of 5 trades that day carried warnings. See Challenge.”</p>
+  <div class="call tip"><b class="t">A pass is not proof</b><p>The pass banner says it plainly: “A pass shows your risk control held on this path. It is not evidence of an edge.” Use a pass to confirm discipline; use the readiness odds for the price of the bet.</p></div>
+  <h4>The attempt log</h4>
+  <p>The last 20 finished attempts, newest first: <b>Started</b>, <b>Rules</b>, <b>Result</b>, <b>Phase</b> (the one it ended in), <b>Days</b> (trading days over all phases) and <b>Return</b> (final balance ÷ initial capital − 1, so a 2-step pass shows both phases together). The log is saved with your account, and Export / Import in Help carries it.</p>
+  <div class="call ex"><b class="t">Worked example · a phase 1 in numbers</b><p>2-step · static, $100,000. Day 1 closes +1,500 (balance 101,500; that day’s floor 95,000). Day 2 −2,000 (99,500; floor 96,500). Day 3 +4,000 (103,500; floor 94,500). Day 4 +3,000 (106,500; floor 98,500). Day 5 +3,600 → 110,100, flat, 5 trading days ≥ 4: “Phase 1 passed in 5 trading days”. Phase 2 starts at 110,100 with target 115,100, max floor 100,100 and a daily amount of 5,000.</p></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Readiness odds</h2><p>What your own closed trades say about these rules, how the odds are computed, and how to use them.</p></div></div>
+
+<section class="ch" id="sample">
+  <div class="ch-h"><span class="n">15</span><h3>Which trades are used</h3></div>
+  <p>The readiness card works on your own closed trades in the history. Each closed row becomes a <b>return</b>: the money it made or lost as a share of the balance before it. Then the rows are grouped into trading days with the selected rules’ reset.</p>
+  <table class="g-t">
+    <thead><tr><th>Step</th><th>Rule in the code</th></tr></thead>
+    <tbody>
+      <tr><td>Left out</td><td>Balance credits that are not trades; example trades from the demo history (“Demo trades never count”); rows whose balance before was not positive.</td></tr>
+      <tr><td>Net</td><td>P&amp;L net of commission. The commission also deepens the trade’s drawdown.</td></tr>
+      <tr><td><b>Risk per trade: As traded</b></td><td class="mono">return = net ÷ balance before the trade</td></tr>
+      <tr><td><b>Risk per trade: 0.25% · 0.5% · 1% · 2%</b></td><td class="mono">return = net × risk% ÷ the trade’s $ risk to its stop</td></tr>
+      <tr><td>What-if needs a stop</td><td>Trades without a known stop are left out of a what-if (“… without a stop left out of the what-if”).</td></tr>
+      <tr><td>Inside the trade</td><td>The worst and best floating P&amp;L during the trade (MAE / MFE), tracked on every check. Older trades without it: “Intra-trade drawdown unknown for … older trades — breach odds are understated.”</td></tr>
+      <tr><td>Clip</td><td>A return below −99.9% is clipped there.</td></tr>
+      <tr><td>Enough data</td><td class="mono">≥ 30 trades and ≥ 10 trading days</td></tr>
+    </tbody>
+  </table>
+  <p>Below that, the card shows “No verdict yet — Close at least 30 trades over 10 trading days of your own. Demo trades never count.” and a progress line such as <span class="tag nt">18 / 30 trades · 7 / 10 days</span>. With a what-if risk selected and too few trades with a stop: “Only 22 trades have a known stop — need 30 for a what-if at 1%.”</p>
+  <div class="call key"><b class="t">Why a what-if risk matters</b><p><b>As traded</b> asks: would my trades, sized as I sized them, survive these rules? A fixed risk such as 0.5% asks: would the same trades, each sized to lose 0.5% at its stop, survive? It separates your trade selection from your position sizing.</p></div>
+</section>
+
+<section class="ch" id="mc">
+  <div class="ch-h"><span class="n">16</span><h3>20,000 random attempts</h3></div>
+  <p>The odds come from a <b>day-block bootstrap</b>: your trading days are drawn at random, with replacement, and played one after another against the rules, many times. Whole days are kept together, so a bad afternoon of revenge trades stays a bad afternoon instead of being spread out.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Your trades, grouped by day, resampled 200 times, 100 attempts per resample, 20,000 results with a 90 percent interval">
+      <rect x="4" y="20" width="136" height="74" class="s-box"/><text x="72" y="44" text-anchor="middle" class="b s s-tx">Your closed trades</text><text x="72" y="62" text-anchor="middle" class="s s-tx2">returns, MAE, MFE</text><text x="72" y="78" text-anchor="middle" class="s s-tx3">≥ 30 over ≥ 10 days</text>
+      <rect x="158" y="20" width="136" height="74" class="s-box"/><text x="226" y="44" text-anchor="middle" class="b s s-tx">Grouped by day</text><text x="226" y="62" text-anchor="middle" class="s s-tx2">in the rules’ reset</text><text x="226" y="78" text-anchor="middle" class="s s-tx3">a day = a block</text>
+      <rect x="312" y="20" width="136" height="74" class="s-box"/><text x="380" y="44" text-anchor="middle" class="b s s-tx">200 resamples</text><text x="380" y="62" text-anchor="middle" class="s s-tx2">of the day list,</text><text x="380" y="78" text-anchor="middle" class="s s-tx3">with replacement</text>
+      <rect x="466" y="20" width="136" height="74" class="s-box"/><text x="534" y="44" text-anchor="middle" class="b s s-tx">100 attempts each</text><text x="534" y="62" text-anchor="middle" class="s s-tx2">random days, up to</text><text x="534" y="78" text-anchor="middle" class="s s-tx3">the horizon per phase</text>
+      <rect x="620" y="20" width="136" height="74" class="s-box2"/><text x="688" y="44" text-anchor="middle" class="b s s-tx">20,000 results</text><text x="688" y="62" text-anchor="middle" class="s s-tx2">pass · daily · max</text><text x="688" y="78" text-anchor="middle" class="s s-tx3">· neither</text>
+      <path d="M140 57 H156" class="s-arrow" marker-end="url(#ah)"/><path d="M294 57 H310" class="s-arrow" marker-end="url(#ah)"/><path d="M448 57 H464" class="s-arrow" marker-end="url(#ah)"/><path d="M602 57 H618" class="s-arrow" marker-end="url(#ah)"/>
+      <g>
+        <text x="312" y="128" class="s s-tx2">pass share in each of the 200 resamples:</text>
+        <line x1="312" y1="160" x2="756" y2="160" class="s-ln3"/>
+        <g class="s-tx3"><circle cx="330" cy="152" r="2.5"/><circle cx="352" cy="152" r="2.5"/><circle cx="380" cy="152" r="2.5"/><circle cx="398" cy="146" r="2.5"/><circle cx="412" cy="152" r="2.5"/><circle cx="430" cy="146" r="2.5"/><circle cx="446" cy="152" r="2.5"/><circle cx="460" cy="140" r="2.5"/><circle cx="472" cy="146" r="2.5"/><circle cx="484" cy="152" r="2.5"/><circle cx="498" cy="140" r="2.5"/><circle cx="510" cy="146" r="2.5"/><circle cx="522" cy="152" r="2.5"/><circle cx="536" cy="140" r="2.5"/><circle cx="550" cy="146" r="2.5"/><circle cx="566" cy="152" r="2.5"/><circle cx="584" cy="146" r="2.5"/><circle cx="604" cy="152" r="2.5"/><circle cx="628" cy="152" r="2.5"/><circle cx="662" cy="152" r="2.5"/><circle cx="712" cy="152" r="2.5"/></g>
+        <line x1="352" y1="134" x2="352" y2="170" class="s-lin" stroke-dasharray="3 3"/><line x1="662" y1="134" x2="662" y2="170" class="s-lin" stroke-dasharray="3 3"/>
+        <text x="352" y="184" text-anchor="middle" class="s s-in">5th percentile</text><text x="662" y="184" text-anchor="middle" class="s s-in">95th percentile</text>
+        <text x="507" y="200" text-anchor="middle" class="s s-tx3">the 90% interval shown next to each pass rate</text>
+      </g>
+      <text x="4" y="128" class="s s-tx2">Twice over:</text>
+      <text x="4" y="146" class="s s-tx">· As traded</text>
+      <text x="4" y="164" class="s s-tx">· With zero edge</text>
+      <text x="4" y="182" class="s s-tx3">(every return − the average)</text>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>200 outer resamples × 100 attempts = 20,000 attempts, for each of the two scenarios. The pass rate is over all 20,000; the interval is the spread across the 200 resamples.</figcaption></figure>
+  <h4>One random attempt</h4>
+  <ol>
+    <li>Equity starts at 1 (the initial capital). Each phase has up to <b>Horizon</b> trading days (20, 60 or 120); a 2-step can use up to twice the horizon.</li>
+    <li>Each day: draw one of your days at random. The account is flat at the day start, so the daily floor is that day’s start − the daily amount.</li>
+    <li>Each trade of that day, in order: first the run-up (MFE) raises an intraday trailing floor on equity, then the drawdown (MAE) is tested against both floors, then the return is applied and tested again. Run-up before drawdown is the conservative order for a trailing floor.</li>
+    <li>Touching a floor ends the attempt as a <b>daily</b> or <b>max</b> breach.</li>
+    <li>At day end: count profitable days and the best day; end-of-day trailing raises its high-water mark. If the target, min days, profitable days and consistency are all met, the phase passes; the next phase is a fresh account at 1.</li>
+    <li>A phase that runs out of horizon days ends the attempt as <b>neither</b>.</li>
+  </ol>
+  <h4>Zero edge</h4>
+  <p>The second scenario subtracts your average return from every trade (the <b>Method</b> note says by how many basis points), so the average trade makes exactly zero. Your sizing, your spread of results, your bad days and your drawdowns inside trades all stay; only the edge goes. It answers: if my trade selection is worth nothing, how often do these rules pass me by luck, given how I size and how I lose?</p>
+  <div class="call key"><b class="t">Why zero edge is the row to decide with</b><p>A few dozen trades cannot tell a real edge from a lucky run. The <b>As traded</b> row assumes your past average continues; the <b>With zero edge</b> row does not. The card’s fixed line: “These odds describe your sizing and rule discipline with no edge assumed, not your chances on a live account.”</p></div>
+  <p>The run is deterministic: the random seed comes from your trades, the rules and the options, so the same inputs give the same numbers (the seed is shown in <b>Method</b>). It re-runs only when one of them changes, and the card shows “Running 20,000 random attempts… 40%” meanwhile.</p>
+</section>
+
+<section class="ch" id="verdict">
+  <div class="ch-h"><span class="n">17</span><h3>The six checks and the verdict</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Check</th><th>Passes when</th><th>Reason shown when it fails</th></tr></thead>
+    <tbody>
+      <tr><td class="n">D1 · stops</td><td class="n">≥ 95% of trades had a stop</td><td>“3 of your 40 trades had no stop loss.”</td></tr>
+      <tr><td class="n">D2 · size</td><td class="mono">≥ 95% of trades with a known risk risked ≤ half the daily % of the balance before them (no daily limit: ≤ a quarter of the max %)</td><td>“4 trades risked more than half of the daily limit on their own.”</td></tr>
+      <tr><td class="n">D3 · tilt</td><td class="mono">≤ 5% of trades placed during tilt guard or within 10 min of a loss</td><td>“3 trades were placed during tilt guard or within 10 min of a loss.”</td></tr>
+      <tr><td class="n">D4 · daily history</td><td>no day of yours, at the chosen sizing, went past the daily % (drawdowns inside trades included)</td><td>“On 2 of your 14 trading days you went past the 5% daily limit.”</td></tr>
+      <tr><td class="n">D5 · daily odds</td><td class="mono">zero edge: the upper end of the 90% interval of daily breaches ≤ 10%</td><td>“At this sizing, 18% of random attempts break the daily limit (90%: 9%–28%).”</td></tr>
+      <tr><td class="n">D6 · practice</td><td>a practice attempt on these rules passed, or ran ≥ 10 trading days without a breach (stopped or still running counts; void does not)</td><td>“Run a practice attempt on these rules first — none has finished without a breach yet.”</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 200" role="img" aria-label="Verdict: no data gives No verdict yet; any failing check gives Not ready; otherwise Borderline with the zero-edge odds">
+      <rect x="10" y="20" width="200" height="46" class="s-box" stroke-dasharray="4 3"/><text x="110" y="40" text-anchor="middle" class="s s-tx">≥ 30 trades over</text><text x="110" y="56" text-anchor="middle" class="s s-tx">≥ 10 trading days?</text>
+      <rect x="10" y="120" width="200" height="56" class="s-box2"/><text x="110" y="142" text-anchor="middle" class="b s s-tx">No verdict yet</text><text x="110" y="160" text-anchor="middle" class="s s-tx3">progress: n / 30 · d / 10</text>
+      <rect x="260" y="20" width="200" height="46" class="s-box"/><text x="360" y="40" text-anchor="middle" class="s s-tx">Run 20,000 attempts,</text><text x="360" y="56" text-anchor="middle" class="s s-tx">then D1–D6</text>
+      <rect x="510" y="20" width="240" height="46" class="s-box" stroke-dasharray="4 3"/><text x="630" y="40" text-anchor="middle" class="s s-tx">Any check failing?</text><text x="630" y="56" text-anchor="middle" class="s s-tx3">order D5 · D4 · D2 · D1 · D3 · D6</text>
+      <rect x="390" y="120" width="170" height="56" class="s-dnbg" style="stroke:var(--dn)"/><text x="475" y="142" text-anchor="middle" class="b s s-dn">✕ Not ready</text><text x="475" y="160" text-anchor="middle" class="s s-tx2">up to 3 reasons</text>
+      <rect x="580" y="120" width="170" height="56" class="s-box2"/><text x="665" y="142" text-anchor="middle" class="b s s-tx">● Borderline</text><text x="665" y="160" text-anchor="middle" class="s s-tx2">with the zero-edge odds</text>
+      <path d="M110 66 V118" class="s-arrow" marker-end="url(#ah)"/><text x="116" y="96" class="s s-tx3">no</text>
+      <path d="M210 43 H258" class="s-arrow" marker-end="url(#ah)"/><text x="222" y="38" class="s s-tx3">yes</text>
+      <path d="M460 43 H508" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M560 66 L500 118" class="s-arrow" marker-end="url(#ah)"/><text x="512" y="96" class="s s-tx3">yes</text>
+      <path d="M680 66 V118" class="s-arrow" marker-end="url(#ah)"/><text x="686" y="96" class="s s-tx3">no</text>
+      <text x="380" y="196" text-anchor="middle" class="s s-tx3">There is no “Ready” verdict.</text>
+    </svg>
+  </div><figcaption><b>Fig. 8</b>The verdict. Failing checks are listed in a fixed order, most important first, and at most three are shown.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Verdict</th><th>Title</th><th>Body</th></tr></thead>
+    <tbody>
+      <tr><td>No data</td><td>No verdict yet</td><td>Close at least 30 trades over 10 trading days of your own. Demo trades never count.</td></tr>
+      <tr><td><span class="tag dn">✕</span> Not ready</td><td>Not ready — don’t buy a challenge yet.</td><td>Each of these is in your control. Fix them in practice first; a paid attempt will not be kinder.</td></tr>
+      <tr><td><span class="tag nt">●</span> Borderline</td><td>Borderline — practise more before paying for a challenge.</td><td>Your risk fits these rules; your edge is unproven, so a pass here is discipline plus luck. With zero edge, these rules end in a pass 37% of the time (90% interval 1%–93%) and a breach 54% — about 3 paid attempts per pass. A real challenge is a paid bet; decide with that number.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="odds">
+  <div class="ch-h"><span class="n">18</span><h3>Reading the odds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Scenario</th><th>Pass</th><th>Breach (daily / max)</th><th>Neither in 60 days</th></tr></thead>
+    <tbody>
+      <tr><td>As traded</td><td class="n">62% <small>90%: 10%–99%</small></td><td class="n">31% (0% / 31%)</td><td class="n">7%</td></tr>
+      <tr><td>With zero edge</td><td class="n">37% <small>90%: 1%–93%</small></td><td class="n">54% (0% / 54%)</td><td class="n">9%</td></tr>
+    </tbody>
+  </table>
+  <p>Under the table, one stacked bar per row: green <b>pass</b>, grey <b>neither</b>, filled red <b>daily</b>, outlined red <b>max</b> (fill, not hue, tells the two breaches apart); a segment is labelled when it is at least 8%. Then: “With zero edge: about 3 paid attempts per pass · median 32 trading days to pass.” Fewer than 1 pass in 100 reads “fewer than 1 pass in 100 attempts”; values below 0.5% show as <span class="tag nt">&lt;1%</span>.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 120" role="img" aria-label="Stacked bars: as traded 62 percent pass, 7 neither, 31 max breach; zero edge 37 pass, 9 neither, 54 max breach">
+      <text x="10" y="32" class="s s-tx2">As traded</text>
+      <rect x="120" y="18" width="373.2" height="22" class="s-up"/><text x="126" y="33" class="s m b s-bg">pass 62%</text>
+      <rect x="493.2" y="18" width="42" height="22" class="s-box2"/>
+      <rect x="535.2" y="18" width="185.4" height="22" class="s-bg" style="stroke:var(--dn)"/><text x="541" y="33" class="s m b s-dn">max 31%</text>
+      <text x="10" y="76" class="s s-tx2">With zero edge</text>
+      <rect x="120" y="62" width="222" height="22" class="s-up"/><text x="126" y="77" class="s m b s-bg">pass 37%</text>
+      <rect x="342" y="62" width="57" height="22" class="s-box2"/><text x="347" y="77" class="s m s-tx">9%</text>
+      <rect x="399" y="62" width="321.6" height="22" class="s-bg" style="stroke:var(--dn)"/><text x="405" y="77" class="s m b s-dn">max 54%</text>
+      <text x="120" y="108" class="s s-tx3">pass · neither · daily (filled red, none here) · max (outlined red)</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>The bars for the default calculator inputs below: a 45% win rate at 1.5 R:R, 1% risk, 3 trades a day, on 2-step · static.</figcaption></figure>
+  <div class="mx">
+    <div class="c"><div class="s">Pass rate<div class="tags"><span class="tag nt">37%</span></div></div><div class="m">Share of the 20,000 attempts that completed every phase within the horizon.</div><div class="u">1 ÷ pass = attempts per pass: 1 ÷ 0.37 ≈ 3.</div></div>
+    <div class="c"><div class="s">90% interval<div class="tags"><span class="tag nt">1%–93%</span></div></div><div class="m">How much the pass rate moves when your own days are resampled. Wide means few days, or a few days that decide everything.</div><div class="u">Trust the centre only when the interval is narrow; add trading days to narrow it.</div></div>
+    <div class="c"><div class="s">Daily vs max<div class="tags"><span class="tag dn">daily</span><span class="tag dn">max</span></div></div><div class="m">Daily breaches come from bad single days; max breaches from slow bleeding.</div><div class="u">Daily-heavy: cut the risk per trade or trades per day. Max-heavy: the size is fine per day but too big for the phase.</div></div>
+    <div class="c"><div class="s">Neither<div class="tags"><span class="tag nt">9%</span></div></div><div class="m">Attempts that neither passed nor breached within the horizon.</div><div class="u">A large share at a small risk: the target is out of reach in the time; check the horizon your firm allows.</div></div>
+    <div class="c"><div class="s">As traded ≫ zero edge<div class="tags"><span class="tag nt">62% vs 37%</span></div></div><div class="m">The difference is your past average trade. It may be skill, or a lucky stretch.</div><div class="u">Decide on the zero-edge row; read the gap as upside you have not proven.</div></div>
+    <div class="c"><div class="s">Median days<div class="tags"><span class="tag nt">32</span></div></div><div class="m">Half of the zero-edge passes took fewer trading days, half more.</div><div class="u">Compare with the firm’s time limit, if it has one.</div></div>
+  </div>
+
+  <h4>Try it: pass odds with the tab’s own model</h4>
+  <p>This calculator runs the tab’s code (the same random attempt, the same 200 × 100 bootstrap, the same seed rule) on example trades built from a win rate and a reward:risk instead of your history. Each example trade loses the risk % at its stop or gains R:R × risk %; a winner first goes against you by the set fraction of R, a loser first runs in your favour by the set fraction.</p>
+  <div class="calc" id="mccalc">
+    <div class="cin">
+      <label class="sw">Rules <select id="mcP"><option value="2s-static">2-step · static drawdown</option><option value="1s-eod">1-step · end-of-day trailing</option><option value="2s-pdays">2-step · profitable days</option><option value="intraday">Intraday trailing</option></select></label>
+      <label class="sw">Win rate % <input id="mcW" type="number" value="45" min="1" max="99" step="1"></label>
+      <label class="sw">Reward : risk <input id="mcRR" type="number" value="1.5" min="0.1" max="10" step="0.1"></label>
+      <label class="sw">Risk per trade % <input id="mcK" type="number" value="1" min="0.05" max="10" step="0.05"></label>
+      <label class="sw">Trades per day <input id="mcD" type="number" value="3" min="1" max="20" step="1"></label>
+      <label class="sw">Days of history <input id="mcN" type="number" value="40" min="10" max="250" step="1"></label>
+      <label class="sw">Winner dips first (R) <input id="mcA" type="number" value="0.5" min="0" max="1" step="0.1"></label>
+      <label class="sw">Loser runs first (R) <input id="mcF" type="number" value="0.3" min="0" max="5" step="0.1"></label>
+      <label class="sw">Horizon <select id="mcH"><option value="20">20 trading days</option><option value="60" selected>60 trading days</option><option value="120">120 trading days</option></select></label>
+      <label class="sw">Fee per attempt $ <input id="mcFee" type="number" value="500" min="0" step="10"></label>
+      <button type="button" class="cb-run" id="mcRun">Run 20,000 attempts</button>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="mcPass">—</b><span class="tag nt">pass with zero edge</span></div>
+      <div class="parts">
+        <span>90% interval</span><b id="mcCI">—</b>
+        <span>Breach with zero edge (daily / max)</span><b id="mcBr">—</b>
+        <span>Pass as traded</span><b id="mcAs">—</b>
+        <span>Attempts per pass, zero edge</span><b id="mcPer">—</b>
+        <span>Median trading days to pass</span><b id="mcMed">—</b>
+        <span>Check D5 (daily odds ≤ 10% at the 90% top)</span><b id="mcD5">—</b>
+        <span>Fees per pass at zero edge (guide arithmetic)</span><b id="mcCost">—</b>
+      </div>
+      <div class="cb-stack"><span>As traded</span><div id="mcBarA"></div></div>
+      <div class="cb-stack"><span>With zero edge</span><div id="mcBarZ"></div></div>
+      <p class="sub" id="mcSub">Average example trade: — · zero edge shifts every trade by — bp.</p>
+    </div>
+  </div>
+  <div class="call ex"><b class="t">What the defaults show</b><p>At 1% risk, 3 trades a day, 2-step · static gives about 37% at zero edge, roughly 3 attempts per pass. Switch to 1-step · end-of-day trailing: its 3% daily limit is nearly three full losses, so the daily breach share jumps and check D5 fails. Raise the risk to 2% on 2-step · static: three losses in a day exceed 5% and daily breaches dominate.</p></div>
+  <div class="call warn"><b class="t">Fixed % of a growing balance</b><p>Returns compound: a 1% risk on a balance of 108,000 is $1,080, while the daily limit stays $3,000 or $5,000 of the initial capital. As the account grows, the same % risk uses more of a fixed daily limit. This is in the tab’s model too.</p></div>
+</section>
+
+<section class="ch" id="decide">
+  <div class="ch-h"><span class="n">19</span><h3>Before you pay for a real challenge</h3></div>
+  <p>The tab is built around one decision. A routine that uses every part of it:</p>
+  <ol class="tl">
+    <li><span class="ph">Rules</span><div><b>Model the exact challenge</b><span>Pick the closest preset, or copy the firm’s current page into <b>+ Use my firm’s current rules…</b>. Check the day reset time zone.</span></div></li>
+    <li><span class="ph">Data</span><div><b>30 trades over 10 days, at least</b><span>Your own closed trades, with stops, at the size you mean to use.</span></div></li>
+    <li><span class="ph">Checks</span><div><b>Clear every “Not ready” reason</b><span>Stops on ≥ 95% of trades, size within half the daily limit, few tilt trades, no day past the limit, daily odds ≤ 10%.</span></div></li>
+    <li><span class="ph">Sizing</span><div><b>Try the what-if risks</b><span>Compare As traded with 0.25% / 0.5% / 1%. Pick the size whose zero-edge daily breach share is small.</span></div></li>
+    <li><span class="ph">Practice</span><div><b>Run a practice attempt</b><span>Until it passes, or runs 10 trading days without a breach (check D6).</span></div></li>
+    <li><span class="ph">Price</span><div><b>Read the zero-edge line</b><span>“About N paid attempts per pass” × the fee is what a pass costs you if you have no edge.</span></div></li>
+  </ol>
+  <div class="call ex"><b class="t">Worked example · the price of a pass</b><p>Borderline, zero-edge pass 25% (90% interval 15%–36%). That is about 4 paid attempts per pass. At a $500 fee that is about $2,000 of fees per pass at zero edge, and the interval says it could be 3 to 7 attempts. If you do have an edge, the As traded row is your upside; you have not proven it yet.</p></div>
+  <div class="mx">
+    <div class="c"><div class="s">No verdict yet<div class="tags"><span class="tag nt">12 / 30 trades</span></div></div><div class="m">Too little of your own data.</div><div class="u">Keep trading your plan; a verdict on 12 trades would be noise.</div></div>
+    <div class="c"><div class="s">Not ready: daily odds<div class="tags"><span class="tag dn">D5</span></div></div><div class="m">At your sizing, bad days break the daily limit too often.</div><div class="u">Try a smaller what-if risk; then trade that size in practice.</div></div>
+    <div class="c"><div class="s">Not ready: no stops<div class="tags"><span class="tag dn">D1</span></div></div><div class="m">More than 5% of trades without a stop.</div><div class="u">One unstopped loss can end a paid attempt; the ticket warns on each one.</div></div>
+    <div class="c"><div class="s">Not ready: practice<div class="tags"><span class="tag dn">D6</span></div></div><div class="m">No practice attempt on these rules survived yet.</div><div class="u">Start one. It is free.</div></div>
+    <div class="c"><div class="s">Borderline, wide interval<div class="tags"><span class="tag nt">5%–60%</span></div></div><div class="m">A few days decide everything.</div><div class="u">More trading days narrow it before you pay.</div></div>
+    <div class="c"><div class="s">Practice passed<div class="tags"><span class="tag up">✓ Passed</span></div></div><div class="m">Your risk control held on that path.</div><div class="u">Look at the odds again; one pass is one path.</div></div>
+  </div>
+  <div class="call warn"><b class="t">The firm’s challenge is not this tab</b><p>Firms differ in fills, spreads, commissions, news rules, weekend holding and how they read their own limits. The tab models the mechanics stated in the rules and nothing else.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Caveats, every value and message, the words.</p></div></div>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">20</span><h3>Limits and caveats</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Generic presets</h5><p>Readings of published rules at a date, with notes where the text was ambiguous. Not any firm’s terms.</p></div>
+    <div class="card"><h5>Trades one at a time</h5><p>The odds play your trades in sequence; overlapping positions are not modelled, and days are independent of each other.</p></div>
+    <div class="card"><h5>Drawdown inside trades</h5><p>Measured on checks 250 ms apart; older trades without it understate breach odds (the card says so).</p></div>
+    <div class="card"><h5>Your past, resampled</h5><p>The model only re-orders days you already had. A kind of day you never had cannot appear.</p></div>
+    <div class="card"><h5>Gaps</h5><p>A position on a closed market is closed at its next open after a breach, at that price; a gap counts against or for it.</p></div>
+    <div class="card"><h5>Not advice</h5><p>The odds describe sizing and discipline. They are not a forecast or financial advice.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">21</span><h3>All values and messages</h3></div>
+  <h4>Thresholds</h4>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Warnings</td><td class="mono">50% and 80% of each room, once per trading day and rule</td></tr>
+      <tr><td>Cool-down</td><td>after 80% of the daily room, the tilt guard’s cool-down (15 min by default): every new trade gets a pre-mortem</td></tr>
+      <tr><td>Ticket block</td><td class="mono">order risk + open and pending risk ≥ room</td></tr>
+      <tr><td>Ticket warning / pre-mortem</td><td class="mono">no stop, or risk ≥ 50% of room</td></tr>
+      <tr><td>Speed cap</td><td class="n">60× during an attempt</td></tr>
+      <tr><td>Verdict data</td><td class="mono">≥ 30 trades, ≥ 10 trading days</td></tr>
+      <tr><td>Monte Carlo</td><td class="mono">200 resamples × 100 attempts; 90% interval = 5th–95th percentile</td></tr>
+      <tr><td>Risk per trade options</td><td class="mono">As traded · 0.25% · 0.5% · 1% · 2%</td></tr>
+      <tr><td>Horizon options</td><td class="mono">20 · 60 · 120 trading days (per phase)</td></tr>
+      <tr><td>D1 · D2 · D3</td><td class="mono">≥ 95% with stop · ≥ 95% within size · ≤ 5% tilt or after-loss</td></tr>
+      <tr><td>D5 · D6</td><td class="mono">daily breach 90% top ≤ 10% · practice ≥ 10 days or passed</td></tr>
+      <tr><td>Log</td><td class="n">last 20 attempts</td></tr>
+      <tr><td>Phases</td><td class="n">1–3 (custom form: 1–2)</td></tr>
+    </tbody>
+  </table>
+  <h4>Messages</h4>
+  <table class="g-t">
+    <thead><tr><th>Toast title</th><th>Body</th></tr></thead>
+    <tbody>
+      <tr><td>Practice attempt started</td><td>&lt;rules&gt;: equity is checked on every market update.</td></tr>
+      <tr><td>Attempt not started</td><td>The reason (open positions, pending orders, zero balance, an attempt already running).</td></tr>
+      <tr><td>Challenge: 50% of the daily loss room used</td><td>Room left $… before the daily loss limit. (Same for max, and 80% of max.)</td></tr>
+      <tr><td>Challenge: 80% of today’s loss limit used</td><td>Room left $…. For 15 min every new trade gets a pre-mortem.</td></tr>
+      <tr><td>Target reached</td><td>Still needed: … · Limits still apply. (or Phase complete.)</td></tr>
+      <tr><td>Phase 1 passed in 5 trading days</td><td>Phase 2 starts now as a fresh account of the initial capital ($100,000): your phase 1 profit does not count toward it. Target +5% ($5,000), same limits.</td></tr>
+      <tr><td>All phases passed</td><td>A pass shows your risk control held on this path. It is not evidence of an edge.</td></tr>
+      <tr><td>Challenge breached — daily loss limit</td><td>Equity $… reached the floor $…. 2 open positions closed. The attempt is over.</td></tr>
+      <tr><td>Challenge stop-out completed</td><td>1 position closed at the market open after the breach.</td></tr>
+      <tr><td>Speed capped at 60× during a challenge attempt</td><td>Rules are checked every 250 ms; at 300× that is 75 market seconds between checks …</td></tr>
+      <tr><td>Custom rules saved</td><td>The name.</td></tr>
+      <tr><td>Not changed — read-only tab</td><td>The challenge belongs to the account open in another tab. Use “Take over here” to change it in this tab.</td></tr>
+      <tr><td>Challenge not started / not stopped / settings not saved</td><td>The execution server refused, with its reason.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">22</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Prop-firm challenge</dt><dd>A paid evaluation: reach a profit target within loss limits to be offered a funded account.</dd>
+    <dt>Initial capital</dt><dd>The balance at the start of the attempt; every % in the rules applies to it.</dd>
+    <dt>Phase</dt><dd>One stage of the evaluation; each later phase is a fresh account of the initial capital.</dd>
+    <dt>Equity</dt><dd>Balance plus floating P&amp;L and swap of open positions. The limits use it.</dd>
+    <dt>Closed balance</dt><dd>Balance from closed trades only. The target uses it, with no open positions.</dd>
+    <dt>Anchor</dt><dd>The day-start value the daily limit is measured from: the balance, or the higher of balance and equity.</dd>
+    <dt>Floor</dt><dd>The equity level that ends the attempt when touched.</dd>
+    <dt>Room</dt><dd>Equity minus the higher floor: the loss you can still take.</dd>
+    <dt>High-water mark</dt><dd>The highest balance or equity a trailing floor has followed so far.</dd>
+    <dt>Static / trailing</dt><dd>A floor fixed for the phase, or one that rises with the high-water mark (at day end or on every check).</dd>
+    <dt>Lock</dt><dd>“Floor stops at start balance”: a trailing floor stops rising there.</dd>
+    <dt>Trading day</dt><dd>A day, in the rules’ reset, with at least one fill.</dd>
+    <dt>Consistency</dt><dd>A cap on the best day’s share of total profit; not a breach.</dd>
+    <dt>MAE / MFE</dt><dd>The worst and best floating P&amp;L reached during a trade.</dd>
+    <dt>Bootstrap</dt><dd>Resampling your own data with replacement to see how much a result depends on chance.</dd>
+    <dt>Zero edge</dt><dd>Your trades with their average return removed, so the average trade makes nothing.</dd>
+    <dt>90% interval</dt><dd>The 5th to 95th percentile of the pass rate across the 200 resamples.</dd>
+    <dt>Pre-mortem</dt><dd>The prompt before a flagged trade that asks you to imagine it lost and say why.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="related">
+  <div class="ch-h"><span class="n">23</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <a class="card g-link" href="lab.html"><h5>Risk Lab ›</h5><p>The drawdown a win rate, a reward:risk and a risk per trade imply over many trades; its <b>Challenge odds on my trades</b> button opens this tab.</p></a>
+    <a class="card g-link" href="vol.html"><h5>Volatility ›</h5><p>Stops outside normal noise and sizes that make each stop cost the risk % you chose: the inputs of every room calculation here.</p></a>
+    <a class="card g-link" href="corr.html"><h5>Correlation ›</h5><p>Correlated positions hit their stops together: two 1% trades on near-identical pairs use the daily room like one 2% trade.</p></a>
+    <a class="card g-link" href="calc.html"><h5>Calculators ›</h5><p>Position size and pip value for a given stop and risk.</p></a>
+  </div>
+  <p>Inside the terminal: <b>Coach › Behaviour</b> (the tilt guard, the pre-mortem and the trade warnings the checks count, reached from <b>Review in Behaviour</b>) and <b>Coach › Journal</b> (the closed trades the odds use).</p>
+</section>
+
+<p class="g-foot">tradeBerry · Challenge guide. Examples use the tab’s own arithmetic on example inputs; prop firms are named only where the code names them, with no endorsement. Nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* Room ladder: the same arithmetic as chFloors / chOrderBlock / chFlag in challenge.js (static floor, or a trailing
+   floor before any new high-water mark; base 'initial'; flat at the day start, so both anchors equal the balance). */
+(function () {
+  const PR = { '2s-static': { d: 5, m: 10 }, '1s-eod': { d: 3, m: 10 }, '2s-pdays': { d: 5, m: 10 }, intraday: { d: null, m: 6 } };
+  const $ = id => document.getElementById(id), v = id => Math.max(0, +$(id).value || 0);
+  const usd = x => (x < 0 ? '−$' : '$') + Math.abs(Math.round(x)).toLocaleString('en-US');
+  function draw() {
+    const p = PR[$('rmP').value], cap = v('rmC'), r = v('rmR') / 100 * cap, earlier = v('rmE'), today = v('rmT');
+    const bal0 = cap - earlier, dAmt = p.d != null ? p.d / 100 * cap : Infinity, dF = p.d != null ? bal0 - dAmt : -Infinity;
+    const mAmt = p.m / 100 * cap, mF = cap - mAmt, floor = Math.max(dF, mF), which = dF >= mF ? 'daily' : 'max';
+    let eq = bal0 - today, n = 0, rows = '';
+    $('rmDF').textContent = p.d != null ? usd(dF) : 'no daily limit';
+    $('rmMF').textContent = usd(mF);
+    $('rmRoom').textContent = eq <= floor ? 'breached' : usd(eq - floor) + ' (' + which + ')';
+    $('rmRisk').textContent = usd(r);
+    for (let j = 0; j < 40 && eq > floor && r > 0; j++) {
+      const room = eq - floor, used = p.d != null ? Math.max(0, (bal0 - eq) / dAmt) : null;
+      const st = r >= room ? '<b class="dn">✕ Blocked</b>' : r >= .5 * room ? '<span class="wn">▲ Pre-mortem</span>' : '● Accepted';
+      if (j < 14) rows += `<tr><td>#${j + 1}</td><td>${usd(room)}</td><td>${used == null ? '—' : Math.round(used * 100) + '%'}</td><td>${st}</td></tr>`;
+      if (r >= room) break;
+      n++; eq -= r;
+    }
+    if (r <= 0) rows = '<tr><td colspan="4">Enter a risk above zero.</td></tr>';
+    $('rmN').textContent = eq <= floor && n === 0 ? '0' : String(n);
+    $('rmLad').innerHTML = rows;
+  }
+  document.querySelectorAll('#rmcalc input, #rmcalc select').forEach(i => i.addEventListener('input', draw)); draw();
+})();
+
+/* Pass odds: chHash, chRng, chMaxFloor, chPath, chPctl, chSampleOf and chSimRunner copied from challenge.js.
+   Only the example day blocks (exDays) are the guide's own: they stand in for your closed trades. */
+(function () {
+  const PRE = {
+    '2s-static': { id: '2s-static', pv: 1, phases: [{ target: 10 }, { target: 5 }], daily: { pct: 5, base: 'initial', anchor: 'balance' }, max: { pct: 10, mode: 'static', trailOn: 'balance', lock: false }, minDays: 4, profitDays: null, consistency: null },
+    '1s-eod': { id: '1s-eod', pv: 1, phases: [{ target: 10 }], daily: { pct: 3, base: 'initial', anchor: 'balance' }, max: { pct: 10, mode: 'eod', trailOn: 'balance', lock: true }, minDays: 0, profitDays: null, consistency: 50 },
+    '2s-pdays': { id: '2s-pdays', pv: 1, phases: [{ target: 10 }, { target: 5 }], daily: { pct: 5, base: 'initial', anchor: 'maxBalEq' }, max: { pct: 10, mode: 'static', trailOn: 'balance', lock: false }, minDays: 0, profitDays: { n: 3, minPct: .5 }, consistency: null },
+    intraday: { id: 'intraday', pv: 1, phases: [{ target: 10 }], daily: null, max: { pct: 6, mode: 'intraday', trailOn: 'equity', lock: true }, minDays: 0, profitDays: null, consistency: 30 }
+  };
+  const chHash = s => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  function chRng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const chMaxFloor = (mx, e0, hw, cap = e0) => { const amt = mx.pct / 100 * cap; if (mx.mode === 'static') return e0 - amt; const f = hw - amt; return mx.lock ? Math.min(f, e0) : f; };
+  function chPath(pool, R, H, rnd) {
+    const dl = R.daily, mx = R.max;
+    let E = 1, e0 = 1, hw = 1, total = 0;
+    for (let ph = 0; ph < R.phases.length; ph++) {
+      const tgt = e0 * (1 + R.phases[ph].target / 100);
+      let pd = 0, best = 0, done = false;
+      for (let d = 1; d <= H && !done; d++) {
+        const day = pool[(rnd() * pool.length) | 0], bal0 = E;
+        const dF = dl ? bal0 - dl.pct / 100 * (dl.base === 'initial' ? e0 : bal0) : -Infinity;
+        for (const tr of day) {
+          if (mx.mode === 'intraday' && mx.trailOn === 'equity') hw = Math.max(hw, E * (1 + tr.mfe));
+          let mF = chMaxFloor(mx, e0, hw), low = E * (1 + tr.mae);
+          if (low <= dF || low <= mF) return [low <= dF && (low > mF || dF >= mF) ? 1 : 2, total + d];
+          E *= 1 + tr.ret;
+          if (mx.mode === 'intraday') { hw = Math.max(hw, E); mF = chMaxFloor(mx, e0, hw); }
+          if (E <= dF || E <= mF) return [E <= dF && (E > mF || dF >= mF) ? 1 : 2, total + d];
+        }
+        const dp = E - bal0; best = Math.max(best, dp);
+        if (R.profitDays && dp >= R.profitDays.minPct / 100 * e0) pd++;
+        if (mx.mode === 'eod') hw = Math.max(hw, E);
+        if (E >= tgt && d >= R.minDays && pd >= (R.profitDays ? R.profitDays.n : 0) && (!R.consistency || (E - e0 > 0 && best <= R.consistency / 100 * (E - e0)))) {
+          total += d;
+          if (ph === R.phases.length - 1) return [0, total];
+          E = e0 = hw = 1; done = true;
+        }
+      }
+      if (!done) return [3, total + H];
+    }
+    return [3, total];
+  }
+  const chPctl = (a, q) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.max(0, Math.round(q * (s.length - 1))))] : 0; };
+  function chSampleOf(days, rules, horizon = 60) {
+    const all = days.flat(), n = all.length, mu = n ? all.reduce((s, x) => s + x.ret, 0) / n : 0;
+    const ds = days.map((a, i) => ({ k: 'd' + i, tr: a.map(x => ({ ret: x.ret, mae: Math.min(0, x.mae ?? Math.min(0, x.ret), x.ret), mfe: Math.max(0, x.mfe ?? Math.max(0, x.ret), x.ret) })) }));
+    for (const d of ds) d.tr0 = d.tr.map(x => { const r0 = x.ret - mu; return { ret: r0, mae: Math.min(x.mae, r0, 0), mfe: Math.max(x.mfe, r0, 0) }; });
+    return { ok: true, n, nDays: ds.length, days: ds, mu, sig: 'x:' + n + ':' + all.reduce((s, x) => s + x.ret, 0).toFixed(8) + ':' + rules.id + rules.pv + ':' + horizon };
+  }
+  function chSimRunner(sample, rules, opt, B = 200, P = 100) {
+    const seed = chHash(sample.sig), H = opt.horizon || 60, nD = sample.days.length, rnd = chRng(seed);
+    const V = { asis: sample.days.map(d => d.tr), zero: sample.days.map(d => d.tr0) };
+    const acc = {}; for (const v in V) acc[v] = { n: [0, 0, 0, 0], pb: [], bb: [], db: [], passDays: [] };
+    let b = 0;
+    return {
+      get done() { return b >= B; }, get progress() { return b / B; },
+      step(k) {
+        for (const z = Math.min(B, b + k); b < z; b++) {
+          const idx = Array.from({ length: nD }, () => (rnd() * nD) | 0);
+          for (const v in V) {
+            const pool = idx.map(i => V[v][i]), a = acc[v], c = [0, 0, 0, 0];
+            for (let p = 0; p < P; p++) { const [res, days] = chPath(pool, rules, H, rnd); c[res]++; if (res === 0) a.passDays.push(days); }
+            for (let i = 0; i < 4; i++) a.n[i] += c[i];
+            a.pb.push(c[0] / P); a.bb.push((c[1] + c[2]) / P); a.db.push(c[1] / P);
+          }
+        }
+      },
+      result() {
+        const out = { B, P, seed };
+        for (const v in V) {
+          const a = acc[v], N = B * P, f = a.n.map(x => x / N), pass = f[0];
+          out[v] = {
+            pass, daily: f[1], max: f[2], breach: f[1] + f[2], neither: f[3],
+            ci: { pass: [chPctl(a.pb, .05), chPctl(a.pb, .95)], breach: [chPctl(a.bb, .05), chPctl(a.bb, .95)], daily: [chPctl(a.db, .05), chPctl(a.db, .95)] },
+            medDays: a.passDays.length ? chPctl(a.passDays, .5) : null, perPass: pass > 0 ? 1 / pass : Infinity
+          };
+        }
+        return out;
+      }
+    };
+  }
+  // the guide's example trades, deterministic for the same inputs
+  function exDays(o) {
+    const rnd = chRng(chHash([o.nDays, o.perDay, o.win, o.rr, o.risk, o.adv, o.fav].join(':'))), r = o.risk / 100, days = [];
+    for (let d = 0; d < o.nDays; d++) {
+      const a = [];
+      for (let i = 0; i < o.perDay; i++) a.push(rnd() < o.win / 100 ? { ret: o.rr * r, mae: -o.adv * r, mfe: o.rr * r } : { ret: -r, mae: -r, mfe: o.fav * r });
+      days.push(a);
+    }
+    return days;
+  }
+  const chP = x => !Number.isFinite(x) ? '—' : x > 0 && x < .005 ? '<1%' : (x * 100).toFixed(0) + '%';
+  const chPerPass = z => z.pass < .01 ? 'fewer than 1 pass in 100 attempts' : `about ${Math.round(1 / z.pass)} paid attempts per pass`;
+  const $ = id => document.getElementById(id);
+  const num = (id, lo, hi) => Math.min(hi, Math.max(lo, +$(id).value || lo));
+  function bar(el, z) {
+    const seg = (cl, x, lab) => x > 0 ? `<i class="${cl}" style="width:${(x * 100).toFixed(2)}%">${x >= .08 ? (lab ? lab + ' ' : '') + chP(x) : ''}</i>` : '';
+    el.innerHTML = seg('p', z.pass, 'pass') + seg('n', z.neither, '') + seg('d', z.daily, 'daily') + seg('m', z.max, 'max');
+  }
+  let token = 0;
+  function run() {
+    const o = { nDays: Math.round(num('mcN', 10, 250)), perDay: Math.round(num('mcD', 1, 20)), win: num('mcW', 1, 99), rr: num('mcRR', .1, 10), risk: num('mcK', .05, 10), adv: num('mcA', 0, 1), fav: num('mcF', 0, 5) };
+    const R = PRE[$('mcP').value], H = +$('mcH').value, smp = chSampleOf(exDays(o), R, H), r = chSimRunner(smp, R, { horizon: H }), my = ++token, btn = $('mcRun');
+    btn.disabled = true;
+    const go = () => {
+      if (my !== token) return;
+      r.step(10);
+      if (!r.done) { btn.textContent = `Running 20,000 random attempts… ${Math.round(r.progress * 100)}%`; setTimeout(go, 0); return; }
+      const x = r.result(), z = x.zero, fee = Math.max(0, +$('mcFee').value || 0);
+      $('mcPass').textContent = chP(z.pass);
+      $('mcCI').textContent = chP(z.ci.pass[0]) + '–' + chP(z.ci.pass[1]);
+      $('mcBr').textContent = chP(z.breach) + ' (' + chP(z.daily) + ' / ' + chP(z.max) + ')';
+      $('mcAs').textContent = chP(x.asis.pass) + ' (90%: ' + chP(x.asis.ci.pass[0]) + '–' + chP(x.asis.ci.pass[1]) + ')';
+      $('mcPer').textContent = chPerPass(z);
+      $('mcMed').textContent = z.medDays != null ? String(z.medDays) : '—';
+      const d5 = !R.daily || z.ci.daily[1] <= .10;
+      $('mcD5').innerHTML = R.daily ? (d5 ? '✓ passes' : '<span class="dn">✕ fails</span>') + ' (' + chP(z.ci.daily[1]) + ')' : '✓ no daily limit';
+      $('mcCost').textContent = z.pass >= .01 ? '≈ $' + Math.round(fee / z.pass).toLocaleString('en-US') : 'more than 100 fees';
+      bar($('mcBarA'), x.asis); bar($('mcBarZ'), z);
+      $('mcSub').textContent = `Average example trade: ${(smp.mu * 100 >= 0 ? '+' : '−') + Math.abs(smp.mu * 100).toFixed(3)}% of equity · zero edge shifts every trade by ${(smp.mu * 1e4).toFixed(1)} bp. ${smp.n} trades over ${smp.nDays} days · seed ${x.seed}.`;
+      btn.disabled = false; btn.textContent = 'Run 20,000 attempts';
+    };
+    setTimeout(go, 0);
+  }
+  $('mcRun').addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

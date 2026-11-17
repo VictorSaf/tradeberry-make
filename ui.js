@@ -4,7 +4,7 @@
   const $q = (s, r = document) => r.querySelector(s), $$q = (s, r = document) => [...r.querySelectorAll(s)];
 
   /* ---- page heading + skip links ---- */
-  const h1 = document.createElement('h1'); h1.className = 'sr-only'; h1.textContent = 'trade.Berry trading terminal'; ($q('header.topbar') || document.body).prepend(h1);
+  const h1 = document.createElement('h1'); h1.className = 'sr-only'; h1.textContent = 'tradeBerry trading terminal'; ($q('header.topbar') || document.body).prepend(h1);
   const dock = $q('.panel.dock'); if (dock) { const h2 = document.createElement('h2'); h2.className = 'sr-only'; h2.textContent = 'Trading tools'; dock.prepend(h2); }
   const skip = document.createElement('nav'); skip.className = 'skip'; skip.setAttribute('aria-label', 'Skip links');
   skip.innerHTML = '<a href="#chart">Skip to chart</a><a href="#tkLots">Skip to order ticket</a><a href="#tabs">Skip to tools</a>';
@@ -23,7 +23,7 @@
 
   /* ---- accessible names for every form control (static and rendered later) ---- */
   const NAMES = {
-    speedSel: 'Simulation speed', levSel: 'Leverage', wlSearch: 'Filter markets', qLots: 'Quick trade size in lots',
+    speedSel: 'Market speed', levSel: 'Leverage', wlSearch: 'Filter markets', qLots: 'Quick trade size in lots',
     tkPrice: 'Entry price', tkLots: 'Order size in lots', tkRisk: 'Risk per trade, percent of equity', tkSL: 'Stop loss distance in pips',
     tkTP: 'Take profit distance in pips', tkRiskUsd: 'Risk per trade, dollars', tkSlPx: 'Stop loss price', tkSlAtr: 'Stop loss distance, multiples of the hourly ATR', tkTpPx: 'Take profit price', tkTpR: 'Take profit, multiples of the stop distance', tkTrail: 'Trailing stop distance in pips', useSL: 'Use stop loss', useTP: 'Use take profit', useTrail: 'Use trailing stop',
     alSym: 'Alert pair', alCond: 'Alert condition', alPx: 'Alert price', cpSym: 'Position size pair', cpAcc: 'Account size', cpRisk: 'Risk percent',
@@ -143,15 +143,15 @@
   if (!rail || !dock) { window.wsApply = () => {}; window.wsState = () => ({}); return; } // no rail/dock markup: no resizable workspace, dependants still start
   const PRESETS = {
     // each preset is a different workstation: arrangement + chart setup, not only panel sizes
-    standard: { label: 'Standard — balanced', wl: 288, rail: 332, dock: 290, mirror: false, mode: '', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false, isw: 'iDom',
+    standard: { label: 'Standard — balanced', wl: 288, rail: 360, dock: 290, mirror: false, mode: '', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false, isw: 'iDom',
       hint: '15m chart, ticket with a switchable panel, positions below.' },
     scalping: { label: 'Scalping — ladder + 1m', wl: 240, rail: 600, dock: 180, mirror: false, mode: 'scalp', tf: 1, charts: '1', ind: { ema20: true, ema50: false, bb: false, rsi: false }, tkMore: true,
       hint: '1-minute chart, full-height depth ladder beside the ticket, click a level to place a limit. No RSI pane — more room for price.' },
     analysis: { label: 'Analysis — 4 charts', wl: 288, rail: 300, dock: 220, mirror: false, mode: '', tf: 60, charts: '4', ind: { ema20: true, ema50: true, bb: true, rsi: true }, tkMore: false, isw: 'iStr', iswShow: true,
       hint: 'Four 1H charts of the most related instruments (favourites and FX), Bollinger bands, G8 currency strength in the side panel.' },
-    focus: { label: 'Chart focus — no panels', wl: 0, rail: 332, dock: 150, mirror: false, mode: 'focus', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false,
+    focus: { label: 'Chart focus — no panels', wl: 0, rail: 360, dock: 150, mirror: false, mode: 'focus', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false,
       hint: 'Chart fills the screen. Trade from the buy/sell box on the chart; positions stay in a thin strip below.' },
-    mirror: { label: 'Mirrored — ticket left', wl: 288, rail: 332, dock: 290, mirror: true, mode: '', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false, isw: 'iDom',
+    mirror: { label: 'Mirrored — ticket left', wl: 288, rail: 360, dock: 290, mirror: true, mode: '', tf: 15, charts: '1', ind: { ema20: true, ema50: true, bb: false, rsi: true }, tkMore: false, isw: 'iDom',
       hint: 'Standard with the ticket on the left and the watchlist on the right.' }
   };
   const LIM = { wl: [240, 420], rail: [280, 640], dock: [120, 640] };
@@ -165,13 +165,15 @@
     if (p.ind) { for (const [k, v] of Object.entries(p.ind)) S.set.ind[k] = v; document.querySelectorAll('#indSeg button').forEach(b => b.classList.toggle('on', !!S.set.ind[b.dataset.ind])); if (typeof applyIndVis === 'function') applyIndVis(); if (typeof legend === 'function') legend(null); const n = document.getElementById('indN'); if (n) n.textContent = Object.values(S.set.ind).filter(Boolean).length; }
     if (p.isw) { if (window.iswOpen) { iswOpen(p.isw); if (!p.iswShow && window.iswFold) iswFold(true); } else document.querySelector(`#isw button[data-i="${p.isw}"]`)?.click(); } // a preset picks its market panel; only Analysis opens it beside the ticket
     const more = document.getElementById('tkMore'); if (more && p.tkMore != null) more.open = !!p.tkMore;
-    // the step-by-step ticket (ticket.js): a preset that opened More opens the Check step of a ticket in progress
-    if (p.tkMore && typeof TKS === 'object' && TKS.started && typeof tkStepGo === 'function') tkStepGo(5);
+    // the one-form ticket (ticket.js): a preset that opened More opens Costs & checks
+    const chk = document.querySelector('.ticket .tk-sec[data-sec=check]'); if (chk && p.tkMore != null) chk.open = !!p.tkMore;
     if (typeof setView === 'function' && typeof currentView === 'function' && currentView() !== 'trade') setView('trade');
   }
   const desk = () => innerWidth > 1080 && !document.body.classList.contains('mnav-on');
   S.set.layouts = Array.isArray(S.set.layouts) ? S.set.layouts : [];
   let cur = { ...PRESETS.standard, ...(S.set.ws || {}) };
+  // v15.10: the one-form ticket starts at 360 px; a column still on the old 332 px default moves with it
+  if (cur.rail === 332 && cur.mode !== 'scalp') cur.rail = PRESETS.standard.rail;
   // panels on demand (see pvBuild below): which panels show, kept per browser (a display preference, not account state)
   const PV_KEY = 'tb.panels', PV_DEF = { wl: true, tk: true, dock: 'auto', qt: true };
   let pv = (() => { try { const o = JSON.parse(localStorage.getItem(PV_KEY) || '{}'); return { ...PV_DEF, ...(o && typeof o === 'object' ? o : {}) }; } catch (e) { return { ...PV_DEF }; } })();
@@ -184,11 +186,14 @@
   const mkBeside = () => !rail.classList.contains('isw-fold') && pv.tk;
   const railStack = () => desk() && cur.mode !== 'scalp' && !g.classList.contains('pv-railmin') && mkBeside() && innerWidth < 1440;
   const railExt = () => !desk() || cur.mode === 'scalp' || g.classList.contains('pv-railmin') ? 0 : 40 + (mkBeside() && !railStack() ? 268 : 0);
+  // the default ticket width (360) is for 1520 px and up; below, the default stays at 332 so the chart and the dock keep
+  // their room (a width the user dragged is kept as it is)
+  const railOwn = () => cur.rail === PRESETS.standard.rail && innerWidth < 1520 ? 332 : cur.rail;
   function applyVars() {
     g.classList.add('ws'); g.classList.toggle('rail-stack', railStack()); g.classList.toggle('ws-mirror', cur.mirror); g.classList.toggle('ws-nowl', !cur.wl);
     g.classList.toggle('ws-scalp', cur.mode === 'scalp'); g.classList.toggle('ws-focus', cur.mode === 'focus');
-    document.documentElement.style.setProperty('--ws-rail-eff', (cur.mode === 'focus' ? 0 : cur.rail + railExt()) + 'px');
-    g.style.setProperty('--wl-w', (cur.wl || 0) + 'px'); g.style.setProperty('--rail-w', (cur.rail + railExt()) + 'px'); g.style.setProperty('--dock-h', cur.dock + 'px'); document.documentElement.style.setProperty('--ws-rail', cur.rail + 'px'); document.documentElement.style.setProperty('--ws-dock', cur.dock + 'px');
+    document.documentElement.style.setProperty('--ws-rail-eff', (cur.mode === 'focus' ? 0 : railOwn() + railExt()) + 'px');
+    g.style.setProperty('--wl-w', (cur.wl || 0) + 'px'); g.style.setProperty('--rail-w', (railOwn() + railExt()) + 'px'); g.style.setProperty('--dock-h', cur.dock + 'px'); document.documentElement.style.setProperty('--ws-rail', railOwn() + 'px'); document.documentElement.style.setProperty('--ws-dock', cur.dock + 'px');
   }
   function apply(ws, name) {
     cur = { wl: ws.wl, rail: ws.rail, dock: ws.dock, mirror: !!ws.mirror, mode: ws.mode || '' };
@@ -196,7 +201,7 @@
     if (g.classList.contains('dock-big') && name) toggleDock(false);
     if (name !== undefined) g.classList.remove('dock-held'); // a preset or a saved layout: the empty dock folds again
     S.set.ws = cur; if (name !== undefined) S.set.wsName = name; save(); sync(); position();
-    setTimeout(() => { if (typeof reqOverlay === 'function') reqOverlay(); if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') runLab(); if (activeTab === 'bt' && typeof drawBtCurve === 'function') drawBtCurve(); }, 80);
+    setTimeout(() => { if (typeof reqOverlay === 'function') reqOverlay(); if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') redrawLab(); if (activeTab === 'bt' && typeof drawBtCurve === 'function') drawBtCurve(); }, 80);
   }
 
   /* header picker — a native select keeps it keyboard and screen-reader friendly */
@@ -276,6 +281,7 @@
     h.setAttribute('role', 'separator'); h.setAttribute('tabindex', '0'); h.setAttribute('aria-orientation', dir === 'col' ? 'vertical' : 'horizontal');
     h.setAttribute('aria-label', { wl: 'Resize watchlist', rail: 'Resize order ticket column', dock: 'Resize bottom panel' }[k]);
     h.setAttribute('aria-valuemin', LIM[k][0]); h.setAttribute('aria-valuemax', LIM[k][1]);
+    if (k === 'rail') h.title = 'Drag to widen or narrow the order ticket (double-click: back to 360 px)';
     g.appendChild(h); return h; // inside <main>: fixed-positioned, so it takes no grid cell
   });
   function position() {
@@ -354,9 +360,12 @@
      its tab strip); the quick-trade box on the chart. With New order hidden the market panels take the whole rail;
      with both hidden the rail is a 28 px strip of labelled tabs. Nothing is removed: a hidden panel is one click away.
      Desktop only (the phone has its own navigation). A preset shows every panel again. */
-  const MK = [['iDom', 'Depth'], ['iExp', 'Exposure'], ['iStr', 'Strength'], ['iSes', 'Sessions']];
+  const MK = [['iDom', 'Depth'], ['iStats', 'Stats']];
   const mkShown = () => !(window.iswFolded && iswFolded());
   function pvSave() { try { localStorage.setItem(PV_KEY, JSON.stringify(pv)); } catch (e) { /* private mode: lasts this visit */ } }
+  // one window at a time in the rail (Victor, 31.10.2026): New order or one market panel
+  const depthOpen = () => !!rail.querySelector('.intel.isw-on') && !rail.classList.contains('isw-fold');
+  const depthOff = () => { if (desk() && depthOpen() && window.iswFold) iswFold(true); };
   function pvSet(o, mk) {
     pv = { ...pv, ...o }; pvSave();
     if (mk != null && window.iswFold) iswFold(!mk);
@@ -367,6 +376,8 @@
     g.classList.toggle('pv-nowl', !pv.wl && !!cur.wl);
     g.classList.toggle('pv-notk', !pv.tk);
     g.classList.toggle('pv-railmin', !pv.tk && !mk);
+    const tkb = document.querySelector('.rail>.pv-tkbar');
+    if (tkb) { tkb.setAttribute('aria-pressed', String(!!pv.tk)); tkb.title = pv.tk ? 'Hide New order' : 'Show New order'; }
     g.classList.toggle('pv-dockmin', dockFolded()); // by choice, or while empty (Folds while empty)
     g.classList.toggle('pv-noqt', !pv.qt);
     if (pv.dock === 'open') g.classList.add('dock-held'); // always open: an empty Positions tab does not fold it
@@ -394,13 +405,13 @@
       + `<div class="pv-edge pv-edge-r" role="group" aria-label="Hidden panels"><button type="button" data-pv-show="tk" title="Show the order ticket"><span>New order</span></button>${MK.map(([id, l]) => `<button type="button" data-pv-mk="${id}" title="Show ${l}"><span>${l}</span></button>`).join('')}</div>`);
     // New order's own hide button at the right of its title band (artboard 2: ›); the edge band brings it back
     const tph = document.querySelector('.rail>.ticket>.ph');
-    if (tph && !tph.querySelector('.tk-hide')) tph.insertAdjacentHTML('beforeend', `<button type="button" class="tk-hide" data-pv-hide="tk" aria-label="Hide New order" title="Hide New order (the band at the top of the rail, or Panels, brings it back)">›</button>`);
+    if (tph && !tph.querySelector('.tk-hide')) tph.insertAdjacentHTML('beforeend', `<button type="button" class="tk-hide" data-pv-hide="tk" aria-label="Hide New order" title="Hide New order (the New order tab on the right edge, or Panels, brings it back)"><span>Hide</span><i aria-hidden="true">›</i></button>`);
     // the dock's own hide / show button, beside Expand panel
     const exp = document.getElementById('dockBtn');
     if (exp && !document.getElementById('dockMin')) exp.parentElement.insertAdjacentHTML('beforeend', `<button type="button" class="ghost sm" id="dockMin" aria-controls="tabs"></button>`); // last in the strip, as it is drawn: the Tab order follows the eye
     // the floating P&L on the dock's strip (a copy of the header figure), so a folded dock still says what is at stake
     if (exp && !document.getElementById('dockPnl')) {
-      exp.parentElement.insertAdjacentHTML('afterbegin', `<span class="dock-pnl dock-metric" aria-label="Floating P&amp;L"><small>Open P&amp;L</small><b id="dockPnl" class="mono">—</b></span><span class="dock-pnl dock-metric"><small>Margin used</small><b id="dockMargin" class="mono">—</b></span><span class="dock-pnl dock-metric"><small>Drawdown</small><b id="dockDd" class="mono">—</b></span>`);
+      exp.parentElement.insertAdjacentHTML('afterbegin', `<span class="dock-pnl" aria-label="Floating P&amp;L">P&amp;L <b id="dockPnl" class="mono">—</b></span>`);
       const src = document.getElementById('mPnl'), dst = document.getElementById('dockPnl');
       const copy = () => { if (src && dst) { dst.textContent = src.textContent; dst.className = 'mono ' + [...src.classList].filter(c => c === 'up' || c === 'dn').join(' '); } };
       if (src) new MutationObserver(copy).observe(src, { childList: true, characterData: true, subtree: true, attributes: true }); copy();
@@ -440,7 +451,9 @@
       menu.querySelector('[data-pv-all]').addEventListener('click', () => { g.classList.remove('dock-held'); pvSet({ ...PV_DEF }, true); });
     }
     document.addEventListener('click', e => {
-      const sh = e.target.closest('[data-pv-show]'); if (sh) { pvSet({ [sh.dataset.pvShow]: true }); return; }
+      // New order in the tab column shows and hides the ticket (on / off); the other edges only show
+      const tb = e.target.closest('.rail>.pv-tkbar'); if (tb && desk()) { if (!pv.tk) depthOff(); pvSet({ tk: !pv.tk }); return; }
+      const sh = e.target.closest('[data-pv-show]'); if (sh) { if (sh.dataset.pvShow === 'tk') depthOff(); pvSet({ [sh.dataset.pvShow]: true }); return; }
       const hd = e.target.closest('[data-pv-hide]'); if (hd) { pvSet({ [hd.dataset.pvHide]: false }); const bar = document.querySelector('.rail>.pv-tkbar'); if (bar) bar.focus({ preventScroll: true }); return; }
       const mk = e.target.closest('[data-pv-mk]'); if (mk) { if (window.iswOpen) iswOpen(mk.dataset.pvMk); pvApply(); return; }
       if (e.target.closest('#dockMin')) { if (dockFolded()) dockShow(); else { g.classList.remove('dock-held'); pvSet({ dock: 'min' }); } return; }
@@ -449,7 +462,8 @@
       if (e.target.closest('#tabs button[data-tab]')) { const was = pv.dock === 'min'; setTimeout(() => { if (was) dockShow(); else pvApply(); }, 0); } // folded by choice: a tab opens it; folded while empty: only an empty Positions tab keeps it folded
     });
     // the rail's own fold (a click on the open market tab) changes what the rail shows
-    const isw = document.getElementById('isw'); if (isw) isw.addEventListener('click', () => setTimeout(pvApply, 0));
+    // one window at a time: opening a market panel hides the ticket, showing the ticket closes the panel
+    const isw = document.getElementById('isw'); if (isw) isw.addEventListener('click', () => setTimeout(() => { if (desk() && depthOpen() && pv.tk) { pv = { ...pv, tk: false }; pvSave(); } pvApply(); }, 0));
     pvApply();
   }
   (function pvInit() { if (!window.iswFold || !document.getElementById('dockBtn')) return setTimeout(pvInit, 200); pvBuild(); })();
@@ -471,25 +485,27 @@
   if (typeof S === 'undefined' || !S || !S.set || !window.wsApply) return setTimeout(onboarding, 150);
   const phone = () => document.body.classList.contains('mnav-on');
   const go = v => { if (phone() && window.mnavGo) mnavGo(v); };
+  // the account type, said when the step shows (not when the tour is built): the same words as the status-bar flag and
+  // the account menu (persist.js acctKind) for a demo, a live, a not-yet-known or a browser account
+  const acctSay = () => { const k = typeof acctKind === 'function' ? acctKind() : null; return k && k.tour ? ' ' + k.tour : ''; };
   const DESK = [
-    ['.panel.watch', 'Markets', 'Pick an instrument to load it everywhere: FX, indices, commodities, crypto and stocks. Prices are a simulation started from a broker-platform snapshot of 20 Oct 2026, zero drift since — practise freely, nothing is real money.'],
+    ['.panel.watch', 'Markets', () => 'Pick an instrument to load it everywhere: FX, indices, commodities, crypto and stocks.' + (Engine.feedOn ? ' Prices are live from the broker platform.' : '') + acctSay()],
     ['.panel.chartp', 'Chart', 'Drag the dashed SL / TP lines to adjust risk (or type them: Data, bottom right, lists every level with Edit), draw levels and trendlines, or split into 2 or 4 charts with the layout buttons.'],
-    ['.panel.ticket', 'Risk-first ticket', 'Size by lots or by % risk. Before you click, you see risk, reward : risk, spread cost and the break-even win rate.'],
-    ['#views', 'Workspaces', 'Trade is for execution. Markets is for discovery and monitoring. Research, Lab and Coach each get the full screen. Alt+1 … Alt+5 switches.'],
+    ['.panel.ticket', 'Risk-first ticket', 'Set the size in lots and tick SL and TP: before you click, the ticket shows the risk in money, reward : risk and the cost of the order.'],
+    ['#views', 'Workspaces', 'Trade is for execution. Monitor is a dense board of every quote. Research, Strategy Lab and Coach each get the full screen. Alt+1 … Alt+5 switches.'],
     ['#tabs', 'Positions & orders', 'Positions, orders, history, alerts and the journal sit at a fixed height under the chart — nothing resizes on its own. Drag the edge to change it.'],
-    ['#layoutSel', 'Layout and settings', 'The status bar holds speed, leverage and the layout: switch between Scalping, Analysis or Chart focus, drag any panel edge, then save your own.'],
     ['#cmdBtn', 'Command bar', 'Press ⌘K / Ctrl K and type an order such as “buy 1 eurusd sl 20 tp 40”, or jump to any tool.']
   ];
   const PHONE = [
     ['.mnav button[data-mv="chart"]', 'Chart', 'Long-press the chart to place a limit, stop or alert at that exact price. Drag SL / TP lines with your finger.', 'chart'],
     ['.mnav button[data-mv="trade"]', 'Trade', 'The risk-first ticket: size by % risk and see reward : risk before you commit. A short vibration confirms each fill.', 'trade'],
-    ['.mnav button[data-mv="markets"]', 'Markets', 'Every instrument with simulated prices (started from a platform snapshot, zero drift). Tap one to load it.', 'markets'],
+    ['.mnav button[data-mv="markets"]', 'Markets', () => (Engine.feedOn ? 'Every instrument with live platform prices. Tap one to load it.' : 'Every instrument. Tap one to load it.'), 'markets'],
     ['.mnav button[data-mv="portfolio"]', 'Portfolio', 'Open positions, pending orders and history. The badge counts what is open.', 'portfolio'],
     ['.mnav button[data-mv="tools"]', 'Tools', 'Backtester, Observatory, Behaviour coach and more. Swipe left or right anywhere to move between screens.', 'tools']
   ];
   let i = 0, steps = [], spot = null, card = null, opener = null;
   function place() {
-    const [sel, title, body] = steps[i]; const t = document.querySelector(sel);
+    const [sel, title, say] = steps[i]; const t = document.querySelector(sel), body = typeof say === 'function' ? say() : say;
     if (!t || !t.getClientRects().length) { return i < steps.length - 1 ? (i++, place()) : end(); }
     const r = t.getBoundingClientRect(), pad = 6;
     Object.assign(spot.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px' });
@@ -535,18 +551,27 @@
     spot.addEventListener('click', () => end());
     addEventListener('resize', place); show(0);
   };
+  // a step on screen when the account type changes is re-said in the new words
+  document.addEventListener('tb:acct-kind', () => { if (card) place(); });
 
   /* gentle, non-blocking invitation (session-scoped, like all state here) */
   let chip = null;
-  function hideChip() { if (chip) { chip.classList.add('out'); const c = chip; chip = null; setTimeout(() => c.remove(), 250); } }
+  // desktop: while the invitation shows, a 54 px lane above the status bar is reserved for it (the workspace gives the space back on dismiss)
+  const lane = on => { const sb = document.getElementById('statusbar'); document.body.style.setProperty('--tour-sb', (on && sb ? sb.offsetHeight : 0) + 'px'); document.body.classList.toggle('tour-lane', on); window.dispatchEvent(new Event('resize')); };
+  // the lane is given back after the fade-out, not on pointerdown: a layout shift between pointerdown and click would swallow the click on a bottom control
+  function hideChip() { if (chip) { chip.classList.add('out'); const c = chip; chip = null; setTimeout(() => { c.remove(); if (!chip) lane(false); }, 250); } }
   function offer() {
     if (S.set.tourSeen || S.history.length || S.positions.length || chip) return;
     chip = document.createElement('aside'); chip.className = 'tour-chip'; chip.setAttribute('aria-label', 'Getting started');
-    chip.innerHTML = '<span>New to trade.Berry?</span><button class="tour-go btn-pri">Take the 60-second tour</button><button class="tour-no" aria-label="Dismiss">×</button>';
+    chip.innerHTML = '<span>New to tradeBerry?</span><button class="tour-go btn-pri">Take the 60-second tour</button><button class="tour-no" aria-label="Dismiss">×</button>';
     document.body.appendChild(chip);
+    if (!document.body.classList.contains('mnav-on')) lane(true);
     chip.querySelector('.tour-go').onclick = () => startTour();
     chip.querySelector('.tour-no').onclick = () => { S.set.tourSeen = true; save(); hideChip(); };
-    setTimeout(hideChip, 25000);
+    setTimeout(hideChip, 12000);
+    // the first real click or key on the page is an answer too: the chip steps aside instead of covering controls
+    const away = e => { if (chip && !chip.contains(e.target)) { hideChip(); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', away, true); } };
+    document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', away, true);
   }
   const bootDone = () => document.getElementById('boot')?.classList.contains('done') || !document.getElementById('boot');
   (function wait() { if (!bootDone()) return setTimeout(wait, 300); setTimeout(offer, 1800); })();
@@ -560,9 +585,12 @@
   /* empty-state actions */
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-es]'); if (!b) return; const k = b.dataset.es;
-    if (k === 'tour') return startTour();
+    // the same Teach me as in the account menu: the page on screen, element by element (front · 09.11.2026)
+    if (k === 'tour') return typeof teachMe === 'function' ? teachMe() : startTour();
     if (k === 'cmd') return document.getElementById('cmdBtn')?.click();
-    if (k === 'ticket' || k === 'limit') { go('trade'); if (k === 'limit') document.querySelector('#otSeg [data-ot="limit"]')?.click(); const f = document.getElementById(k === 'limit' ? 'tkPrice' : 'tkLots'); f?.scrollIntoView({ block: 'center' }); f?.focus(); f?.closest('.panel')?.animate([{ boxShadow: 'inset 0 0 0 2px var(--acc)' }, { boxShadow: 'inset 0 0 0 0 transparent' }], { duration: 900 }); return; }
+    if (k === 'ticket' || k === 'limit') { go('trade');
+      // New order hidden (its edge tab shows instead): open it first, as a click on that tab does (front · 09.11.2026)
+      { const tk = document.querySelector('.rail .ticket.panel'), tb = document.querySelector('.rail>.pv-tkbar'); if (tb && tb.offsetParent && !(tk && tk.offsetParent)) tb.click(); } if (k === 'limit') document.querySelector('#otSeg [data-ot="limit"]')?.click(); const f = document.getElementById(k === 'limit' ? 'tkPrice' : 'tkLots'); f?.scrollIntoView({ block: 'center' }); f?.focus(); f?.closest('.panel')?.animate([{ boxShadow: 'inset 0 0 0 2px var(--acc)' }, { boxShadow: 'inset 0 0 0 0 transparent' }], { duration: 900 }); return; }
     if (k === 'journal') return setTab('journal');
     if (k === 'alpx') { const f = document.getElementById('alPx'); f?.focus(); return; }
     if (k === 'alerttool') { go('chart'); document.querySelector('[data-tool="alert"]')?.click(); toast('Alert tool on', 'Click the chart at the price you want to watch.', 'info'); }
@@ -661,12 +689,11 @@ function validateLevel(target, price) {
   const k = target.kind, sym = lvSym(target), m = M(sym), q = Engine.quote(sym);
   if (!(typeof price === 'number' && isFinite(price) && price > 0)) return { ok: false, why: 'Enter a valid price' };
   price = +price.toFixed(m.digits);
-  const p = target.ref, buy = !!p && p.side === 'buy';
-  if (k === 'pos-sl' && !(buy ? price < q.bid : price > q.ask)) return { ok: false, why: buy ? 'Stop loss must be below the bid' : 'Stop loss must be above the ask' };
-  if (k === 'pos-tp' && !(buy ? price > q.bid : price < q.ask)) return { ok: false, why: buy ? 'Take profit must be above the bid' : 'Take profit must be below the ask' };
-  if (k === 'ord') { // the same rule as placeOrder
-    const ref = buy ? q.ask : q.bid, lim = p.ot === 'limit', ok = lim ? (buy ? price < ref : price > ref) : (buy ? price > ref : price < ref);
-    if (!ok) return { ok: false, why: `${buy ? 'Buy' : 'Sell'} ${p.ot} must be ${lim === buy ? 'below' : 'above'} market` };
+  const p = target.ref;
+  // a stop, a target or a pending price: the core's modify rules (one place for the editor, the dock, the chart and the server)
+  if (k === 'pos-sl' || k === 'pos-tp' || k === 'ord') {
+    const v = modifyCheck(k === 'ord' ? 'ord' : 'pos', p.id, k === 'pos-sl' ? { sl: price } : k === 'pos-tp' ? { tp: price } : { price });
+    if (!v.ok) return { ok: false, why: v.why };
   }
   if (k === 'tk-sl' || k === 'tk-tp') {
     const c = tkCalc(), d = c.side === 'buy' ? 1 : -1, pips = (price - c.entry) * d / m.pip;
@@ -681,10 +708,11 @@ function setLevel(target, price) {
   if (!lvLive(target)) return false;
   const v = validateLevel(target, price); if (!v.ok) return false;
   const k = target.kind, r = target.ref, sym = lvSym(target), px = v.price;
-  if (k === 'pos-sl') { r.sl = px; r.trail = 0; r.trailed = false; changed('pos'); }
-  else if (k === 'pos-tp') { r.tp = px; if (typeof syncTps === 'function') syncTps(r); changed('pos'); }
-  else if (k === 'ord') { r.price = px; changed('ord'); }
-  else if (k === 'alert') { r.price = px; r.cond = px > Engine.quote(sym).mid ? 'above' : 'below'; changed('al'); }
+  // stops, targets and pending prices through modifyPosition / modifyOrder (a new stop clears the trail, as a drag does)
+  if (k === 'pos-sl') return modifyPosition(r.id, { sl: px });
+  else if (k === 'pos-tp') return modifyPosition(r.id, { tp: px });
+  else if (k === 'ord') return modifyOrder(r.id, { price: px });
+  else if (k === 'alert') { if (TradeLink.live) return TradeLink.send('alert', { do: 'edit', id: r.id, price: px, cond: px > Engine.quote(sym).mid ? 'above' : 'below' }).then(x => x.ok); r.price = px; r.cond = px > Engine.quote(sym).mid ? 'above' : 'below'; changed('al'); }
   else if (k === 'hline') { S.hlines[sym][r] = px; changed(); }
   else if (k === 'draw-pt') { r.pts[target.i].p = px; changed(); if (typeof reqOverlay === 'function') reqOverlay(); }
   else if (k === 'tk-entry') { S.tk.price = px; syncTicketInputs(); }
@@ -693,9 +721,9 @@ function setLevel(target, price) {
 }
 function removeLevel(t) {
   const k = t.kind, r = t.ref, sym = lvSym(t);
-  if (k === 'pos-sl') { r.sl = null; r.trail = 0; r.trailed = false; changed('pos'); }
-  else if (k === 'pos-tp') { r.tp = null; if (typeof syncTps === 'function') syncTps(r); changed('pos'); }
-  else if (k === 'alert') { S.alerts = S.alerts.filter(a => a !== r); changed('al'); }
+  if (k === 'pos-sl') return modifyPosition(r.id, { sl: null, trail: 0 });
+  else if (k === 'pos-tp') return modifyPosition(r.id, { tp: null });
+  else if (k === 'alert') { if (TradeLink.live) return TradeLink.send('alert', { do: 'del', id: r.id }).then(x => x.ok); S.alerts = S.alerts.filter(a => a !== r); changed('al'); }
   else if (k === 'hline') { S.hlines[sym].splice(r, 1); changed(); }
 }
 const lvTitle = t => { const n = LV_NAME[t.kind]; return n[0].toUpperCase() + n.slice(1); };
@@ -730,7 +758,7 @@ function editLevel(target, anchorEl, value) {
     dist.textContent = s; return v;
   };
   const gone = () => { lvClose(); toast('Level no longer exists', `${lvWho(target)} was closed, filled or removed`, 'bad'); };
-  const set = () => { const v = check(); if (!v.ok) { inp.focus(); return; } if (!lvLive(target)) return gone(); setLevel(target, v.price); toast(`${lvTitle(target)} set`, `${lvWho(target)} ${fp(sym, v.price)}`, 'info'); lvClose(); };
+  const set = () => { const v = check(); if (!v.ok) { inp.focus(); return; } if (!lvLive(target)) return gone(); Promise.resolve(setLevel(target, v.price)).then(ok => { if (ok !== false) toast(`${lvTitle(target)} set`, `${lvWho(target)} ${fp(sym, v.price)}`, 'info'); }); lvClose(); };
   inp.addEventListener('input', check);
   el.addEventListener('keydown', e => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); lvClose(); }
@@ -742,7 +770,7 @@ function editLevel(target, anchorEl, value) {
     const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
     if (a === 'set') set();
     if (a === 'x') lvClose();
-    if (a === 'rm') { if (!lvLive(target)) return gone(); removeLevel(target); toast(`${lvTitle(target)} removed`, lvWho(target), 'info'); lvClose(); }
+    if (a === 'rm') { if (!lvLive(target)) return gone(); Promise.resolve(removeLevel(target)).then(ok => { if (ok !== false) toast(`${lvTitle(target)} removed`, lvWho(target), 'info'); }); lvClose(); }
     if (a === 'pick') pickStart(target);
   });
   document.body.appendChild(el);
@@ -771,8 +799,9 @@ function pickCancel() {
 function pickAt(price) {
   if (!pickLevel) return false; const t = pickLevel.target; pickCancel();
   if (!lvLive(t)) { toast('Level no longer exists', `${lvWho(t)} was closed, filled or removed`, 'bad'); return true; }
-  if (setLevel(t, price)) toast(`${lvTitle(t)} set`, `${lvWho(t)} ${fp(lvSym(t), validateLevel(t, price).price)}`, 'info');
-  else editLevel(t, null, price); // the editor reopens on the picked price and says why it was refused
+  const v = validateLevel(t, price);
+  if (!v.ok) { editLevel(t, null, price); return true; } // the editor reopens on the picked price and says why it was refused
+  Promise.resolve(setLevel(t, price)).then(ok => { if (ok) toast(`${lvTitle(t)} set`, `${lvWho(t)} ${fp(lvSym(t), v.price)}`, 'info'); else editLevel(t, null, price); });
   return true;
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && pickLevel) pickCancel(); }, true);
@@ -839,7 +868,7 @@ function chartFigure() {
   let hi = -Infinity, lo = Infinity; const r = chart && chart.timeScale().getVisibleLogicalRange();
   if (r && n) for (let i = Math.max(0, Math.floor(r.from)); i <= Math.min(n - 1, Math.ceil(r.to)); i++) { hi = Math.max(hi, disp[i].high); lo = Math.min(lo, disp[i].low); }
   const chg = ($('#symChg')?.textContent || '').trim(), cnt = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
-  const summary = `${pretty(sym)} ${TF_NAME(S.set.tf)}, simulated prices. Last ${fp(sym, q.mid)}${chg && chg !== '—' ? ` (${chg.replace(/\s*24h$/, '')} 24h)` : ''}. ${isFinite(hi) ? `Visible range high ${fp(sym, hi)}, low ${fp(sym, lo)}. ` : ''}${cnt(pos.length, 'position')}, ${cnt(ord.length, 'pending order')}, ${cnt(al.length, 'alert')} on this instrument.`;
+  const summary = `${pretty(sym)} ${TF_NAME(S.set.tf)}, ${Engine.feedOn ? 'live platform prices' : 'no live prices'}. Last ${fp(sym, q.mid)}${chg && chg !== '—' ? ` (${chg.replace(/\s*24h$/, '')} 24h)` : ''}. ${isFinite(hi) ? `Visible range high ${fp(sym, hi)}, low ${fp(sym, lo)}. ` : ''}${cnt(pos.length, 'position')}, ${cnt(ord.length, 'pending order')}, ${cnt(al.length, 'alert')} on this instrument.`;
   const levels = [], edit = [], editName = [];
   const add = (kind, side, px, pnl, t, nm) => { levels.push([kind, side, px == null ? 'none' : fp(sym, px), px == null ? '—' : sgn((px - q.mid) / m.pip), pnl == null ? '—' : usdFmt(pnl, true)]); edit.push(t); editName.push(nm); };
   for (const p of pos) {
@@ -848,7 +877,7 @@ function chartFigure() {
     add('Stop loss', sd, p.sl, at(p.sl), { kind: 'pos-sl', ref: p }, `stop loss ${who}`);
     add('Take profit', sd, p.tp, at(p.tp), { kind: 'pos-tp', ref: p }, `take profit ${who}`);
   }
-  for (const o of ord) add(`${o.ot[0].toUpperCase() + o.ot.slice(1)} order #${o.id}`, o.side.toUpperCase(), o.price, null, { kind: 'ord', ref: o }, `order price #${o.id}`);
+  for (const o of ord) add(`${o.ot[0].toUpperCase() + o.ot.slice(1)} order #${String(o.id).replace(/^.*-(\d+)$/, '$1')}`, o.side.toUpperCase(), o.price, null, { kind: 'ord', ref: o }, `order price #${String(o.id).replace(/^.*-(\d+)$/, '$1')}`);
   for (const a of al) add(`Alert ${a.cond} #${a.id}`, '—', a.price, null, { kind: 'alert', ref: a }, `alert #${a.id}`);
   hl.forEach((px, i) => add(`Level ${i + 1}`, '—', px, null, { kind: 'hline', ref: i, sym }, `level ${i + 1}`));
   const rows = [];
@@ -927,10 +956,11 @@ function chartFigure() {
   pressed();
 
   /* SL / TP cells in Positions: reachable with Tab, Enter starts the existing inline edit */
-  const pb = $('#posBody');
-  const cells = () => { for (const td of pb.querySelectorAll('td[data-edit]:not([tabindex])')) { td.tabIndex = 0; td.title = 'Click or press Enter to edit'; } };
-  new MutationObserver(cells).observe(pb, { childList: true }); cells();
-  pb.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('td[data-edit]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
+  for (const pb of [$('#posBody'), $('#ordBody')]) { // Orders: the SL / TP of a pending order (UX-92)
+    const cells = () => { for (const td of pb.querySelectorAll('td[data-edit]:not([tabindex])')) { td.tabIndex = 0; if (pb.id === 'posBody') td.title = 'Click or press Enter to edit'; } };
+    new MutationObserver(cells).observe(pb, { childList: true }); cells();
+    pb.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('td[data-edit]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
+  }
 
   /* chart: pick-on-chart click, navigation without dragging, text alternative */
   // picking takes the press before the line drag and the drawing tools see it, so a line under the pointer cannot swallow it
@@ -993,16 +1023,75 @@ function chartFigure() {
   const bar = document.querySelector('.topbar'); if (!bar || document.getElementById('userWrap')) return;
   bar.insertAdjacentHTML('beforeend', `<div class="user-wrap" id="userWrap">
     <button type="button" class="user-btn" id="userBtn" aria-haspopup="true" aria-expanded="false" aria-controls="userPop" aria-label="Account menu" title="Account"><span class="user-av" id="userAv" aria-hidden="true"></span><span class="user-dot" id="userDot" aria-hidden="true"></span></button>
-    <div class="user-pop" id="userPop" role="menu" aria-label="Account" hidden>
+    <div class="user-pop" id="userPop" role="menu" aria-label="Account" aria-describedby="userKind" hidden>
+      <div class="user-kind" id="userKind"></div>
       <div class="user-hd"><b id="userName"></b><span id="userSt"></span><p id="userNote"></p></div>
+      <button type="button" role="menuitem" data-u="helpBtn">Settings &amp; shortcuts</button>
       <button type="button" role="menuitem" data-u="exportBtn">Export account</button>
       <button type="button" role="menuitem" data-u="importBtn">Import account</button>
-      <button type="button" role="menuitem" data-opening>Replay opening note</button>
       <button type="button" role="menuitem" data-u="resetAcct">Reset demo account</button>
+      <button type="button" role="menuitem" data-u="adminBtn">Administration</button>
+      <button type="button" role="menuitemcheckbox" aria-checked="false" data-oc title="On: the chart Buy/Sell buttons, Shift+B/S and a click on a Depth level send an order immediately. Off: they only fill in the order ticket">One-click trading <span class="user-st"></span></button>
+      <button type="button" role="menuitem" data-teach title="A guided walk through the page that is open: what each part shows, how to read it, how to use it">Teach me</button>
+      <button type="button" role="menuitem" data-guide hidden>Guide</button>
       <button type="button" role="menuitem" data-u="helpBtn">Help &amp; shortcuts</button>
       <button type="button" role="menuitem" data-u="signOutBtn" class="user-out">Sign out</button>
     </div></div>`);
   const btn = document.getElementById('userBtn'), pop = document.getElementById('userPop');
+  /* the written guide of the page that is open (guides/<page>.html): a key per page as Teach me uses it (the Monitor,
+     else the open tool); a page without a guide yet shows no entry. Add a page here when its guide is written. */
+  // the Observatory has one guide per tool (guides/obs-<view>.html); guides/obs.html is its overview
+  const GUIDES = { brief: 'Market Brief', corr: 'Correlation', vol: 'Volatility', bt: 'Backtester', lab: 'Risk Lab', calc: 'Calculators', behav: 'Behaviour', journal: 'Journal', chal: 'Challenge', 'obs-const': 'Constellation', 'obs-regime': 'Regime map', 'obs-dc': 'Intrinsic time', 'obs-deja': 'Déjà vu',
+    'obs-rp': 'Recurrence', 'obs-drv': 'Drivers', 'obs-clock': 'Volatility clock', 'obs-tap': 'Tapestry', 'obs-bask': 'Baskets',
+    'obs-scan': 'Edge check', 'obs-cone': 'Range cone', 'obs-exit': 'Exit lab',
+    positions: 'Positions', orders: 'Orders', history: 'History', alerts: 'Alerts' }; // these four share guides/trade.html (UX-83)
+  const guideKey = () => {
+    const v = typeof currentView === 'function' ? currentView() : 'trade', t = typeof activeTab === 'string' ? activeTab : '';
+    if (v === 'monitor') return 'monitor';
+    if (t === 'obs') { let ov = ''; try { ov = typeof obsCfg === 'function' ? obsCfg().view : ''; } catch (e) { /* not built yet */ } return 'obs-' + (ov || 'const'); }
+    return t;
+  };
+  const openGuide = k => window.open('guides/' + (/^(positions|orders|history|alerts)$/.test(k) ? 'trade' : k) + '.html', '_blank'); /* no noopener: the guide's Back button returns to this tab */
+  // the Guide button at the end of the tool strip (#tabs): the guide of the tool on screen; hidden where none is written yet
+  // Hints switch (front 15.11.2026): a small "?" switch, on = yellow with a black ?, off = black with a yellow ?; remembered in this browser
+  // the same switch twice: in the tool strip (left of Guide) and in the Monitor band (the Monitor has no strip); one remembered state
+  const tipsSw = ['tipsOn', 'tipsMon'].map(id => document.getElementById(id)).filter(Boolean);
+  if (tipsSw.length) {
+    let off = false; try { off = localStorage.getItem('tb-hints') === '0'; } catch (e) {}
+    const apply = on => { tipsSw.forEach(b => b.setAttribute('aria-checked', String(on))); document.body.classList.toggle('no-hints', !on); const t = document.getElementById('brTip'); if (t && !on) t.style.display = 'none'; };
+    apply(!off);
+    tipsSw.forEach(b => b.addEventListener('click', () => { const on = b.getAttribute('aria-checked') !== 'true'; apply(on); try { localStorage.setItem('tb-hints', on ? '1' : '0'); } catch (e) {} }));
+  }
+  const gBtn = document.getElementById('guideBtn');
+  function syncGuideBtn() {
+    if (!gBtn) return;
+    const k = guideKey(), name = GUIDES[k], mg = document.querySelector('.mtool-guide');
+    const tg = document.getElementById('tipsTgl'); if (tg) tg.hidden = /^(positions|orders|history|alerts)$/.test(k); // the strip switch is on every page that has the strip, except the four Trade dock tabs (their strip keeps its cells, DSP7)
+    gBtn.hidden = !name || /^(positions|orders|history|alerts)$/.test(k); if (mg) mg.hidden = !name; // on the Trade dock the guide opens from the account menu (the strip keeps its cells)
+    if (!name || gBtn.dataset.k === k) return;
+    gBtn.dataset.k = k; gBtn.title = `Guide: how to read, interpret and use ${name} (opens in a new tab)`; gBtn.setAttribute('aria-label', 'Guide: ' + name);
+    if (!/^(positions|orders|history|alerts)$/.test(k)) guideIntro(k); // the Trade page opens without the one-second intro
+  }
+  /* opening a page that has a guide (Victor, 09.11.2026): for 1 s only the Guide button shows, in its place, without
+     its left rule, zooming from 2x to 1x; then the rest of the window fades in. A cover over the app with a copy of the button (which opens the guide) on top.
+     Not under the Opening Note, a Teach me walk, in automated browsers (the tests) or where the button is not on screen. */
+  function guideIntro(k) {
+    if (navigator.webdriver || document.querySelector('.guide-intro, .tour-card') || document.documentElement.classList.contains('onote-open')) return;
+    const r = gBtn.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const cov = document.createElement('div'); cov.className = 'guide-intro'; cov.setAttribute('aria-hidden', 'true');
+    const b = gBtn.cloneNode(true); b.removeAttribute('id'); b.tabIndex = -1;
+    Object.assign(b.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: 0 });
+    b.addEventListener('click', () => openGuide(k));
+    cov.append(b); document.body.append(cov);
+    setTimeout(() => { cov.classList.add('out'); setTimeout(() => cov.remove(), 450); }, 1000);
+  }
+  if (gBtn) gBtn.addEventListener('click', () => { if (gBtn.dataset.k) openGuide(gBtn.dataset.k); });
+  // follow every switch of tool or page (setTab is wrapped by other modules too: the chain stays, see CLAUDE.md)
+  if (typeof window.setTab === 'function') { const st = window.setTab; window.setTab = function () { const r = st.apply(this, arguments); safe('guide button', syncGuideBtn); return r; }; }
+  // switching tool inside the Observatory (its left list) changes the guide too
+  // in the same task as the click (the page's own handlers ran first, on the way up): the intro cover lands before
+  // the new page paints, so it does not flash on screen for a frame; the timeout catches pages that switch a tick later
+  document.addEventListener('click', e => { if (e.target.closest('#views, #tabs, .mnav, .obs-nav, .mtools-grid')) { safe('guide button', syncGuideBtn); setTimeout(() => safe('guide button', syncGuideBtn), 0); } });
   const ini = n => { const p = String(n || '').split(/[\s._@-]+/).filter(Boolean); return ((p[0] || '')[0] || '') + ((p[1] || '')[0] || '') || ''; };
   const ICON = '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>';
   function sync() {
@@ -1018,18 +1107,57 @@ function chartFigure() {
     dot.dataset.st = !signed ? '' : pill.classList.contains('st-bad') ? 'bad' : /Saving/.test(st || '') ? 'busy' : 'ok';
     btn.title = signed ? `${name} · ${st}` : 'Account (local)';
     pop.querySelector('.user-out').hidden = !signed;
-    for (const b of pop.querySelectorAll('[data-u]')) if (b.dataset.u !== 'signOutBtn') b.hidden = !document.getElementById(b.dataset.u);
+    // Reset is there only while its control is (a signed-in page: on a demo account only)
+    for (const b of pop.querySelectorAll('[data-u]')) if (b.dataset.u !== 'signOutBtn') { const el = document.getElementById(b.dataset.u); b.hidden = !el || (b.dataset.u === 'resetAcct' && el.hidden); if (el && b.dataset.u === 'importBtn' && b.textContent !== el.textContent) b.textContent = el.textContent; }
+    // the state may not be loaded yet (the menu is built at boot): the switches show once it is
+    const ss = typeof S !== 'undefined' && S && S.set ? S.set : null, oc = pop.querySelector('[data-oc]'), ocOn = !!(ss && ss.oneClick);
+    syncGuideBtn();
+    const gk = guideKey(), gb = pop.querySelector('[data-guide]');
+    gb.hidden = !GUIDES[gk]; if (GUIDES[gk]) { gb.dataset.guide = gk; gb.textContent = 'Guide: ' + GUIDES[gk]; gb.title = `How to read, interpret and use ${GUIDES[gk]} (opens in a new tab)`; }
+    oc.hidden = !ss || !document.getElementById('oneClickSet'); oc.setAttribute('aria-checked', String(ocOn)); oc.lastElementChild.textContent = ocOn ? 'On' : 'Off';
+    // the menu's Pre-mortem master switch is gone (Behaviour turns pre-mortems on and off): clear a saved "off" so nobody stays stuck without a control
+    if (ss && typeof pmCfg === 'function' && pmCfg().off) { pmCfg().off = false; save(); }
+    fit();
   }
-  const items = () => [...pop.querySelectorAll('[role=menuitem]:not([hidden])')];
+  /* the account type, the first row (not a menu item, so screen readers hear it as the menu's description:
+     aria-describedby on #userPop): the status bar that also says it is hidden below 1081 px and on the phone, so the
+     menu says it on every width, in the same words as the status-bar flag. Written from persist.js's 'tb:acct-kind'
+     event (the one signal of a change of type) and once here at build; the look is styles.css #userKind. */
+  function kindRow(k) {
+    const kd = document.getElementById('userKind'); if (!kd) return;
+    const txt = k ? k.line : '', ttl = k ? k.title : '';
+    if (kd.textContent !== txt) kd.textContent = txt;
+    if (kd.title !== ttl) kd.title = ttl;
+    kd.dataset.kind = k ? k.key : ''; kd.hidden = !txt;
+    if (txt) pop.setAttribute('aria-describedby', 'userKind'); else pop.removeAttribute('aria-describedby');
+    fit();
+  }
+  const items = () => [...pop.querySelectorAll('[role^=menuitem]:not([hidden])')];
   const close = f => { if (pop.hidden) return; pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (f) btn.focus(); };
-  const open = () => { sync(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); items()[0]?.focus(); };
+  /* the menu hangs from the right edge of the avatar (styles.css; on the phone it is fixed under the header). fit() moves
+     it by the overflow so it stays inside the window: sideways at every width (between the phone and the desktop,
+     761-1080 px, the avatar sits at the left end of the header, so the menu would open off its left edge), below the
+     read-only banner (#persistBanner, fixed at the top, z-index 2000) while that shows, so the account-type row is not
+     under it, and no taller than the room left (it scrolls inside). Applied on opening, on every resize while it is
+     open and when its rows change (sync, kindRow). */
+  function fit() {
+    if (pop.hidden) return;
+    const st = pop.style, sc = pop.scrollTop;
+    st.left = st.right = st.top = st.maxHeight = st.overflowY = '';
+    const cs = getComputedStyle(pop), r = pop.getBoundingClientRect(), W = document.documentElement.clientWidth || innerWidth;
+    let dx = 0;
+    if (r.right > W) dx = W - r.right;
+    if (r.left + dx < 0) dx = -r.left;
+    if (dx) { st.right = (parseFloat(cs.right) || 0) - dx + 'px'; st.left = 'auto'; }
+    const ban = document.getElementById('persistBanner'), b = ban && !ban.hidden ? ban.getBoundingClientRect() : null;
+    let top = r.top;
+    if (b && b.height && b.bottom > r.top) { top = b.bottom + 1; st.top = (parseFloat(cs.top) || 0) + (top - r.top) + 'px'; }
+    if (top + r.height > innerHeight) { st.maxHeight = Math.max(120, innerHeight - top - 4) + 'px'; st.overflowY = 'auto'; pop.scrollTop = sc; }
+  }
+  addEventListener('resize', () => safe('user menu', fit));
+  const open = () => { sync(); pop.hidden = false; fit(); btn.setAttribute('aria-expanded', 'true'); items()[0]?.focus(); };
   btn.addEventListener('click', e => { e.stopPropagation(); pop.hidden ? open() : close(true); });
-  pop.addEventListener('click', e => {
-    const b = e.target.closest('[data-u],[data-opening]'); if (!b) return;
-    close(false);
-    if (b.hasAttribute('data-opening')) { window.replayOpening?.(); return; }
-    document.getElementById(b.dataset.u)?.click();
-  });
+  pop.addEventListener('click', e => { if (e.target.closest('[data-oc]')) { const cb = document.getElementById('oneClickSet'); cb.checked = !S.set.oneClick; cb.dispatchEvent(new Event('change')); sync(); return; } if (e.target.closest('[data-teach]')) { close(false); if (typeof teachMe === 'function') teachMe(); return; } const g = e.target.closest('[data-guide]'); if (g) { close(false); openGuide(g.dataset.guide); return; } const b = e.target.closest('[data-u]'); if (!b) return; close(false); document.getElementById(b.dataset.u)?.click(); });
   pop.addEventListener('keydown', e => {
     const l = items(), i = l.indexOf(document.activeElement);
     if (e.key === 'Escape') { e.stopPropagation(); close(true); }
@@ -1037,5 +1165,7 @@ function chartFigure() {
     else if (e.key === 'Tab') close(false);
   });
   document.addEventListener('pointerdown', e => { if (!e.target.closest('#userWrap')) close(false); });
+  document.addEventListener('tb:acct-kind', e => safe('user menu', () => kindRow(e.detail)));
+  kindRow(typeof acctKind === 'function' ? acctKind() : null);
   sync(); setInterval(() => safe('user menu', sync), 2000);
 })();

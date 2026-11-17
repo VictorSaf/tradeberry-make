@@ -31,13 +31,15 @@ function drawOverlay() {
       if (p.sl != null) band(x0, ye, Y(p.sl), c.dn, '33');
       if (p.tp != null) band(x0, ye, Y(p.tp), c.up, '33');
     }
-    const k = tkCalc(), lastX = ts.logicalToCoordinate(bars.length - 1) ?? pw;
+    // the next order's zones only while the user works in the ticket (UX 09.11 F7: ticket.js tkPreviewActive)
+    const preview = typeof tkPreviewActive !== 'function' || tkPreviewActive();
+    const k = preview ? tkCalc() : { sl: null, tp: null }, lastX = ts.logicalToCoordinate(bars.length - 1) ?? pw;
     const x0 = clamp(lastX - 70, 0, pw - 40), ye = Y(k.entry);
     if (k.sl != null) band(x0, ye, Y(k.sl), c.dn, '24');
     if (k.tp != null) band(x0, ye, Y(k.tp), c.up, '24');
     if (k.sl != null && k.tp != null && ye != null) {
       const rr = k.rewUsd / k.riskUsd, yt = Y(k.tp);
-      const label = `1 : ${rr.toFixed(2)}`;
+      const label = Number.isFinite(rr) ? `1 : ${rr.toFixed(2)}` : '1 : —'; // never NaN (UX F13)
       g.font = '600 10.5px JetBrains Mono'; const tw = g.measureText(label).width;
       const ly = clamp((ye + yt) / 2, 10, ph - 10);
       const lx = Math.max(2, x0 - tw - 16);
@@ -209,7 +211,7 @@ function domClick(e) {
     syncTicketInputs(); const k = renderTicket(), bl = tkBlocks(k);
     if (document.body.classList.contains('mnav-on') && typeof window.mnavGo === 'function') window.mnavGo('trade');
     const b = $('#tkSubmit'); b.scrollIntoView({ block: 'nearest' }); if (!bl.length) b.focus({ preventScroll: true });
-    toast('Ticket ready — not sent', bl.length ? bl[0].why : `${side === 'buy' ? 'Buy' : 'Sell'} ${ot} ${tkLotsText(sym, k.lots)} ${pretty(sym)} at ${fp(sym, price)}: press the order button to send. One-click trading is off (Guide → Settings).`, 'info');
+    toast('Ticket ready — not sent', bl.length ? bl[0].why : `${side === 'buy' ? 'Buy' : 'Sell'} ${ot} ${tkLotsText(sym, k.lots)} ${pretty(sym)} at ${fp(sym, price)}: press the order button to send. One-click trading is off (account menu).`, 'info');
     return;
   }
   // One-click on: size it as the ticket would size this very order, without changing the ticket
@@ -217,7 +219,10 @@ function domClick(e) {
   // a stop or target held as a price (ticket.js tkHold) is measured from this order's entry
   const why = typeof tkHold === 'function' ? tkHold(side, ot, price) : ''; if (why) { toast('Order blocked', why + '.', 'dn'); beep('err'); return; }
   Object.assign(t, { side, ot, price }); let k; try { k = tkCalc(); } finally { Object.assign(t, keep); }
-  placeOrder({ sym, side, ot, price, lots: k.lots || t.lots, ...tkExits() });
+  // a ticket size that cannot go (under the minimum, over the maximum) is refused with its reason, never replaced by
+  // another size (UX 09.11 round 2, #2)
+  const sw = typeof tkSizeWhy === 'function' ? tkSizeWhy(k) : ''; if (sw) { toast('Order blocked', `Order size: ${sw} — set it in the ticket.`, 'dn'); beep('err'); return; }
+  placeOrder({ sym, side, ot, price, lots: k.lots, ...tkExits() });
 }
 
 /* ============ watchlist sparklines ============ */
@@ -241,7 +246,7 @@ function renderSparks() {
 }
 
 /* ============ trade coach ============ */
-// The market is a zero-drift random walk: gaps between pairs, sessions or setups are mostly noise.
+// The market is a zero-drift random walk: gaps between pairs or sessions are mostly noise.
 // Below COACH_MIN trades a group gets no verdict; below COACH_N it is shown with "may be chance".
 const COACH_MIN = 10, COACH_N = 30;
 const coachEsc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -276,7 +281,7 @@ function coachInsights() {
   const longs = h.filter(x => x.side === 'buy'), shorts = h.filter(x => x.side === 'sell');
   if (longs.length >= COACH_MIN && shorts.length >= COACH_MIN && Math.abs(wr(longs) - wr(shorts)) >= 20) {
     const better = wr(longs) > wr(shorts) ? 'long' : 'short', B = better === 'long' ? longs : shorts, O = better === 'long' ? shorts : longs;
-    out.push({ tone: 'info', t: `You win ${wrTxt(B.filter(x => x.pnl > 0).length, B.length)} of <b>${better}s</b> vs ${wrTxt(O.filter(x => x.pnl > 0).length, O.length)} of ${better === 'long' ? 'shorts' : 'longs'}${Math.min(B.length, O.length) < COACH_N ? ' — may be chance' : ''}. On a zero-drift market neither side has an edge.` });
+    out.push({ tone: 'info', t: `You win ${wrTxt(B.filter(x => x.pnl > 0).length, B.length)} of <b>${better}s</b> vs ${wrTxt(O.filter(x => x.pnl > 0).length, O.length)} of ${better === 'long' ? 'shorts' : 'longs'}${Math.min(B.length, O.length) < COACH_N ? ' — may be chance' : ''}.` });
   }
   const noSL = h.filter(x => x.r == null);
   if (noSL.length) out.push({ tone: noSL.length / h.length > .3 ? 'bad' : 'info', t: `${noSL.length} of ${h.length} trades had no stop loss (net ${usdFmt(net(noSL), true)}). Unprotected trades are where accounts blow up.` });
@@ -285,15 +290,94 @@ function coachInsights() {
   if (revenge.length >= 2) out.push({ tone: 'info', t: `${revenge.length} trades were opened within ${REVENGE_MIN} minutes of a loss${revenge.length >= COACH_MIN ? ` — they win ${coachWr(revenge)}` : ''}. Quick re-entries after a loss are how revenge trading starts.` });
   const sess = group(x => SESS_OF(x.open)).filter(([, v]) => v.length >= COACH_MIN).map(([k, v]) => [k, net(v), v, v.length]).sort((a, b) => b[1] - a[1]);
   if (sess.length > 1) out.push({ tone: 'info', t: `Best session so far: <b>${sess[0][0]}</b> (${usdFmt(sess[0][1], true)}, wins ${coachWr(sess[0][2])}). Weakest: ${sess[sess.length - 1][0]} (${usdFmt(sess[sess.length - 1][1], true)}, wins ${coachWr(sess[sess.length - 1][2])}).` });
-  const setups = group(x => x.setup || '').filter(([k, v]) => k && v.length >= COACH_MIN).map(([k, v]) => [k, wr(v), v]).sort((a, b) => b[1] - a[1]);
-  if (setups.length) out.push({ tone: 'info', t: `Best tagged setup so far: <b>${coachEsc(setups[0][0])}</b> — wins ${coachWr(setups[0][2])}.` });
-  else if (h.some(x => x.setup)) out.push({ tone: 'info', t: `Keep tagging: a setup needs ${COACH_MIN}+ trades before the coach compares it, and ${COACH_N}+ before a gap means much.` });
-  else out.push({ tone: 'info', t: 'Tag your trades with a setup in Trade notes to compare how your setups perform.' });
   return out.slice(0, 7);
+}
+/* Coach, compact (Victor, 31.10.2026): one line per insight (its first clause, a tone mark), Details opens a floating
+   panel with every insight in full and the tables behind them (pair, session, side, holds, stops, re-entries) */
+function coachShort(t) {
+  // first sentence, figures kept (front 15.11.2026: the $ and the counts stay on the line); a "may be chance" tail becomes a ‡ mark
+  const i = t.indexOf('. ', 12); let x = (i > 0 ? t.slice(0, i) : t).replace(/\.$/, ''), few = false;
+  if (/,? may be chance/.test(x)) { few = true; x = x.replace(/,? may be chance/, '').replace(/\s*\(n=\d+\)/, '').replace(/\s*\(\)/, ''); }
+  if ((x.match(/<b>/g) || []).length > (x.match(/<\/b>/g) || []).length) x += '</b>';
+  return x + (few ? ' <i class="coach-few" title="Small sample: may be chance">‡</i>' : '');
+}
+function coachDetails() {
+  const h = tradesOf(S.history).map(x => ({ ...x, pnl: x.net })), net = a => a.reduce((s, x) => s + x.pnl, 0);
+  const wins = a => a.filter(x => x.pnl > 0).length, fm = m => m >= 60 ? `${(m / 60).toFixed(1)}h` : `${m.toFixed(0)}m`;
+  const hold = a => a.length ? fm(a.reduce((s, x) => s + (x.close - x.open), 0) / a.length / 60) : '—';
+  const pc = v => Math.round(v * 100) + '%', up = v => v >= 0 ? 'up' : 'dn';
+  const by = f => { const g = {}; h.forEach(x => (g[f(x)] = g[f(x)] || []).push(x)); return Object.entries(g).sort((a, b) => net(b[1]) - net(a[1])); };
+  // one table for every breakdown: a band per group, one header; the interval in its own column, a thin sample is flagged
+  const row = ([k, v], gname) => { const ci = wilson(wins(v), v.length), few = v.length < COACH_N;
+    return `<tr${few ? ' class="cd-few"' : ''}><th scope="row" data-rich="cg:${gname}|${String(k).replace(/<[^>]+>/g, '').replace(/"/g, '')}">${k}</th><td class="mono">${v.length}</td><td class="mono ${up(net(v))}">${usdFmt(net(v), true)}</td><td class="mono">${v.length ? pc(wins(v) / v.length) : '—'}</td><td class="mono cd-ci">${ci ? `${pc(ci.lo)}–${pc(ci.hi)}` : '—'}${few ? '<i title="fewer than 30 trades: may be chance">‡</i>' : ''}</td><td class="mono ${up(net(v))}">${usdFmt(net(v) / v.length, true)}</td></tr>`; };
+  const groups = [['Pair', by(x => pretty(x.sym))], ['Session · open time, UTC', by(x => SESS_OF(x.open))], ['Side', by(x => x.side === 'buy' ? 'Long' : 'Short')]];
+  const table = `<table class="cd-tbl"><thead><tr><th scope="col">Breakdown</th><th scope="col" data-rich="gl:Trades" data-tip="Trades|Number of trades in the group.">Trades</th><th scope="col" data-rich="gl:Net" data-tip="Net|Total result of the group, after commission.">Net</th><th scope="col" data-rich="gl:Win rate" data-tip="Win rate|Share of the group that closed in profit.">Win rate</th><th scope="col" data-rich="gl:95% interval" data-tip="95% interval|Where the true win rate plausibly lies. A wide interval means the sample is too small to conclude.">95% interval</th><th scope="col" data-rich="gl:Avg" data-tip="Avg|Average result per trade in the group.">Avg</th></tr></thead>${groups.map(([t, rows]) => `<tbody><tr class="cd-band"><th colspan="6" scope="rowgroup">By ${t.toLowerCase()}</th></tr>${rows.map(r => row(r, t.split(' ')[0])).join('')}</tbody>`).join('')}</table>
+    <p class="cd-legend">‡ fewer than ${COACH_N} trades — may be chance · a group needs ${COACH_MIN}+ trades before the coach gives it a verdict</p>`;
+  const W = h.filter(x => x.pnl > 0), L = h.filter(x => x.pnl <= 0), Wc = W.filter(x => x.complete), Lc = L.filter(x => x.complete);
+  const byOpen = [...h].sort((a, b) => a.open - b.open), closes = [...h].sort((a, b) => a.close - b.close);
+  const rev = byOpen.filter(x => closes.some(y => y !== x && y.pnl < 0 && y.close <= x.open && x.open - y.close < REVENGE_MIN * 60)), noSL = h.filter(x => x.r == null);
+  const ci = wilson(W.length, h.length);
+  const CT = { 'Trades': 'Closed trades, partial closes counted once, net of commission.', 'Net': 'Total result of the closed trades after commission.', 'Win rate': 'Share of trades that closed in profit, with its 95% interval. The interval is wide when n is small.', 'Avg win': 'Average profit of the winning trades.', 'Avg loss': 'Average loss of the losing trades. Compare with the average win.', 'Hold W / L': 'Average time a winner and a loser stayed open. Losers held much longer than winners is loss aversion. Only fully closed positions count.', 'No stop loss': 'Trades opened without a stop loss, and their net result. They have no R and an unbounded risk.', 'Re-entries': 'Trades opened within the revenge window after a loss, and how they ended. A low win rate here is the signature of revenge trading.' };
+  const cell = (l, v, sub, cls) => `<div data-rich="cd:${l}" data-tip="${escHtml(l + '|' + (CT[l] || ''))}" tabindex="0"><dt>${l}</dt><dd><b class="mono ${cls || ''}">${v}</b>${sub ? `<small>${sub}</small>` : ''}</dd></div>`;
+  const sum = `<dl class="cd-sum">${cell('Trades', h.length, 'closed, net of commission')}${cell('Net', usdFmt(net(h), true), '', up(net(h)))}`
+    + `${cell('Win rate', h.length ? pc(W.length / h.length) : '—', ci ? `95% ${pc(ci.lo)}–${pc(ci.hi)} · n=${h.length}` : '')}`
+    + `${cell('Avg win', W.length ? usdFmt(net(W) / W.length) : '—', '', W.length ? 'up' : '')}${cell('Avg loss', L.length ? usdFmt(-net(L) / L.length) : '—', '', L.length ? 'dn' : '')}`
+    + `${cell('Hold W / L', `${hold(Wc)} / ${hold(Lc)}`, 'flat positions only')}${cell('No stop loss', `${noSL.length}/${h.length}`, noSL.length ? 'net ' + usdFmt(net(noSL), true) : '', noSL.length ? 'cd-warn' : '')}`
+    + `${cell('Re-entries', rev.length, rev.length ? `within ${REVENGE_MIN} min of a loss · wins ${wrTxt(wins(rev), rev.length)}` : `within ${REVENGE_MIN} min of a loss`)}</dl>`;
+  // every trade, newest first, with its notes editable here (they live on the trade's first history row, as in
+  // Trade notes) and every figure the journal keeps on it
+  const tr = tradesOf(S.history).sort((a, b) => b.close - a.close);
+  const dt = t => new Date(t * 1000).toISOString().slice(5, 16).replace('T', ' '), flagN = k => (typeof FLAG_NAMES === 'object' && FLAG_NAMES[k]) || k;
+  const revIds = new Set(rev.map(x => x.id + '|' + x.open));
+  const trades = `<table class="cd-tbl cd-trades"><thead><tr><th scope="col" data-rich="gl:Closed" data-tip="Closed|When the trade closed (UTC).">Closed</th><th scope="col" data-rich="gl:Trade" data-tip="Trade|Side, size and instrument. Warnings that applied at entry are counted next to it.">Trade</th><th scope="col" data-rich="gl:Entry → exit" data-tip="Entry → exit|Average entry and exit price.">Entry → exit</th><th scope="col" data-rich="gl:Pips / pt" data-tip="Pips / pt|Distance gained or lost: pips on FX, points on other instruments.">Pips / pt</th><th scope="col" data-rich="gl:R" data-tip="R|Result in multiples of the money risked at the stop. No stop, no R.">R</th><th scope="col" data-rich="gl:Net" data-tip="Net|Total result of the group, after commission.">Net</th><th scope="col" data-rich="gl:Hold" data-tip="Hold|How long the trade was open.">Hold</th><th scope="col" data-rich="gl:Exit" data-tip="Exit|How the trade closed: by hand, stop loss, take profit, trailing stop or another rule.">Exit</th><th scope="col" data-rich="gl:Note" data-tip="Note|Your note, saved on the trade and shown in Trade notes.">Note</th></tr></thead><tbody>${tr.map(x => {
+    const i = S.history.indexOf(x.rows[x.rows.length - 1]), fl = [...(x.ctx || []).map(flagN), x.r == null ? 'No stop loss' : '', revIds.has(x.id + '|' + x.open) ? `Within ${REVENGE_MIN} min of a loss` : ''].filter((v, k, a) => v && a.indexOf(v) === k);
+    return `<tr data-i="${i}"><td class="mono" data-rich="jt:${i}">${dt(x.close)}</td><th scope="row" data-rich="jt:${i}"><span class="cd-sd ${x.side === 'buy' ? 'up' : 'dn'}">${x.side === 'buy' ? 'Buy' : 'Sell'}</span> ${x.lots.toFixed(2)} ${coachEsc(pretty(x.sym))}${x.parts > 1 ? ` <small>${x.parts} parts${x.complete ? '' : ', still open'}</small>` : ''}${fl.length ? `<span class="cd-fl" title="${coachEsc(fl.join(' · '))}">${fl.length} warning${fl.length > 1 ? 's' : ''}</span>` : ''}</th>`
+      + `<td class="mono">${fp(x.sym, x.entry)} → ${fp(x.sym, x.exit)}</td><td class="mono ${up(x.pips)}">${x.pips >= 0 ? '+' : ''}${(+x.pips).toFixed(1)}</td><td class="mono">${x.r == null ? '—' : (x.r >= 0 ? '+' : '') + x.r.toFixed(2) + 'R'}</td>`
+      + `<td class="mono ${up(x.net)}" title="${x.comm ? `net of ${usdFmt(x.comm)} commission` : 'net P&L'}${x.swap ? ` · swap ${usdFmt(x.swap, true)}` : ''}">${usdFmt(x.net, true)}</td><td class="mono">${fm((x.close - x.open) / 60)}</td><td class="cd-ex">${coachEsc(x.reason || '—')}</td>`
+      + `<td><input data-j="note" aria-label="Note" placeholder="What did you see? What would you change?" value="${coachEsc(x.note || '')}"></td></tr>`;
+  }).join('')}</tbody></table>`;
+  return { sum, table, trades, n: h.length };
+}
+function coachOpen() {
+  let el = $('#coachDlg');
+  if (!el) {
+    el = document.createElement('div'); el.className = 'overlay'; el.id = 'coachDlg'; document.body.appendChild(el);
+    el.addEventListener('click', e => { if (e.target === el || e.target.closest('[data-cf]')) el.hidden = true; });
+    el.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); el.hidden = true; } });
+    // notes typed here are the journal's: same field on the same history row, then the journal redraws
+    el.addEventListener('change', e => { const r = e.target.closest('tr[data-i]'), f = e.target.dataset.j; if (!r || !f) return; const h = S.history[+r.dataset.i]; if (!h) return; h[f] = e.target.value; save(); if (typeof renderJournal === 'function') renderJournal(); });
+  }
+  const ins = coachInsights(), d = coachDetails();
+  el.innerHTML = `<div class="modal cf-modal cd-modal" role="dialog" aria-modal="true" aria-labelledby="cdT">
+    <div class="ph"><h2 id="cdT">Coach · details</h2><span class="muted small">${d.n} closed trade${d.n === 1 ? '' : 's'} · a group needs ${COACH_MIN}+ trades for a verdict, ${COACH_N}+ before a gap means much</span><button type="button" class="cd-x" data-cf="cancel" aria-label="Close">Close</button></div>
+    ${d.n ? d.sum : ''}
+    <div class="cd-body${d.n ? '' : ' cd-one'}"><section class="cd-col"><h4 data-rich="j:coach">Insights</h4><ul class="cd-ins">${ins.map((i, n) => `<li class="${i.tone}" data-rich="ci:${n}" tabindex="0">${i.t}</li>`).join('')}</ul></section>
+      ${d.n ? `<section class="cd-col cd-wide">${d.table}</section><section class="cd-col cd-tr"><h4 data-rich="j:notes">Trades · ${d.n} · newest first · notes save to the journal</h4>${d.trades}</section>` : ''}</div></div>`;
+  el.hidden = false; el.querySelector('[data-cf=cancel]').focus({ preventScroll: true });
+}
+// a hover for each Coach line: the full sentence, and how to use it
+function coachTip(t) {
+  const plain = t.replace(/<[^>]+>/g, ''), use = [
+    [/^Suggested rule/, 'A warning that goes with worse results for you. Turn it into a rule: pause and write the pre-mortem before such a trade.'],
+    [/^Costliest warning/, 'The context at entry that has cost you the most so far. Fix this one first.'],
+    [/^Disposition effect/, 'You close winners readily and hold losers. Let stops close the losers.'],
+    [/^Best pair/, 'Where your results are best. A small sample can be chance: look at the number of trades before leaning on it.'],
+    [/^Weakest pair/, 'Check spread, size and timing before blaming the pair.'],
+    [/hold losers/, 'Holding losers longer than winners is loss aversion. Let the stop do the job.'],
+    [/let winners run/i, 'Winners run longer than losers: keep doing it.'],
+    [/Average loss/, 'A large average loss needs a high win rate to break even.'],
+    [/of longs|of shorts|\bwin\b.*(long|short)/, 'A gap between long and short results; small samples are often chance.'],
+    [/no stop loss/, 'Trades without a stop have an unbounded loss and no R. Set one before you enter.'],
+    [/within \d+ minutes of a loss/, 'Quick re-entries after a loss are how revenge trading starts. Take a break after a loss.'],
+    [/^Best session/, 'The session (by open time, UTC) where you do best. Consider concentrating there.'],
+  ].find(([re]) => re.test(plain));
+  return 'Insight|' + plain + (use ? ' ' + use[1] : '');
 }
 function renderCoach() {
   const el = $('#coach'); if (!el) return;
-  el.innerHTML = `<h3>Coach</h3><ul>${coachInsights().map(i => `<li class="${i.tone}">${i.t}</li>`).join('')}</ul>`;
+  const h = `<div class="coach-h"><h3 data-rich="j:coach" data-tip="Coach|Reads your closed trades and points at habits: what costs you, what works. Each line is the short form; a ‡ means the sample is small and may be chance. Details opens every insight and the tables behind them.">Coach</h3><button type="button" class="coach-more" data-coach="more" aria-haspopup="dialog">Details</button></div><ul class="coach-l">${coachInsights().map((i, n) => `<li class="${i.tone}" data-rich="ci:${n}" data-tip="${escHtml(coachTip(i.t))}" tabindex="0">${coachShort(i.t)}</li>`).join('')}</ul>`;
+  if (el._h !== h) { el.innerHTML = h; el._h = h; }
+  if (!el._b) { el._b = 1; el.addEventListener('click', e => { if (e.target.closest('[data-coach=more]')) coachOpen(); }); }
 }
 
 /* ============ export / import ============ */
@@ -316,7 +400,7 @@ function importAccount(file) {
       // imported files are untrusted: drop prototype keys and refuse numbers that are not finite.
       // Free-text fields keep their text exactly (every render site escapes them; sanitizeState caps lengths).
       // Every other string loses markup characters, because some number and enum fields reach innerHTML unchecked.
-      const FREE = new Set(['reason', 'note', 'setup', 'own', 'kill', 'mine', 'flags', 'codes', 'broke', 'name', 'label', 'text', 'title', 'wsName', 'ctx', 'news', 'tags']);
+      const FREE = new Set(['reason', 'note', 'own', 'kill', 'mine', 'flags', 'codes', 'broke', 'name', 'label', 'text', 'title', 'wsName', 'ctx', 'news', 'tags']);
       const clean = (v, path = 'state', key = '') => typeof v === 'number' ? (Number.isFinite(v) ? v : (() => { throw bad(`${path} is not a finite number`); })())
         : typeof v === 'string' ? (FREE.has(key) ? v : v.replace(/[<>"'`]/g, ''))
         : Array.isArray(v) ? v.map((x, i) => clean(x, `${path}[${i}]`, key))
@@ -324,6 +408,19 @@ function importAccount(file) {
       if (j.app && j.app !== 'meridian-fx') throw bad('it was exported by another app');
       if (j.version != null && j.version > 1) { toast('Import failed', `This file was exported by a newer version (format ${j.version}).`, 'dn'); return; }
       // a fresh object from the cleaned copy: the original keeps its own __proto__ key, which Object.assign would apply as a prototype
+      // a signed-in page: the account is the server's; the file gives only the interface preferences (settings, ticket,
+      // watchlist, drawings, lines, pre-mortem and tilt), the balance, positions, orders and history stay as they are
+      if (TradeLink.live) {
+        const keep = {}; for (const k of ACCT_KEYS) if (S[k] !== undefined) keep[k] = S[k];
+        const exec = {}; for (const k of SET_EXEC) exec[k] = S.set[k];
+        const pr = prefsOf(clean(st));
+        loadState({ ...JSON.parse(JSON.stringify(S)), ...pr, set: { ...S.set, ...(pr.set || {}), ...exec } });
+        Object.assign(S, keep); Object.assign(S.set, exec); save();
+        applyTheme(); syncTicketInputs(); fullChart(true); changed('pos', 'ord', 'hist', 'al');
+        if (typeof syncLevSel === 'function') syncLevSel(); $('#help').hidden = true;
+        toast('Preferences imported', 'Settings, ticket, watchlist, drawings and lines from the file. The account on the server (balance, positions, orders, history) is not changed by an import.', 'info');
+        return;
+      }
       const n0 = st.positions.length + st.history.length + (Array.isArray(st.orders) ? st.orders.length : 0) + (Array.isArray(st.alerts) ? st.alerts.length : 0);
       loadState(clean(st)); save();
       const dropped = n0 - (S.positions.length + S.history.length + S.orders.length + S.alerts.length);
@@ -349,7 +446,7 @@ if (typeof renderOrders === 'function') {
     const rebuilt = dirty.ord; base();
     if (!rebuilt) return;
     for (const tr of $('#ordBody').children) {
-      const o = S.orders.find(x => x.id === +tr.dataset.id), tag = tr.querySelector('.tag'); if (!o || !tag) continue;
+      const o = S.orders.find(x => String(x.id) === tr.dataset.id), tag = tr.querySelector('.tag'); if (!o || !tag) continue;
       tag.textContent = `${o.side} ${ordType(o)}`;
       const extra = [o.limit != null ? `limit ${fp(o.sym, o.limit)}${o.status === 'triggered' ? ' · triggered' : ''}` : '', o.tif && o.tif !== 'GTC' ? tifText(o) : '', o.oca ? 'OCO' : ''].filter(Boolean).join(' · ');
       if (extra) { const sp = document.createElement('div'); sp.className = 'muted small'; sp.textContent = extra; tag.parentElement.appendChild(sp); }
@@ -366,7 +463,9 @@ if (typeof renderPositions === 'function') {
     const rebuilt = dirty.pos; base();
     for (const tr of $('#posBody').children) {
       const p = S.positions.find(x => x.id === +tr.dataset.id); if (!p) continue;
-      if (rebuilt && p.fills && p.fills.length) { const a = tr.querySelector('.acts'); if (a && !a.querySelector('[data-fid]')) a.insertAdjacentHTML('afterbegin', `<button type="button" data-fid="${p.fills[0]}" title="Opening fill receipt" aria-label="Opening fill receipt for #${p.id}">Fill</button>`); }
+      // the server account keeps the receipts in S.fills only: the row finds its opening fill there (UX-41)
+      const pf = p.fills && p.fills.length ? p.fills : (S.fills || []).filter(f => f.pos === p.id && f.sym === p.sym).map(f => f.fid).reverse();
+      if (rebuilt && pf.length && Number.isInteger(pf[0])) { const a = tr.querySelector('.acts'); if (a && !a.querySelector('[data-fid]')) a.insertAdjacentHTML('afterbegin', `<button type="button" data-fid="${pf[0]}" data-tip="Show the receipt of the opening fill" aria-label="Show the receipt of the opening fill for #${p.id}">Fill</button>`); }
       const sl = tr.querySelector('[data-edit=sl]'), tp = tr.querySelector('[data-edit=tp]');
       if (sl && !sl.querySelector('input') && p.sl != null && p.beSl === p.sl && !/BE$/.test(sl.textContent)) sl.textContent += ' BE';
       if (tp && !tp.querySelector('input') && p.tps && p.tps.length > 1) { const t = `${fp(p.sym, p.tp)} +${p.tps.length - 1}`; if (tp.textContent !== t) { tp.textContent = t; tp.title = p.tps.map(l => `${l.leg} ${fp(p.sym, l.price)} · ${lotsWord(p.sym, l.lots)}`).join('\n') + '\nClick to edit the nearest target'; } }
@@ -380,8 +479,10 @@ if (typeof renderHistory === 'function') {
     const rebuilt = dirty.hist; base();
     if (!rebuilt) return;
     [...$('#histBody').children].forEach((tr, i) => {
-      const h = S.history[i], f = h && Array.isArray(h.fills) ? h.fills[h.fills.length - 1] : null;
-      if (h && !h.nbp && Number.isInteger(f) && tr.lastElementChild) tr.lastElementChild.insertAdjacentHTML('beforeend', ` <button type="button" class="link" data-fid="${f}" aria-label="Fill receipt">Receipt</button>`);
+      const h = S.history[i], f = h && Array.isArray(h.fills) && h.fills.length ? h.fills[h.fills.length - 1] : h ? ((S.fills || []).find(x => x.pos === h.id && x.sym === h.sym) || {}).fid : null;
+      // the receipt sits with the close's reason (since UX 09.11 F14 the last cells are Costs and Net)
+      const cell = (tr.querySelector('td[data-c="costs"]') || {}).previousElementSibling || tr.lastElementChild;
+      if (h && !h.nbp && Number.isInteger(f) && cell) cell.insertAdjacentHTML('beforeend', ` <button type="button" class="link" data-fid="${f}" aria-label="Fill receipt">Receipt</button>`);
     });
   };
 }

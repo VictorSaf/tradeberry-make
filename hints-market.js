@@ -1,0 +1,1 @@
+/* Hint cards: empty on purpose. the whole zone (Market watch and the Trade chart) is opted out by Victor on 16.11.2026: aside.watch and section.chartp in hints-optouts.json. The cards written by the zone task are in git history (commit before this one) if Victor wants them back. */

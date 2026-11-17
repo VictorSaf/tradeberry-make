@@ -3,7 +3,7 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const usdFmt = (v, sign = false) => v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : sign && v > 0 ? '+' : '') + '$' + nf2.format(Math.abs(v));
+const usdFmt = (v, sign = false) => v == null || !isFinite(v) ? '—' : (Math.abs(v) < .005 ? '' : v < 0 ? '−' : sign && v > 0 ? '+' : '') + '$' + nf2.format(Math.abs(v)); // a zero carries no sign (UX-70)
 const pct = (v, d = 2, sign = true) => !isFinite(v) ? '—' : (v < 0 ? '−' : sign && v > 0 ? '+' : '') + Math.abs(v).toFixed(d) + '%';
 const nfx = (v, d = 1) => { if (v == null || !isFinite(v)) return '—'; const s = Math.abs(v).toFixed(d); return (v < 0 && +s !== 0 ? '−' : '') + s; }; // no '−0.00'
 const sgn = (v, d = 1) => (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d);
@@ -20,9 +20,25 @@ const dts = t => { const d = new Date(t * 1000).toISOString(); return d.slice(5,
 const cls = v => v > 0 ? 'up' : v < 0 ? 'dn' : '';
 const LOT = 100000;
 const escHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* A price in the broker platform's own layout, from the sheet's fmt ('#.##RRS', '#.RR#', '#.RR', '#'): after the point,
+   '#' is a plain digit, 'R' a large one, 'S' a small raised one; the whole part is plain. One source for New order and
+   the market watch, so both read exactly as the platform does. → { a: plain lead, b: large, c: plain after, s: raised } */
+function pxSplit(sym, v) {
+  const m = M(sym), t = fp(sym, v), dot = t.indexOf('.');
+  const f = (m && typeof m.fmt === 'string' ? m.fmt : '#.##RRS').split('.')[1] || '';
+  if (dot < 0 || !f) return { a: t, b: '', c: '', s: '' };
+  const dec = t.slice(dot + 1), out = { a: t.slice(0, dot + 1), b: '', c: '', s: '' };
+  for (let i = 0; i < dec.length; i++) {
+    const k = f[i] || '#', d = dec[i];
+    if (k === 'R') { if (out.c) { out.c += d; continue; } out.b += d; }
+    else if (k === 'S') out.s += d;
+    else if (out.b) out.c += d; else out.a += d;
+  }
+  return out;
+}
 function bigPx(sym, v) {
-  const s = v.toFixed(M(sym).digits);
-  return `<span>${s.slice(0, -3)}</span><b>${s.slice(-3, -1)}</b><sup>${s.slice(-1)}</sup>`;
+  const p = pxSplit(sym, v);
+  return `<span>${p.a}</span><b>${p.b}</b>${p.c ? `<span>${p.c}</span>` : ''}${p.s ? `<sup>${p.s}</sup>` : ''}`;
 }
 
 /* ============ state ============ */
@@ -33,9 +49,20 @@ const DEF = {
   // choice (capped at the sheet maximum); fav: favourite symbols (≤ 50); wlOpen: watchlist group key → open (empty = nothing chosen yet: Favourites and FX open, on a phone with
   // favourites only Favourites; once chosen, a missing key is closed)
   set: { sym: 'EURUSD', tf: 15, type: 'candles', ind: { ema20: true, ema50: true, bb: false, rsi: true }, theme: 'dark', jur: 'none', lev: null, sound: true, strLb: 240, corrLb: 1440, oneClick: false, wl: 'all', fav: [], wlOpen: {} },
-  tk: { side: 'buy', ot: 'market', sm: 'lots', lots: 1, risk: 1, sl: 20, tp: 40, trail: 15, useSL: true, useTP: true, useTrail: false, price: null }
+  tk: { side: 'buy', ot: 'market', sm: 'lots', lots: 1, risk: 1, sl: 20, tp: 40, trail: 15, useSL: false, useTP: false, useTrail: false, price: null }
 };
 DEF.catv = 1; // instrument catalog version of the account: 1 = v15 (the 265 instruments of the sheet)
+/* What of S is the account (on a signed-in page it lives on the execution server: tradelink.js) and what is an
+   interface preference (saved per key on /api/state by cloud.js, the only thing Help › Import loads on a signed-in
+   page): settings except the execution ones, ticket, watchlist, drawings, lines, pre-mortem and tilt, tool settings. */
+const ACCT_KEYS = ['balance', 'peak', 'positions', 'orders', 'history', 'fills', 'ordLog', 'alerts', 'nextId', 'nextFill', 'chal', 'bkPos', 'bkHist', 'bkAlerts', 'bkOrders', 'demo', 'catv'];
+const SET_EXEC = ['jur', 'lev', 'slip', 'slipSd', 'latMs', 'comm'];
+function prefsOf(st) {
+  const p = {};
+  for (const k of Object.keys(st || {})) if (!ACCT_KEYS.includes(k)) p[k] = st[k];
+  if (p.set && typeof p.set === 'object') { p.set = { ...p.set }; for (const k of SET_EXEC) delete p.set[k]; }
+  return p;
+}
 const KEY = 'meridian-fx-v1';
 let memStore = null; // session-only state (preview host disallows browser storage)
 const store = {
@@ -49,12 +76,19 @@ const store = {
    What is dropped or repaired is listed in opts.dropped (loadState tells the user); a state refused as a whole says
    why in opts.reason. Limits: money beyond ±1e12 USD or a size beyond the order cap (MAX_LOTS) is not an account this
    app produced, so the record is refused rather than turned into 0. Free text stays free (it is escaped where it is
-   shown) but is capped: reason 120, setup 60, note 2000 characters, pre-mortem own/kill 160 (the form's maxlength);
+   shown) but is capped: reason 120, note 2000 characters, pre-mortem own/kill 160 (the form's maxlength);
    a news tag is a string of at most 80 characters, at most 20 per trade. */
 const BAD_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const plainData = (v, depth = 0) => depth > 40 ? undefined : Array.isArray(v) ? v.map(x => plainData(x, depth + 1))
   : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).filter(k => !BAD_KEYS.has(k)).map(k => [k, plainData(v[k], depth + 1)]))
   : typeof v === 'number' && !isFinite(v) ? null : v;
+// Strings that are not free text lose markup characters on the way out of sanitizeState (the browser's own copy, the
+// server's, an import): some number and enum fields reach innerHTML unchecked. Free text keeps its words; every place that shows it
+// escapes it. The same rule as the file import (pro.js importAccount). Security audit 09.11.2026, F17.
+const FREE_TXT = new Set(['reason', 'note', 'own', 'kill', 'mine', 'flags', 'codes', 'broke', 'name', 'label', 'text', 'title', 'wsName', 'ctx', 'news', 'tags']);
+const noMarkup = (v, key = '') => typeof v === 'string' ? (FREE_TXT.has(key) ? v : v.replace(/[<>"'`]/g, ''))
+  : Array.isArray(v) ? v.map(x => noMarkup(x, key))
+  : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k.replace(/[<>"'`]/g, ''), noMarkup(x, k)])) : v;
 const finite = v => typeof v === 'number' && isFinite(v);
 const numOr = (v, d) => finite(v) ? v : d;
 const pxOrNull = v => finite(v) && v > 0 ? v : null;
@@ -62,7 +96,7 @@ const isSide = v => v === 'buy' || v === 'sell';
 const okSym = v => typeof v === 'string' && Object.prototype.hasOwnProperty.call(Engine.META, v);
 // the trade history also keeps the rows of the v14 CFDs retired in v15 (Engine.LEGACY_META)
 const okSymH = v => okSym(v) || (typeof v === 'string' && !!Engine.LEGACY_META && Object.prototype.hasOwnProperty.call(Engine.LEGACY_META, v));
-const MONEY_MAX = 1e12, TXT_MAX = { reason: 120, setup: 60, note: 2000, pm: 160 }, NEWS_MAX = 20, NEWS_LEN = 80;
+const MONEY_MAX = 1e12, TXT_MAX = { reason: 120, note: 2000, pm: 160 }, NEWS_MAX = 20, NEWS_LEN = 80;
 const lotsCap = () => typeof MAX_LOTS === 'number' ? MAX_LOTS : 100;
 // a size within the instrument sheet's volume [min, max] on its step (EURUSD 0.01–400 lots, whole shares on stocks)
 const volRange = sym => { const m = Engine.META[sym]; return m && m.p && Array.isArray(m.p.vol) ? m.p.vol : null; };
@@ -149,7 +183,7 @@ const SHAPES = {
     bkSl: SV.or(SV.one('auto'), SV.num(0, 1e6)), bkTp: SV.or(SV.one('auto'), SV.num(0, 1e6)), bkCmp: SV.one('none', 'ccy', 'bask'), bkTrail: SV.num(0, 1e6), bkBe: SV.num(0, 1e6),
     bkEntry: SV.one('market', 'limit', 'stop'), bkPend: SV.int(1, 2000), bkAn: SV.one('attr', 'sess', 'corr'), bkAnW: SV.one(60, 240, 1440, 4320), bkAl: SV.int(1, 2000), bkPane: SV.one('an', 'tr') },
   // behav.js pmCfg / tiltCfg (C3)
-  pm: { on: SV.bool, minRisk: SV.num(0, 100), noSL: SV.bool, until: SV.num(0, 1e13), skips: okCount },
+  pm: { on: SV.bool, minRisk: SV.num(0, 100), noSL: SV.bool, until: SV.num(0, 1e13), skips: okCount, off: SV.bool },
   tilt: { on: SV.bool, streak: SV.int(1, 100), dayLoss: SV.pos(100), cool: SV.pos(1e5) },
   // rows: req must be present and valid, opt valid when present (basket.js bkExec, bkFinish, bkPlace, the alert button, a custom basket)
   basket: { req: { id: SV.id, name: SV.str(80), long: svW, short: svW }, opt: { note: SV.str(200) } },
@@ -225,7 +259,7 @@ function retireLegacy(s, o, opts, note) {
     o.balance += pnl;
     const risk = finite(p.risk) && p.risk > 0 ? p.risk : null;
     rows.push({ id: numOr(p.id, 0), sym: p.sym, side: p.side, lots: p.lots, entry: p.entry, exit, open: numOr(p.open, now), close: now, pnl, pips: (exit - p.entry) * d / m.pip,
-      r: risk ? pnl / risk : null, reason: RETIRED_REASON, note: '', setup: '', swap, comm, retired: true, pm: p.pm, ctx: p.ctx, news: p.news });
+      r: risk ? pnl / risk : null, reason: RETIRED_REASON, note: '', swap, comm, retired: true, pm: p.pm, ctx: p.ctx, news: p.news });
     say(`${where} closed: instrument retired (catalog v15), ${lv && u ? 'at the last saved price ' + exit : 'at its entry (no saved price), P&L 0'}${swap ? ', swap kept' : ''}: ${usdFmt(pnl, true)}`);
     return false;
   });
@@ -280,9 +314,10 @@ function sanitizeState(raw, opts = {}) {
   // a protection row (nbp) is a balance credit, not a trade: side 'nbp', 0 lots (older saves stored a trade side and size)
   o.history = keep([...retired, ...arr(s.history)], 'hist', 'closed trade').slice(0, 500).map(h => h.nbp === true ? { ...h, side: 'nbp', lots: 0 } : h).map(h => ({
     ...h, id: numOr(h.id, 0), open: numOr(h.open, now), close: numOr(h.close, now), pips: numOr(h.pips, 0), r: finite(h.r) ? h.r : null,
-    reason: typeof h.reason === 'string' && h.reason ? capTxt(h.reason, TXT_MAX.reason) : 'Manual', note: capTxt(h.note, TXT_MAX.note), setup: capTxt(h.setup, TXT_MAX.setup),
+    reason: typeof h.reason === 'string' && h.reason ? capTxt(h.reason, TXT_MAX.reason) : 'Manual', note: capTxt(h.note, TXT_MAX.note),
     pm: pm(h.pm, 'trade #' + h.id), ctx: strs(h.ctx), news: newsOf(h.news), swap: numOr(h.swap, 0), nbp: h.nbp === true
   }));
+  for (const h of o.history) delete h.setup; // the setup tag is gone from the product: older saves, imports and server rows lose it here
   o.alerts = arr(o.alerts).filter(a => okSym(a.sym) && pxOrNull(a.price) && (a.cond === 'above' || a.cond === 'below')).map(a => ({ ...a, id: numOr(a.id, 0), done: !!a.done }));
   o.hlines = {};
   if (plainObj(s.hlines)) for (const [k, v] of Object.entries(s.hlines)) if (okSym(k) && Array.isArray(v)) o.hlines[k] = v.filter(pxOrNull);
@@ -405,7 +440,7 @@ function sanitizeState(raw, opts = {}) {
   // (a retirement close that leaves a flat negative balance is a real loss: protection zeroes it, like at boot)
   if (bal0 < 0 && !o.positions.length && !retired.length && !opts.repairBalance) { opts.reason = 'a negative balance with no valid open positions'; return null; }
   if (dropped.length) opts.dropped = dropped;
-  return o;
+  return noMarkup(o); // after the checks, so a field they refuse is still reported (F17)
 }
 let S;
 // an explicit state that fails sanitizeState throws (the import reports it) and leaves the running account alone
@@ -417,7 +452,7 @@ function loadState(src) {
   if (mig.length) {
     console.info('[Meridian] catalog v15 migration:', mig);
     const n = mig.filter(x => / closed: /.test(x)).length;
-    setTimeout(() => { try { toast('Retired instruments', `The v14 simulated CFDs (gold, US 500, Germany 40, UK 100, WTI, the old Bitcoin) are not in the v15 catalog. ${n ? nOf(n, 'position') + ' closed (in the trade history with the reason); ' : ''}${mig.length - n} order, alert or chart item${mig.length - n === 1 ? '' : 's'} removed.${mig.length > 1 ? ' Full list in the browser console.' : ''}`, 'info'); } catch (e) { console.error(e); } }, 0);
+    setTimeout(() => { try { toast('Retired instruments', `The v14 CFDs (gold, US 500, Germany 40, UK 100, WTI, the old Bitcoin) are not in the v15 catalog. ${n ? nOf(n, 'position') + ' closed (in the trade history with the reason); ' : ''}${mig.length - n} order, alert or chart item${mig.length - n === 1 ? '' : 's'} removed.${mig.length > 1 ? ' Full list in the browser console.' : ''}`, 'info'); } catch (e) { console.error(e); } }, 0);
   }
   if (bad.length) {
     const d = bad; console.warn('[Meridian] state repaired on load:', d);
@@ -444,7 +479,7 @@ function loadState(src) {
       const lev = s.set && LEV_CHOICES.includes(s.set.lev) ? s.set.lev : 0;
       if (S.positions.length && lev) {
         S.set.jur = 'none'; S.set.lev = lev;
-        setTimeout(() => { try { syncLevSel(); toast('Leverage kept at 1:' + lev, `This account was saved before leverage profiles existed. Its ${nOf(S.positions.length, 'open position')} ${S.positions.length > 1 ? 'keep' : 'keeps'} 1:${lev} with no jurisdiction cap (never above an instrument's sheet maximum). A retail cap can be set under Settings › Jurisdiction cap (you will see the resulting margin level first).`, 'info'); } catch (e) { console.error(e); } }, 0);
+        setTimeout(() => { try { syncLevSel(); toast('Leverage kept at 1:' + lev, `This account was saved before leverage profiles existed. Its ${nOf(S.positions.length, 'open position')} ${S.positions.length > 1 ? 'keep' : 'keeps'} 1:${lev}, never above an instrument's sheet maximum (${noCapText(true)}). A retail cap can be set under Settings › Jurisdiction cap (you will see the resulting margin level first).`, 'info'); } catch (e) { console.error(e); } }, 0);
       } else { S.set.jur = DEF.set.jur; S.set.lev = DEF.set.lev; }
     }
   }
@@ -485,8 +520,13 @@ function toast(title, body = '', kind = '') {
   const t = document.createElement('div'); t.className = 'toast ' + kind;
   t.innerHTML = `<b></b><span></span>`; t.querySelector('b').textContent = title; t.querySelector('span').textContent = body;
   $('#toasts').appendChild(t);
+  if (/^Stop-out/.test(title)) { // a forced close stays until it is seen
+    t.classList.add('sticky'); t.title = 'Click to dismiss'; t.style.cursor = 'pointer'; t.style.pointerEvents = 'auto';
+    t.querySelector('span').textContent = (body ? body + ' · ' : '') + (/challenge/.test(title) ? '' : 'Closed by the broker: margin level fell below 50%. ') + 'Click to dismiss.';
+    t.addEventListener('click', () => t.remove()); return;
+  }
   setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = 0; setTimeout(() => t.remove(), 300); }, 3800);
-  const all = $$('#toasts .toast'); if (all.length > 4) all[0].remove();
+  const all = $$('#toasts .toast:not(.sticky)'); if (all.length > 4) all[0].remove();
 }
 
 /* ============ manual actions ============
@@ -497,19 +537,22 @@ const floatingOf = ps => ps.reduce((s, p) => s + posPnl(p).pnl, 0);
 const EXPORT_FIRST = 'Export first (Help › Export account) to keep a copy.';
 // break-even by hand only tightens, like the automatic one (trade.js): the stop moves to the entry when the price is
 // past the entry (the price, not the P&L, which carries swap) and the entry is tighter than the current stop
-const BE_WHY = { at: ['Stop is already at break-even', 'Nothing to move'], tighter: ['Stop is already tighter than break-even', 'Break-even would loosen it, so it stays'], early: ['Price is not past entry yet', 'Break-even needs the price beyond the entry'] };
+const BE_WHY = { refused: ['Stop not moved', 'Refused, see the message before this one'], at: ['Stop is already at break-even', 'Nothing to move'], tighter: ['Stop is already tighter than break-even', 'Break-even would loosen it, so it stays'], early: ['Price is not past entry yet', 'Break-even needs the price beyond the entry'] };
 function manualBe(p) {
   const q = Engine.quote(p.sym), d = p.side === 'buy' ? 1 : -1;
   if (p.sl != null && p.sl === p.entry) return 'at';
   if (p.sl != null && d * (p.sl - p.entry) > 0) return 'tighter';
   if (!(d > 0 ? q.bid > p.entry : q.ask < p.entry)) return 'early';
-  p.sl = p.entry; p.trailed = false; changed('pos');
-  return '';
+  const r = modifyPosition(p.id, { sl: p.entry });
+  return r instanceof Promise ? r.then(ok => ok ? '' : 'refused') : r ? '' : 'refused';
 }
 function confirmCloseAll() {
   const n = S.positions.length; if (!n) { toast('Nothing to close', 'No open positions', 'info'); return; }
-  askConfirm({ title: `Close all ${nOf(n, 'position')}?`, body: `Floating P&L ${usdFmt(floatingOf(S.positions), true)} is booked at the market (simulated fills, which can slip). This cannot be undone.`,
-    ok: 'Close all', kind: 'sell', onOk: () => closeWhere(() => true) });
+  // asked once (decision 44, Victor 10.11.2026): after the first confirmation Close all acts on one click
+  let ack = false; try { ack = localStorage.getItem('tb-ca-ack') === '1'; } catch (x) { /* asks every time */ }
+  if (ack) { closeWhere(() => true); return; }
+  askConfirm({ title: `Close all ${nOf(n, 'position')}?`, body: `Floating P&L ${usdFmt(floatingOf(S.positions), true)} is booked at the market (fills can slip). This cannot be undone. This is asked once: from now on Close all closes every open position on one click.`,
+    ok: 'Close all', kind: 'sell', onOk: () => { try { localStorage.setItem('tb-ca-ack', '1'); $('#closeAll').dataset.oc = '1'; } catch (x) { /* asked again */ } closeWhere(() => true); } });
 }
 // what a reset or a demo load would erase (empty: nothing to lose, no question)
 function acctAtStake() {
@@ -521,8 +564,8 @@ function acctAtStake() {
   if (S.balance !== INIT_BAL) a.push(`the balance of ${usdFmt(S.balance)}`);
   return a;
 }
-function confirmWipe(title, ok, what, onOk) {
-  const at = acctAtStake(); if (!at.length) { onOk(); return; }
+function confirmWipe(title, ok, what, onOk, always) {
+  const at = acctAtStake(); if (!at.length) { if (always) askConfirm({ title, body: what, ok, kind: 'sell', onOk }); else onOk(); return; }
   askConfirm({ title, body: `${what} This erases ${listText(at)}. ${EXPORT_FIRST}`, ok, kind: 'sell', onOk });
 }
 function confirmClearChart() {
@@ -541,9 +584,12 @@ function confirmRev(p) {
   askConfirm({ title: `Reverse ${pretty(sym)} #${id}?`, body: `Closes the ${side} ${lots.toFixed(2)} at the market (floating ${usdFmt(posPnl(p).pnl, true)}) and opens a ${opp} ${lots.toFixed(2)} at the market. The new position starts without a stop loss or take profit.`,
     ok: 'Reverse', kind: opp, onOk: () => {
       if (!S.positions.some(x => x.id === id)) { toast('Not reversed', `#${id} is no longer open`, 'info'); return; }
-      closePosition(id, 'Reversed');
-      const np = openPosition({ sym, side: opp, lots, auto: true, dupOk: true });
-      if (!np) toast('Reverse incomplete', `#${id} was closed, but the ${opp} position was not opened: ${lastReject || 'see the message before this one'}.${S.positions.some(x => x.sym === sym) ? '' : ` You are flat on ${pretty(sym)}.`}`, 'dn');
+      const second = np => { if (!np) toast('Reverse incomplete', `#${id} was closed, but the ${opp} position was not opened: ${lastReject || 'see the message before this one'}.${S.positions.some(x => x.sym === sym) ? '' : ` You are flat on ${pretty(sym)}.`}`, 'dn');
+      };
+      const c = closePosition(id, 'Reversed');
+      // live: the second leg goes once the server confirmed the first: the close's answer, then its position gone (the pos event)
+      if (c instanceof Promise) c.then(ok => ok === false ? null : TradeLink.whenPos(id, false).then(() => openPosition({ sym, side: opp, lots, auto: true, dupOk: true }).then(second)));
+      else second(openPosition({ sym, side: opp, lots, auto: true, dupOk: true }));
     } });
 }
 // an inline stop edit keeps the trail (as dragging the line does); when the trail would override the new level, or the
@@ -553,6 +599,146 @@ function trailNote(p, v, q) {
   const m = M(p.sym), d = p.side === 'buy' ? 1 : -1, n = trailNext(d, null, d > 0 ? q.bid : q.ask, p.trail * m.pip), un = unitWord(p.sym);
   if (d * (n - p.entry) >= 0 && d * (n - v) > 0) toast('Trailing stop is tighter', `The ${p.trail} ${un} trail moves the stop to ${fp(p.sym, n)} on the next check. Clear the SL field to remove the stop and the trail.`, 'info');
   else if (p.trailNow) toast('Trailing stop kept', `Your stop at ${fp(p.sym, v)} applies now; the ${p.trail} ${un} trail takes over once it can lock in the entry.`, 'info');
+}
+
+// a stop loss or take profit set on an open position (v: a price, or null to remove it); every change goes through
+// modifyPosition (the server's account on a signed-in page). false when the level is on the wrong side of price.
+function exitWhy(p, f, v) {
+  const q = Engine.quote(p.sym), buy = p.side === 'buy';
+  if (!(v > 0)) return 'Enter a level';
+  if (f === 'sl' && !(buy ? v < q.bid : v > q.ask)) return `Stop loss must be ${buy ? 'below the bid' : 'above the ask'} (${fp(p.sym, buy ? q.bid : q.ask)})`;
+  if (f === 'tp' && !(buy ? v > q.bid : v < q.ask)) return `Take profit must be ${buy ? 'above the bid' : 'below the ask'} (${fp(p.sym, buy ? q.bid : q.ask)})`;
+  return '';
+}
+function applyExit(p, f, v) {
+  // clearing the stop removes the trail too (a trail alone would put a stop back)
+  if (v == null) { if (f === 'sl' && p.trail > 0 && p.sl != null) toast('Stop loss and trailing stop removed', `${pretty(p.sym)} #${p.id} has no stop now`, 'info'); modifyPosition(p.id, f === 'sl' ? { sl: null, trail: 0 } : { tp: null }); return true; }
+  const why = exitWhy(p, f, v); if (why) { toast('Invalid level', why, 'dn'); return false; }
+  const q = Engine.quote(p.sym), d = p.side === 'buy' ? 1 : -1, m = M(p.sym);
+  // a stop set here keeps the trail (as dragging the line does)
+  if (f === 'sl') { const tr = p.trail; modifyPosition(p.id, tr > 0 ? { sl: v, trail: tr } : { sl: v }); trailNote(p, v, q); }
+  else {
+    modifyPosition(p.id, { tp: v });
+    // a target on the losing side of the entry is allowed (it caps a loss) but it is not a profit: say so
+    if (d * (v - p.entry) <= 0) toast(`Take profit ${d > 0 ? 'below' : 'above'} entry`, `If it fills at ${fp(p.sym, v)}, #${p.id} closes at a loss of about ${usdFmt(Math.abs((v - p.entry) * p.lots * m.size * Engine.usd(m.quote)))} before swap and commission.`, 'dn');
+  }
+  return true;
+}
+// the window that sets a position's SL or TP: the same units as the New order ticket (SL: price, pips, ATR ×, risk %,
+// risk in the quote currency; TP: price, pips, R × the stop), all measured from the entry; the level it gives, its
+// money and whether it is on the right side of price are shown before it is set
+function exitPop(p, f, cell) {
+  document.querySelector('.xp-pop')?.remove();
+  const m = M(p.sym), d = p.side === 'buy' ? 1 : -1, un = m.unit === 'pt' ? 'Points' : 'Pips', sl = f === 'sl';
+  const stopPips = p.sl != null ? Math.abs(p.entry - p.sl) / m.pip : 0;
+  const units = sl ? [['price', 'Price'], ['pips', un], ['atr', 'ATR ×'], ['rpct', 'Risk %'], ['rcur', `Risk ${m.quote}`]] : [['price', 'Price'], ['pips', un], ['r', 'R × stop']];
+  const pv = pipValue(p.sym, p.lots), atr = tkAtr1h(p.sym), eq = account().eq, qUsd = Engine.usd(m.quote);
+  // a value in a unit → the price it means (distance from the entry, on the loss side for a stop, the profit side for a target)
+  const toPx = (u, x) => {
+    if (!(x > 0)) return NaN;
+    const pips = u === 'pips' ? x : u === 'atr' ? x * atr : u === 'rpct' ? eq * x / 100 / pv : u === 'rcur' ? x * qUsd / pv : u === 'r' ? x * stopPips : NaN;
+    return u === 'price' ? x : +(p.entry + (sl ? -d : d) * pips * m.pip).toFixed(m.digits);
+  };
+  // the current level in a unit (to fill the field when the unit changes)
+  const fromPx = (u, v) => {
+    if (v == null) return '';
+    const pips = Math.abs(v - p.entry) / m.pip;
+    return u === 'price' ? fp(p.sym, v) : u === 'pips' ? pips.toFixed(1) : u === 'atr' ? (atr > 0 ? (pips / atr).toFixed(2) : '') : u === 'rpct' ? (eq > 0 ? (pips * pv / eq * 100).toFixed(2) : '') : u === 'rcur' ? (pips * pv / qUsd).toFixed(2) : u === 'r' ? (stopPips > 0 ? (pips / stopPips).toFixed(2) : '') : '';
+  };
+  const cur = p[f];
+  let unit = 'price';
+  const pop = document.createElement('div'); pop.className = 'xp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `${sl ? 'Stop loss' : 'Take profit'} for ${pretty(p.sym)} #${p.id}`);
+  pop.innerHTML = `<div class="xp-h"><b>${sl ? 'Stop loss' : 'Take profit'}</b><span>${pretty(p.sym)} #${p.id} · <span class="tag ${p.side}">${p.side}</span> ${p.lots.toFixed(2)} @ ${fp(p.sym, p.entry)}</span><button type="button" class="xp-x" aria-label="Close">✕</button></div>
+    <div class="xp-u" role="group" aria-label="${sl ? 'Stop loss' : 'Take profit'} in">${units.map(([k, w]) => `<button type="button" data-u="${k}"${k === 'r' && !(stopPips > 0) ? ' disabled title="Needs a stop loss on this position"' : ''}>${escHtml(w)}</button>`).join('')}</div>
+    <div class="xp-in"><input type="number" step="any" class="mono" aria-label="Value"><span class="xp-un"></span></div>
+    <div class="xp-lim mono"></div><div class="xp-out mono"></div><div class="xp-err" role="alert"></div>
+    <div class="xp-a">${cur != null ? '<button type="button" class="xp-rm">Remove</button>' : ''}<span></span><button type="button" class="xp-c">Cancel</button><button type="button" class="xp-ok">Set ${sl ? 'SL' : 'TP'}</button></div>`;
+  document.body.appendChild(pop);
+  const inp = pop.querySelector('input'), out = pop.querySelector('.xp-out'), err = pop.querySelector('.xp-err'), ok = pop.querySelector('.xp-ok');
+  // the furthest level allowed now (one point inside the bid/ask the level is checked against), kept current with the price
+  const limEl = pop.querySelector('.xp-lim'), buy = d > 0;
+  const lim = () => { const q = Engine.quote(p.sym), ref = buy ? q.bid : q.ask, up = sl ? !buy : buy; return { v: +(ref + (up ? m.point : -m.point)).toFixed(m.digits), up, ref, refW: buy ? 'bid' : 'ask' }; };
+  const showLim = () => { const l = lim(); limEl.innerHTML = `${l.up ? 'Min' : 'Max'} <b>${fp(p.sym, l.v)}</b> <span>· ${l.refW} ${fp(p.sym, l.ref)}</span>`; };
+  const tick = setInterval(() => { showLim(); if (inp.value !== '') show(); }, 250);
+  const close = () => { clearInterval(tick); pop.remove(); document.removeEventListener('pointerdown', away, true); cell.focus && cell.focus(); };
+  const away = e => { if (!pop.contains(e.target)) close(); };
+  const show = () => {
+    const v = toPx(unit, parseFloat(inp.value)), why = inp.value === '' ? '' : isFinite(v) ? exitWhy(p, f, v) : 'Enter a value above 0';
+    if (isFinite(v) && v > 0) { const pips = d * (v - p.entry) / m.pip, usd = pips * pv; out.innerHTML = `→ ${fp(p.sym, v)} · ${sgn(pips)} ${un.toLowerCase()} · <span class="${cls(usd)}">${usdFmt(usd, true)}</span>`; }
+    else out.textContent = '';
+    err.textContent = why; ok.disabled = inp.value === '' || !!why; showLim();
+  };
+  const setUnit = u => {
+    unit = u; for (const b of pop.querySelectorAll('[data-u]')) b.classList.toggle('on', b.dataset.u === u);
+    pop.querySelector('.xp-un').textContent = u === 'price' ? '' : u === 'pips' ? un.toLowerCase() : u === 'atr' ? '× ATR 1h' : u === 'rpct' ? '% of equity' : u === 'rcur' ? m.quote : '× stop';
+    inp.value = fromPx(u, cur); show(); inp.focus(); inp.select();
+  };
+  const commit = () => { const v = toPx(unit, parseFloat(inp.value)); if (isFinite(v) && applyExit(p, f, v)) { changed('pos'); close(); } else show(); };
+  pop.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.u) setUnit(b.dataset.u);
+    else if (b.classList.contains('xp-ok')) commit();
+    else if (b.classList.contains('xp-rm')) { applyExit(p, f, null); changed('pos'); close(); }
+    else close();
+  });
+  inp.addEventListener('input', show);
+  pop.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Enter' && e.target === inp && !ok.disabled) { e.preventDefault(); commit(); } });
+  // beside the cell: under it when there is room, otherwise above; never past the window's edges
+  const r = cell.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+  pop.style.top = (r.bottom + h + 8 < innerHeight ? r.bottom - 1 : Math.max(8, r.top - h + 1)) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', away, true));
+  setUnit('price');
+}
+
+/* UX-92: the stop and the target of a pending order, edited in its row as Positions does. The order keeps them as
+   distances from its fill (slPips, tpPips); the editor takes a price or a distance and sends the distance through
+   modifyOrder (the core's checks first, the server's after). */
+function ordExitPop(o, f, cell) {
+  document.querySelector('.xp-pop')?.remove();
+  const m = M(o.sym), d = o.side === 'buy' ? 1 : -1, un = m.unit === 'pt' ? 'points' : 'pips', sl = f === 'sl', key = f + 'Pips', what = sl ? 'Stop loss' : 'Take profit';
+  const cur = +o[key] > 0 ? +o[key] : null, dd = sl ? -d : d;
+  let unit = 'price';
+  const pop = document.createElement('div'); pop.className = 'xp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `${what} for the pending ${pretty(o.sym)} order`);
+  pop.innerHTML = `<div class="xp-h"><b>${what}</b><span>${pretty(o.sym)} · <span class="tag ${o.side}">${o.side} ${o.ot}</span> ${o.lots.toFixed(2)} @ ${fp(o.sym, o.price)}</span><button type="button" class="xp-x" aria-label="Close">✕</button></div>
+    <div class="xp-u" role="group" aria-label="${what} in"><button type="button" data-u="price">Price</button><button type="button" data-u="pips">${un[0].toUpperCase() + un.slice(1)}</button></div>
+    <div class="xp-in"><input type="number" step="any" class="mono" aria-label="Value"><span class="xp-un"></span></div>
+    <div class="xp-lim mono">Measured from the order price ${fp(o.sym, o.price)}: it applies when the order fills</div><div class="xp-out mono"></div><div class="xp-err" role="alert"></div>
+    <div class="xp-a">${cur != null ? '<button type="button" class="xp-rm">Remove</button>' : ''}<span></span><button type="button" class="xp-c">Cancel</button><button type="button" class="xp-ok">Set ${sl ? 'SL' : 'TP'}</button></div>`;
+  document.body.appendChild(pop);
+  const inp = pop.querySelector('input'), out = pop.querySelector('.xp-out'), err = pop.querySelector('.xp-err'), ok = pop.querySelector('.xp-ok');
+  const toPips = (u, x) => !(x > 0) ? NaN : u === 'pips' ? x : (dd * (x - o.price)) / m.pip; // a price: its distance on the right side of the order price
+  const close = () => { pop.remove(); document.removeEventListener('pointerdown', away, true); cell.focus && cell.focus(); };
+  const away = e => { if (!pop.contains(e.target)) close(); };
+  const show = () => {
+    const raw = parseFloat(inp.value), pips = toPips(unit, raw); let why = '';
+    if (inp.value === '') why = ''; else if (!isFinite(pips)) why = 'Enter a value above 0';
+    else if (!(pips > 0)) why = `${what} must be ${sl ? (d > 0 ? 'below' : 'above') : (d > 0 ? 'above' : 'below')} the order price`;
+    else { const v = modifyCheck('ord', o.id, { [key]: +pips.toFixed(1) }); if (!v.ok) why = v.why || v.title || 'Not applied'; }
+    if (isFinite(pips) && pips > 0) { const px = o.price + dd * pips * m.pip; out.innerHTML = `→ ${fp(o.sym, px)} · ${pips.toFixed(1)} ${un} from the fill`; } else out.textContent = '';
+    err.textContent = why; ok.disabled = inp.value === '' || !!why;
+  };
+  const setUnit = u => {
+    unit = u; for (const b of pop.querySelectorAll('[data-u]')) b.classList.toggle('on', b.dataset.u === u);
+    pop.querySelector('.xp-un').textContent = u === 'pips' ? un : '';
+    inp.value = cur == null ? '' : u === 'price' ? fp(o.sym, o.price + dd * cur * m.pip) : String(cur); show(); inp.focus(); inp.select();
+  };
+  const send = v => { const ch = { [key]: v }; if (f === 'tp' && o.tps) ch.tps = null; Promise.resolve(modifyOrder(o.id, ch)).then(r => { if (r !== false) close(); else show(); }); };
+  const commit = () => { const pips = toPips(unit, parseFloat(inp.value)); if (pips > 0) send(+pips.toFixed(1)); };
+  pop.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.u) setUnit(b.dataset.u);
+    else if (b.classList.contains('xp-ok')) { if (!ok.disabled) commit(); }
+    else if (b.classList.contains('xp-rm')) send(null);
+    else close();
+  });
+  inp.addEventListener('input', show);
+  pop.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key === 'Enter' && e.target === inp && !ok.disabled) { e.preventDefault(); commit(); } });
+  const r = cell.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+  pop.style.top = (r.bottom + h + 8 < innerHeight ? r.bottom - 1 : Math.max(8, r.top - h + 1)) + 'px';
+  setTimeout(() => document.addEventListener('pointerdown', away, true));
+  setUnit('price');
 }
 
 /* ============ misc controls ============ */
@@ -582,7 +768,7 @@ function setTab(name) {
   $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.pane === name));
   activeTab = name;
   if (name === 'journal') renderJournal();
-  if (name === 'lab') requestAnimationFrame(runLab);
+  if (name === 'lab') requestAnimationFrame(redrawLab);
   if (name === 'corr') renderCorr();
   if (name === 'vol') renderVol();
   if (name === 'calc') renderCalcs();
@@ -598,7 +784,9 @@ function bind() {
   $('#wl').addEventListener('click', e => { const r = e.target.closest('.wl-row'); if (r) setSymbol(r.dataset.sym); });
   $('#wl').addEventListener('keydown', e => { if (e.key === 'Enter') { const r = e.target.closest('.wl-row'); if (r) setSymbol(r.dataset.sym); } });
   $('#wlSearch').addEventListener('input', () => { buildWatch(); renderWatch(); renderSparks(); });
+  $('#wlSearch').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== 'ArrowDown') return; const r = $('#wl [data-sym]'); if (!r) return; e.preventDefault(); e.stopPropagation(); if (e.key === 'Enter') setSymbol(r.dataset.sym); else { r.tabIndex = 0; r.focus(); } });
   $('#tfSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTF(+b.dataset.tf); });
+  $('#tfSeg').addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const bs = [...e.currentTarget.querySelectorAll('button')], i = bs.indexOf(document.activeElement); if (i < 0) return; e.preventDefault(); e.stopPropagation(); bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length].focus(); });
   $('#typeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const wasIt = S.set.type === 'it'; S.set.type = b.dataset.type; $$('#typeSeg button').forEach(x => x.classList.toggle('on', x === b)); fullChart(wasIt || S.set.type === 'it'); if (S.set.type === 'it') toast('Intrinsic-time candles', 'One candle per move of δ instead of per time period. Timeframe buttons now set δ.', 'info'); save(); });
   $('#indSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = b.dataset.ind; S.set.ind[k] = !S.set.ind[k]; b.classList.toggle('on', S.set.ind[k]); applyIndVis(); legend(null); save(); });
   $('#toolSeg').addEventListener('click', e => {
@@ -631,49 +819,38 @@ function bind() {
   $('#tkSubmit').addEventListener('click', () => submitTicket());
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
   $('#closeAll').addEventListener('click', confirmCloseAll);
+  try { if (localStorage.getItem('tb-ca-ack') === '1') $('#closeAll').dataset.oc = '1'; } catch (x) { /* no mark */ } // acts on one click: the button says so
   document.addEventListener('click', e => { const s = e.target.closest('td.sym, .vcard'); if (s && s.dataset.sym) setSymbol(s.dataset.sym); });
   document.addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const s = e.target.closest && e.target.closest('.vcard'); if (s && s.dataset.sym) { e.preventDefault(); setSymbol(s.dataset.sym); } });
   $('#posBody').addEventListener('click', e => {
     const tr = e.target.closest('tr'); if (!tr) return; const id = +tr.dataset.id, p = S.positions.find(x => x.id === id); if (!p) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
-    if (act === 'close') closePosition(id);
-    if (act === 'half') closePosition(id, 'Partial close', .5);
-    if (act === 'be') { const why = manualBe(p); if (why) toast(BE_WHY[why][0], `${pretty(p.sym)} #${p.id} · ${BE_WHY[why][1]}`, 'info'); else toast('Stop at break-even', `${pretty(p.sym)} #${p.id} · SL ${fp(p.sym, p.sl)}`, 'info'); }
+    if (act && TradeLink.live && !TradeLink.up) { toast('Not sent', TradeLink.DOWN + '.', 'dn'); return; }
+    if (act === 'close') closeClick(id);
+    if (act === 'half') closeClick(id, 'Partial close', .5);
+    if (act === 'be') { const say = why => { if (why) toast(BE_WHY[why][0], `${pretty(p.sym)} #${p.id} · ${BE_WHY[why][1]}`, 'info'); else toast('Stop at break-even', `${pretty(p.sym)} #${p.id} · SL ${fp(p.sym, p.entry)}`, 'info'); }; const w = manualBe(p); if (w instanceof Promise) w.then(say); else say(w); }
     if (act === 'rev') confirmRev(p);
     const ed = e.target.closest('[data-edit]');
-    if (ed && !ed.querySelector('input')) {
-      const f = ed.dataset.edit, inpt = document.createElement('input'); inpt.className = 'edit-in'; inpt.type = 'number'; inpt.step = 'any'; inpt.value = p[f] != null ? fp(p.sym, p[f]) : '';
-      ed.textContent = ''; ed.appendChild(inpt); inpt.focus(); inpt.select();
-      const commit = () => {
-        const v = parseFloat(inpt.value), q = Engine.quote(p.sym);
-        // clearing the stop removes the trail too (a trail alone would put a stop back)
-        if (inpt.value === '') { if (f === 'sl' && p.trail > 0 && p.sl != null) toast('Stop loss and trailing stop removed', `${pretty(p.sym)} #${p.id} has no stop now`, 'info'); p[f] = null; if (f === 'sl') { p.trail = 0; p.trailed = false; } }
-        else if (isFinite(v)) {
-          const okSl = p.side === 'buy' ? v < q.bid : v > q.ask, okTp = p.side === 'buy' ? v > q.bid : v < q.ask;
-          const d = p.side === 'buy' ? 1 : -1, m = M(p.sym);
-          if (f === 'sl' && okSl) { p.sl = v; p.trailed = false; trailNote(p, v, q); }
-          else if (f === 'tp' && okTp) {
-            p.tp = v;
-            // a target on the losing side of the entry is allowed (it caps a loss) but it is not a profit: say so
-            if (d * (v - p.entry) <= 0) toast(`Take profit ${d > 0 ? 'below' : 'above'} entry`, `If it fills at ${fp(p.sym, v)}, #${p.id} closes at a loss of about ${usdFmt(Math.abs((v - p.entry) * p.lots * m.size * Engine.usd(m.quote)))} before swap and commission.`, 'dn');
-          } else toast('Invalid level', `${f.toUpperCase()} is on the wrong side of price`, 'dn');
-        }
-        inpt.remove(); changed('pos');
-      };
-      inpt.addEventListener('blur', commit); inpt.addEventListener('keydown', ev => { if (ev.key === 'Enter') inpt.blur(); if (ev.key === 'Escape') { inpt.value = p[f] != null ? fp(p.sym, p[f]) : ''; inpt.blur(); } });
-    }
+    if (ed) exitPop(p, ed.dataset.edit, ed);
   });
-  $('#ordBody').addEventListener('click', e => { const tr = e.target.closest('tr'); if (tr && e.target.closest('[data-act=cancel]')) { cancelOrder(+tr.dataset.id); toast('Order cancelled', '', 'info'); } });
-  $('#alBody').addEventListener('click', e => { const tr = e.target.closest('tr'); if (tr && e.target.closest('[data-act=del]')) { S.alerts = S.alerts.filter(a => a.id !== +tr.dataset.id); changed('al'); } });
+  // an order id is a number (this browser's account) or the server's order id (a signed-in page)
+  $('#ordBody').addEventListener('click', e => { const tr = e.target.closest('tr'), ed = e.target.closest('td[data-edit]'); if (tr && ed) { const o = S.orders.find(x => String(x.id) === tr.dataset.id); if (o) ordExitPop(o, ed.dataset.edit, ed); return; } if (tr && e.target.closest('[data-act=cancel]')) { const o = S.orders.find(x => String(x.id) === tr.dataset.id); if (o) Promise.resolve(cancelOrder(o.id)).then(r => { if (r !== false) toast('Order cancelled', '', 'info'); }); } });
+  $('#alBody').addEventListener('click', e => { const tr = e.target.closest('tr'); if (!tr || !e.target.closest('[data-act=del]')) return; const a = S.alerts.find(x => String(x.id) === tr.dataset.id); if (!a) return;
+    if (TradeLink.live) TradeLink.send('alert', { do: 'del', id: a.id }).then(r => { if (!r.ok) toast('Alert not removed', r.text || 'Refused by the execution server', 'dn'); });
+    else { S.alerts = S.alerts.filter(x => x !== a); changed('al'); } });
   $('#alertForm').addEventListener('submit', e => { e.preventDefault(); const px = parseFloat($('#alPx').value); if (!px) return; addAlert($('#alSym').value, px, $('#alCond').value); $('#alPx').value = ''; });
   $('#alSym').addEventListener('change', () => { $('#alPx').value = fp($('#alSym').value, Engine.quote($('#alSym').value).mid); });
-  $('#jList').addEventListener('change', e => { const it = e.target.closest('.jitem'); if (!it) return; const h = S.history[+it.dataset.i]; h[e.target.dataset.j] = e.target.value; save(); });
+  $('#jList').addEventListener('click', e => { const f = e.target.closest('[data-jf]'), m = e.target.closest('[data-jmore]'); if (f) { jFil = f.dataset.jf; jLim = 40; } else if (m) jLim += 40; else return; renderJournal(); });
+  $('#jList').addEventListener('change', e => { const it = e.target.closest('.jitem'); if (!it) return; const h = S.history[+it.dataset.i]; h[e.target.dataset.j] = e.target.value; save(); if (TradeLink.live && h && h.id != null && e.target.dataset.j === 'note') TradeLink.send('meta', { posId: h.id, meta: { [e.target.dataset.j]: e.target.value } }); });
   $('#labForm').addEventListener('submit', e => { e.preventDefault(); runLab(); });
   $('#labFromJ').addEventListener('click', () => {
     const s = journalStats();
     if (s.rN < 5 || !s.avgLossR) { toast('Not enough data', 'Close at least 5 trades with stop losses first', 'info'); return; }
-    $('#lWin').value = s.winRate.toFixed(0); $('#lRR').value = (s.avgWinR / s.avgLossR || 1).toFixed(2); $('#lRisk').value = S.tk.risk; runLab();
-    toast('Loaded journal stats', `${s.winRate.toFixed(0)}% win · ${(s.avgWinR / s.avgLossR || 1).toFixed(2)} R:R`, 'info');
+    // win rate and reward : risk from the same trades (those with a stop, so an R): a break-even counts as a loss in both;
+    // risk per trade is the median of what the trades really risked at their open, the ticket's setting only without one
+    const risk = s.riskMed != null ? +s.riskMed.toFixed(2) : S.tk.risk;
+    $('#lWin').value = s.winRateR.toFixed(0); $('#lRR').value = (s.avgWinR / s.avgLossR || 1).toFixed(2); $('#lRisk').value = risk; runLab();
+    toast('Loaded journal stats', `${s.rN} trades with a stop · ${s.winRateR.toFixed(0)}% win · ${(s.avgWinR / s.avgLossR || 1).toFixed(2)} R:R · risk ${risk}% ${s.riskMed != null ? `(median of ${s.riskN} trades)` : '(from New order: the trades carry no risk)'}`, 'info');
   });
   $$('.calc input, .calc select').forEach(x => x.addEventListener('input', renderCalcs));
   $('#strSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.set.strLb = +b.dataset.lb; $$('#strSeg button').forEach(x => x.classList.toggle('on', x === b)); renderStrength(); save(); });
@@ -682,13 +859,25 @@ function bind() {
   $('#speedSel').addEventListener('change', e => setSpeed(+e.target.value));
   $('#levSel').addEventListener('change', e => requestProfile(e.target.value));
   $('#themeBtn').addEventListener('click', () => { S.set.theme = S.set.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); });
-  $('#soundBtn').addEventListener('click', () => { S.set.sound = !S.set.sound; $('#soundBtn').classList.toggle('off', !S.set.sound); save(); if (S.set.sound) beep('fill'); });
+  $('#soundBtn').addEventListener('click', () => { S.set.sound = !S.set.sound; syncSoundBtn(); save(); if (S.set.sound) beep('fill'); });
   $('#helpBtn').addEventListener('click', () => $('#help').hidden = false);
   $('#symName').addEventListener('click', openCmd);
   $('#help').addEventListener('click', e => { if (e.target.id === 'help' || e.target.closest('[data-close]')) $('#help').hidden = true; });
-  $('#oneClickSet').addEventListener('change', e => { S.set.oneClick = e.target.checked; syncOneClick(); save(); toast(S.set.oneClick ? 'One-click trading on' : 'One-click trading off', S.set.oneClick ? 'Quick-trade buttons, chart-pane B/S and Shift+B/S send market orders immediately.' : 'Quick-trade buttons fill in the ticket; you send the order from there.', 'info'); });
-  $('#resetAcct').addEventListener('click', () => confirmWipe('Reset the account?', 'Reset account', `The account goes back to a fresh ${usdFmt(INIT_BAL)} balance.`, resetAccount));
-  const resetAccount = () => { const theme = S.set.theme; store.clear(); loadState(); S.set.theme = theme; delete document.documentElement.dataset.demo; lastSent = null; changed('pos', 'ord', 'hist', 'al'); syncTicketInputs(); syncOneClick(); fullChart(true); $('#help').hidden = true; toast('Account reset', 'Fresh $100,000 demo balance', 'info'); };
+  $('#qLots').addEventListener('input', () => { syncOneClick(); safe('ticket', renderTicket); });
+  // a click on the quick size empties it to type a new one; left empty, the size before comes back (Victor, 15.11.2026)
+  $('#qLots').addEventListener('focus', e => { const q = e.target; q.dataset.prev = q.value; q.value = ''; safe('ticket', renderTicket); });
+  $('#qLots').addEventListener('blur', e => { const q = e.target; if (!(+q.value > 0) && q.dataset.prev) q.value = q.dataset.prev; delete q.dataset.prev; syncOneClick(); safe('ticket', renderTicket); });
+  $('#oneClickSet').addEventListener('change', e => {
+    // the first time it is turned on, one confirmation that says every place it acts and which size each sends (decision 41)
+    let ack = false; try { ack = localStorage.getItem('tb-oc-ack') === '1'; } catch (x) { ack = true; }
+    if (e.target.checked && !ack && !e.ocOk) { e.target.checked = false;
+      askConfirm({ title: 'Turn on one-click trading?', body: 'The Buy / Sell buttons on the chart, Shift+B / Shift+S and a click on a Depth level will send an order at once, with no confirmation. The chart buttons send the quick size shown between them; Shift+B / S and Depth send the ticket’s size.', ok: 'Turn on',
+        onOk: () => { try { localStorage.setItem('tb-oc-ack', '1'); } catch (x) { /* asked again next time */ } const cb = $('#oneClickSet'); cb.checked = true; const ev = new Event('change'); ev.ocOk = true; cb.dispatchEvent(ev); } });
+      return; }
+    S.set.oneClick = e.target.checked; syncOneClick(); save(); toast(S.set.oneClick ? 'One-click trading on' : 'One-click trading off', S.set.oneClick ? 'Quick-trade buttons and Shift+B/S send market orders immediately.' : 'Quick-trade buttons fill in the ticket; you send the order from there.', 'info'); });
+  $('#resetAcct').addEventListener('click', () => confirmWipe('Reset the account?', 'Reset account', `The account goes back to a fresh ${usdFmt(INIT_BAL)} balance.${TradeLink.live ? '' : ' Saved layouts and settings on this device are reset too.'}`, resetAccount, !TradeLink.live));
+  // a signed-in page: the server resets a demo account (the control is absent on a live one); the reports redraw it
+  const resetAccount = () => { if (TradeLink.live) { TradeLink.send('reset').then(r => { if (!r.ok) { toast('Not reset', r.text || 'Refused by the execution server', 'dn'); return; } TradeLink.history(); $('#help').hidden = true; toast('Account reset', 'Fresh $100,000 demo balance', 'info'); }); return; } const theme = S.set.theme; store.clear(); loadState(); S.set.theme = theme; delete document.documentElement.dataset.demo; lastSent = null; changed('pos', 'ord', 'hist', 'al'); syncTicketInputs(); syncOneClick(); fullChart(true); $('#help').hidden = true; toast('Account reset', 'Fresh $100,000 demo balance', 'info'); };
   $('#cmdBtn').addEventListener('click', openCmd);
   $('#cmd').addEventListener('click', e => { if (e.target.id === 'cmd') closeCmd(); const it = e.target.closest('.cmd-item'); if (it) { if (it.dataset.fill) { $('#cmdInput').value = it.dataset.fill; renderCmd(); $('#cmdInput').focus(); } else execCmd(); } });
   $('#cmdInput').addEventListener('input', () => { cmdSel = -1; cmdArm = null; renderCmd(); });
@@ -699,28 +888,45 @@ function bind() {
     if (e.key === 'Enter') { e.preventDefault(); const on = $('#cmdList .cmd-item.on'); if (on && on.dataset.fill) { $('#cmdInput').value = on.dataset.fill; cmdSel = -1; renderCmd(); } else execCmd(); }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = $$('#cmdList .cmd-item').length; cmdSel = (cmdSel + (e.key === 'ArrowDown' ? 1 : -1) + n) % n; renderCmd(); }
   });
+  // letters typed in a burst outside a field are a search ("usdjpy"), not a chain of one-letter shortcuts: from the second letter
+  // within 700 ms the command bar opens with what was typed and the rest lands in it (capture phase: it runs before the shortcut handlers)
+  let burstAt = 0, burstKey = '';
+  document.addEventListener('keydown', e => {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || !/^[a-z]$/i.test(e.key) || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName) || !$('#cmd').hidden) { burstAt = 0; return; }
+    const now = e.timeStamp;
+    if (burstAt && now - burstAt < 700) {
+      e.preventDefault(); e.stopImmediatePropagation(); burstAt = 0;
+      openCmd(); const inp = $('#cmdInput'); inp.value = burstKey + e.key; inp.setSelectionRange(inp.value.length, inp.value.length); renderCmd();
+      return;
+    }
+    burstAt = now; burstKey = e.key;
+  }, true);
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#cmd').hidden ? openCmd() : closeCmd(); return; }
     if (e.key === 'Escape') { measure = null; reqOverlay(); setTool(null); closeCmd(); $('#help').hidden = true; return; }
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName)) return;
     if (e.shiftKey && (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 's')) { const sd = e.key.toLowerCase() === 'b' ? 'buy' : 'sell'; if (S.set.oneClick) submitTicket(sd); else prefillTicket(S.set.sym, sd, null); }
     else if (e.shiftKey && e.key.toLowerCase() === 'x') confirmCloseAll();
-    else if (!e.shiftKey && '12345'.includes(e.key) && e.key.length === 1) setTF([1, 5, 15, 60, 240][+e.key - 1]);
-    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const ps = Engine.PAIRS.map(p => p.sym), i = ps.indexOf(S.set.sym); setSymbol(ps[(i + (e.key === 'ArrowDown' ? 1 : -1) + ps.length) % ps.length]); }
+    else if (!e.shiftKey && !e.altKey && '12345'.includes(e.key) && e.key.length === 1) setTF([1, 5, 15, 60, 240][+e.key - 1]);
+    else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && (document.body.dataset.view || 'trade') === 'trade') { e.preventDefault(); const ps = Engine.PAIRS.map(p => p.sym), i = ps.indexOf(S.set.sym); const inWl = !!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#wl')); setSymbol(ps[(i + (e.key === 'ArrowDown' ? 1 : -1) + ps.length) % ps.length]); if (inWl) requestAnimationFrame(() => { const r = document.querySelector(`#wl [data-sym="${S.set.sym}"]`); if (r) { r.tabIndex = 0; r.focus({ preventScroll: false }); } }); }
     else if (e.key === '?') $('#help').hidden = false;
     else if (e.key.toLowerCase() === 'i' && !e.metaKey && !e.ctrlKey) openBrief();
     else if (e.key.toLowerCase() === 't' && !e.metaKey && !e.ctrlKey && !e.shiftKey) setTab('bt');
     else if (e.key.toLowerCase() === 'm' && !e.metaKey && !e.ctrlKey) setTool(tool === 'measure' ? null : 'measure');
   });
-  window.addEventListener('resize', () => { if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') runLab(); });
+  window.addEventListener('resize', () => { if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') redrawLab(); });
 }
 
 /* ============ boot & loop ============ */
+// the alert form follows the instrument picked in Market watch / on the chart; the price starts at its mid
+function alFollow(sym) { const el = $('#alSym'); if (!el) return; syncInstrSelect(el); if (![...el.options].some(o => o.value === sym)) return; el.value = sym; $('#alPx').value = fp(sym, Engine.quote(sym).mid); }
 async function boot() {
   if (store.ready) await store.ready;
+  await TradeLink.ready; // a local page answered 404 on /api/me is not on the execution server (tradelink.js)
   if (!window.LightweightCharts) { $('.boot-msg').textContent = 'Charting library failed to load. Check your connection and reload.'; return; }
   await Engine.init(typeof store.getMarket === 'function' ? store.getMarket() : null);
   loadState();
+  TradeLink.start(); // a signed-in page: the account comes from the execution server (tradelink.js)
   // real prices from the broker platform when the server has them (livefeed.js); otherwise the simulated market
   if (typeof LiveFeed === 'object' && await LiveFeed.start()) {
     const bm = $('.boot-msg'); if (bm) bm.textContent = 'Loading live prices…';
@@ -729,13 +935,17 @@ async function boot() {
   }
   Engine.speed = S.set.speed || 1; $('#speedSel').value = Engine.speed; buildLevSel();
   rolloverTick(); // sets the first rollover after the (possibly resumed) clock
-  $('#soundBtn').classList.toggle('off', !S.set.sound);
+  syncSoundBtn();
   applyTheme();
   if (typeof LiveFeed === 'object' && LiveFeed.on) LiveFeed.decorate();
-  else { const f = $('#feedPill'); f.textContent = 'SIM · platform snapshot'; f.title = Engine.SNAP_LABEL; } // provenance of the starting levels (rule 7)
+  else { const f = $('#feedPill'); f.textContent = 'OFFLINE · no live prices'; f.title = 'No live prices from the broker platform'; // provenance of the starting levels (rule 7)
+    // a signed-in page whose first price request failed or was slow (UX-11): the prices on screen are not the platform's, so
+    // no order leaves (tlOpen, tlPlace); the request is tried again and the page reloads on the live prices when it answers
+    if (TradeLink.live && typeof LiveFeed === 'object') { f.textContent = 'NO FEED · prices not live'; f.classList.add('feed-down'); f.title = 'The broker platform’s prices have not arrived. The prices on screen are not live and orders are not sent; trying again every 5 seconds.';
+      const again = () => LiveFeed.start().then(ok => { if (ok) location.reload(); else setTimeout(again, 5000); }, () => setTimeout(again, 5000)); setTimeout(again, 5000); } }
   const opts = Engine.PAIRS.map(p => `<option value="${p.sym}">${pretty(p.sym)}</option>`).join('');
   ['#alSym', '#cpSym', '#pvSym'].forEach(id => $(id).innerHTML = opts);
-  $('#alPx').value = fp('EURUSD', Engine.quote('EURUSD').mid);
+  alFollow(S.set.sym);
   $$('#tfSeg button').forEach(b => b.classList.toggle('on', +b.dataset.tf === S.set.tf));
   $$('#typeSeg button').forEach(b => b.classList.toggle('on', b.dataset.type === S.set.type));
   $$('#indSeg button').forEach(b => b.classList.toggle('on', !!S.set.ind[b.dataset.ind]));
@@ -790,3 +1000,5 @@ function frame(slow, slower) {
 }
 // dev mode loads modules as separate scripts: wait until all of them have run before booting
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+
+function syncSoundBtn() { const b = $('#soundBtn'); if (!b) return; b.classList.toggle('off', !S.set.sound); b.setAttribute('aria-pressed', String(!!S.set.sound)); b.title = S.set.sound ? 'Sounds on — click to mute' : 'Sounds off — click to turn on'; }

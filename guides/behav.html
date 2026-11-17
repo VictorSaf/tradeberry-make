@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behaviour guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use the Behaviour tab in tradeBerry's Coach: Habits, Pre-mortem and Red flags.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* small additions for this page only, on the guide.css tokens */
+.calc input[type=number]{font:13px var(--mono);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:4px 6px}
+.calc select{font:13px var(--sans);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:4px 6px}
+.calc input[type=checkbox]{accent-color:var(--acc)}
+.calc .verdict{margin-top:14px;padding:10px 12px;border:1px solid var(--line2);background:var(--bg);font-size:13.5px;color:var(--tx2)}
+.calc .g-t{font-size:12.5px}
+.calc .g-t td,.calc .g-t th{padding:5px 8px}
+.calc .g-t input[type=number]{width:62px}
+.calc ul.fl{margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--tx2)}
+.pmk .r{padding:9px 12px;border-bottom:1px solid var(--line)}
+.pmk .r:last-child{border-bottom:0}
+.pmk .lab{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.pmk .chip{display:inline-block;border:1px solid var(--line2);background:var(--s2);padding:2px 7px;margin:2px 3px 2px 0;font-size:11.5px;color:var(--tx2)}
+.pmk .chip.on{color:var(--tx);border-color:var(--tx2)}
+.pmk .fld{display:block;border:1px solid var(--line2);background:var(--s1);padding:5px 8px;color:var(--tx3);font-size:12px;margin-top:6px}
+.pmk .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.pmk .bt{border:1px solid color-mix(in srgb,var(--acc) 55%,transparent);color:var(--acc);padding:4px 10px;font-size:12px}
+.pmk .lead{font-size:14px;color:var(--tx)}
+.n-ok{color:var(--up)}.n-bad{color:var(--dn)}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Coach <i>/</i> Behaviour</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What Behaviour is</a>
+  <a href="#minute"><span>02</span>The tab in one minute</a>
+  <a href="#map"><span>03</span>Map of the tab</a>
+  <a href="#score"><span>04</span>The Behaviour score</a>
+  <span class="p">II · Habits</span>
+  <a href="#dispo"><span>05</span>Disposition effect: the count</a>
+  <a href="#verdict"><span>06</span>Disposition: verdict and readouts</a>
+  <a href="#tilt"><span>07</span>Tilt guard and Pause</a>
+  <a href="#po"><span>08</span>Process vs outcome</a>
+  <span class="p">III · Pre-mortem</span>
+  <a href="#when"><span>09</span>When a pre-mortem asks</a>
+  <a href="#dialog"><span>10</span>The pre-mortem dialog</a>
+  <a href="#review"><span>11</span>Review and automatic post-mortem</a>
+  <a href="#skipped"><span>12</span>Trades you talked yourself out of</a>
+  <a href="#cal"><span>13</span>Confidence calibration</a>
+  <a href="#mood"><span>14</span>Mood at entry</a>
+  <span class="p">IV · Red flags</span>
+  <a href="#flags"><span>15</span>The checks at entry</a>
+  <a href="#board"><span>16</span>Red-flag scoreboard and rules</a>
+  <a href="#hours"><span>17</span>Your trading hours</a>
+  <span class="p">V · Using it, reference</span>
+  <a href="#use"><span>18</span>Routine and situations</a>
+  <a href="#limits"><span>19</span>Limits and caveats</a>
+  <a href="#ref"><span>20</span>All definitions and thresholds</a>
+  <a href="#glossary"><span>21</span>Glossary</a>
+  <a href="#more"><span>22</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Coach</span>
+  <h1>Behaviour</h1>
+  <p class="g-lede">A mirror for how you trade, not for the market. Behaviour counts the habits that cost traders money (holding losers, widening stops, trading on tilt, entering with warning signs), asks you to imagine a trade’s failure before risky orders go out, and keeps score of what each warning has cost you. Three pages: <b>Habits</b>, <b>Pre-mortem</b> and <b>Red flags</b>, under one Behaviour score.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Coach › Behaviour · key <kbd>Y</kbd></b></div>
+    <div><label>Pages</label><b>Habits · Pre-mortem · Red flags</b></div>
+    <div><label>Counts</label><b>Positions, net of commission</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the tab measures, how it is organised, and the score that sits above every page.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What Behaviour is, and what it is not</h3></div>
+  <p class="lead">Every number here comes from <b>your own trades and decisions</b>: when you closed, what you were holding, what the ticket knew at entry, what you said in a pre-mortem. Nothing on this tab reads the market for a signal.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></div><h5>Habits</h5><p>Do you bank winners and keep losers (the disposition effect)? Do losses cluster after losses (tilt)? Did your wins come with sound risk control or without it?</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="5"/></svg></div><h5>Pre-mortem</h5><p>Before a risky trade you imagine it has already failed and name why. Afterwards the tab compares what you expected with what actually happened, and how well your stated odds matched results.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></svg></div><h5>Red flags</h5><p>Every entry is checked against fourteen warnings. The scoreboard shows what trades with each warning won and lost, and lets you turn a warning into a rule.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why it matters</b><p>Most retail losses do not come from a bad market view. They come from a few repeated habits: a stop moved away, a loser held because closing it hurts, a trade opened minutes after a loss. These habits are measurable, and what is measured can be changed one rule at a time.</p></div>
+  <div class="call warn"><b class="t">Not a verdict on you</b><p>Every reading needs enough trades. Below the sample sizes in this guide (10, 20 and 30 trades) Behaviour says “not clear yet” or “may be chance” rather than guessing. A short run of bad luck is not a bad habit.</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The tab in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Score</h5><p>The Behaviour score (0–100) and its grade. Read <b>Focus next</b>: the weakest habit, in one line.</p></div>
+    <div><h5>Habits</h5><p>Disposition effect, Tilt guard, Process vs outcome: how you exit, how you react to losses, how you won.</p></div>
+    <div><h5>Pre-mortem</h5><p>Set when the pre-mortem asks; review what you expected against what happened; check your confidence and mood.</p></div>
+    <div><h5>Red flags</h5><p>The scoreboard: which warning at entry costs you most. Make the costliest one a rule.</p></div>
+    <div><h5>Repeat</h5><p>Trade, then come back. Each part fills in as voluntary closes, entries and rated trades accumulate.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the tab</h3></div>
+  <p>Behaviour is a tab of the <b>Coach</b> workspace (with Challenge and Journal). The score card sits on top of every page; its first row is the page strip, with the number of cards on each page.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 410" role="img" aria-label="Organisation of the Behaviour tab: score card on top, three pages with their cards, and the parts that live outside the tab">
+      <rect x="270" y="8" width="220" height="44" class="s-box2"/>
+      <text x="380" y="27" text-anchor="middle" class="b s-tx">Coach › Behaviour</text>
+      <text x="380" y="43" text-anchor="middle" class="s s-tx3">key Y · Alt+5 opens Coach</text>
+      <path d="M380 52 V72" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="60" y="74" width="640" height="58" class="s-box"/>
+      <text x="380" y="93" text-anchor="middle" class="b s-tx">Behaviour score card (on every page)</text>
+      <text x="380" y="109" text-anchor="middle" class="s s-tx2">page strip: Habits 3 · Pre-mortem 3 · Red flags 2</text>
+      <text x="380" y="124" text-anchor="middle" class="s s-tx3">score / 100 · Grade · 5 parts · score history · Focus next · Download report</text>
+      <path d="M380 132 V146 M135 146 H625 M135 146 V164 M380 146 V164 M625 146 V164" class="s-ln"/>
+      <rect x="20" y="166" width="230" height="34" class="s-box2"/><text x="135" y="188" text-anchor="middle" class="b s-tx">Habits</text>
+      <rect x="265" y="166" width="230" height="34" class="s-box2"/><text x="380" y="188" text-anchor="middle" class="b s-tx">Pre-mortem</text>
+      <rect x="510" y="166" width="230" height="34" class="s-box2"/><text x="625" y="188" text-anchor="middle" class="b s-tx">Red flags</text>
+      <path d="M30 200 V323 M275 200 V323 M520 200 V281" class="s-ln"/>
+      <path d="M30 223 H40 M30 265 H40 M30 307 H40 M275 223 H285 M275 265 H285 M275 307 H285 M520 223 H530 M520 265 H530" class="s-ln"/>
+      <g class="s">
+        <rect x="40" y="208" width="210" height="30" class="s-box"/><text x="50" y="227" class="s s-tx">1 · Disposition effect</text>
+        <rect x="40" y="250" width="210" height="30" class="s-box"/><text x="50" y="269" class="s s-tx">2 · Tilt guard</text>
+        <rect x="40" y="292" width="210" height="30" class="s-box"/><text x="50" y="311" class="s s-tx">3 · Process vs outcome</text>
+        <rect x="285" y="208" width="210" height="30" class="s-box"/><text x="295" y="227" class="s s-tx">1 · Pre-mortem (settings, review)</text>
+        <rect x="285" y="250" width="210" height="30" class="s-box"/><text x="295" y="269" class="s s-tx">2 · Confidence calibration</text>
+        <rect x="285" y="292" width="210" height="30" class="s-box"/><text x="295" y="311" class="s s-tx">3 · Mood at entry</text>
+        <rect x="530" y="208" width="210" height="30" class="s-box"/><text x="540" y="227" class="s s-tx">1 · Red-flag scoreboard</text>
+        <rect x="530" y="250" width="210" height="30" class="s-box"/><text x="540" y="269" class="s s-tx">2 · Your trading hours</text>
+      </g>
+      <rect x="20" y="344" width="720" height="56" class="s-bg" style="stroke:var(--line2);stroke-dasharray:4 3"/>
+      <text x="32" y="364" class="s b s-tx3">OUTSIDE THE TAB, DRIVEN BY IT</text>
+      <text x="32" y="381" class="s s-tx2">Pre-mortem dialog (from the ticket and from baskets) · ticket note “… the pre-mortem opens before the order is sent.”</text>
+      <text x="32" y="395" class="s s-tx2">Tilt guard line in the ticket warnings · Disposition and red-flag lines in the Journal coach</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The tab as an organisation chart. The page you were on last opens again (Habits the first time).</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Page</th><th>Card</th><th>Question it answers</th><th>Chapter</th></tr></thead>
+    <tbody>
+      <tr><td>Habits</td><td>Disposition effect</td><td>Do I close winners more readily than losers?</td><td class="n"><a href="#dispo">05–06</a></td></tr>
+      <tr><td>Habits</td><td>Tilt guard</td><td>Do I keep trading after a run of losses, and does the guard stop me?</td><td class="n"><a href="#tilt">07</a></td></tr>
+      <tr><td>Habits</td><td>Process vs outcome</td><td>Did my wins come with risk control, or by luck?</td><td class="n"><a href="#po">08</a></td></tr>
+      <tr><td>Pre-mortem</td><td>Pre-mortem</td><td>When must I stop and think, and did I foresee my losses?</td><td class="n"><a href="#when">09–12</a></td></tr>
+      <tr><td>Pre-mortem</td><td>Confidence calibration</td><td>When I say 70%, do I win 70%?</td><td class="n"><a href="#cal">13</a></td></tr>
+      <tr><td>Pre-mortem</td><td>Mood at entry</td><td>Which feelings go with losses?</td><td class="n"><a href="#mood">14</a></td></tr>
+      <tr><td>Red flags</td><td>Red-flag scoreboard</td><td>Which warning at entry costs me most?</td><td class="n"><a href="#board">15–16</a></td></tr>
+      <tr><td>Red flags</td><td>Your trading hours</td><td>At which UTC hours do my entries lose?</td><td class="n"><a href="#hours">17</a></td></tr>
+    </tbody>
+  </table>
+  <div class="call key"><b class="t">What counts as a trade</b><p>Every statistic counts <b>positions</b>, not fills: the partial closes of one position are merged into one record, its P&amp;L is <b>net</b> (after commission), and the negative-balance-protection credit is left out. Basket legs are left out of most cards (they are one basket decision, not single trades).</p></div>
+</section>
+
+<section class="ch" id="score">
+  <div class="ch-h"><span class="n">04</span><h3>The Behaviour score</h3></div>
+  <p>The score card shows <b>Behaviour score</b> as a number out of 100, a <b>Grade</b>, five meters (one per habit), a small history line, and one sentence of advice. The score is the plain <b>average of the parts that have enough data</b>; a part without enough data shows “—” and does not count. With no part ready the card says “not enough data”.</p>
+  <table class="g-t">
+    <thead><tr><th>Part</th><th>How it is scored</th><th>Counts from</th><th>Focus next text (when weakest)</th></tr></thead>
+    <tbody>
+      <tr><td>Disposition</td><td>Only a clear verdict counts. Disposition effect: <code>100 − (PGR/PLR − 1) × 100</code>, kept within 0–100 (ratio 1 → 100, 1.5 → 50, 2 or more → 0; all losses held → 0). The reverse bias scores 100.</td><td>|t| ≥ 2 over ≥ 10 voluntary closes</td><td>Let losers go as readily as winners — close the trade you would not open today.</td></tr>
+      <tr><td>Clean entries</td><td>Share of your last 30 trades (with entry context) that carried no risk flag. Trend and chase warnings do not count against you.</td><td>5 trades</td><td>Most of your recent entries carried a risk flag (stop, size, cost, news, timing or stacking) — fix those before the next trade.</td></tr>
+      <tr><td>Stops kept</td><td><code>100 − trades whose stop ended wider than planned ÷ trades with a stop × 100</code></td><td>5 trades with a stop at entry</td><td>Stop widening is the most expensive habit — move stops only toward profit.</td></tr>
+      <tr><td>Forecast skill (BSS)</td><td><code>50 + 50 × BSS</code>, kept within 0–100: 50 = no better than always stating your own win rate, 100 = perfect, 0 = BSS −1 or worse.</td><td>20 rated trades</td><td>Your stated odds do worse than simply stating your own win rate every time — rate trades closer to what actually happens.</td></tr>
+      <tr><td>Discipline</td><td><code>100 − (overrides + rule breaks) ÷ pre-mortem trades × 150</code>, kept within 0–100.</td><td>pre-mortem trades + tilt trips ≥ 3</td><td>You override your own guard rails often — each override is a trade you said you would not take.</td></tr>
+    </tbody>
+  </table>
+  <div class="two">
+    <div>
+      <h4 style="margin-top:0">Grade and colours</h4>
+      <table class="g-t">
+        <thead><tr><th>Score</th><th>Grade</th></tr></thead>
+        <tbody>
+          <tr><td class="n">≥ 85</td><td>A</td></tr><tr><td class="n">≥ 70</td><td>B</td></tr><tr><td class="n">≥ 55</td><td>C</td></tr><tr><td class="n">≥ 40</td><td>D</td></tr><tr><td class="n">below 40</td><td>E</td></tr>
+        </tbody>
+      </table>
+      <p class="mut">The score is shown green from 70, red below 50. Each meter: green from 70, a middle tone from 50, red below 50.</p>
+    </div>
+    <div>
+      <h4 style="margin-top:0">The rest of the card</h4>
+      <ul>
+        <li><b>Score history</b>: one point per hour of the terminal’s clock (the last 240), with a dashed line at 70.</li>
+        <li><b>Focus next — <i>part</i>:</b> the weakest part, when it is below 70. All parts at 70 or more: “All measured habits are in good shape. Keep the rules that got you here.”</li>
+        <li>When the scoreboard has suggestions, a link “N rule suggestion(s) in the Red-flag scoreboard” opens the Red flags page.</li>
+        <li><b>Download report</b>: a Markdown file <code>tradeberry-behaviour-YYYY-MM-DD.md</code> (also copied to the clipboard) with the score, every part, the disposition numbers and verdict, process vs outcome, the red-flag table, calibration, moods and the count of skipped trades.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="call ex"><b class="t">Example</b><p>Disposition has no clear verdict yet (—), Clean entries 80, Stops kept 90, Forecast skill (BSS) 39, Discipline 75. Score = (80 + 90 + 39 + 75) ÷ 4 = <b>71</b>, Grade <b>B</b>. The weakest part is below 70, so the card says <b>Focus next — forecast skill (bss):</b> followed by its text.</p></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Habits</h2><p>The first page: how you exit, how you react to losses, and whether your wins were earned.</p></div></div>
+
+<section class="ch" id="dispo">
+  <div class="ch-h"><span class="n">05</span><h3>Disposition effect: what is counted</h3></div>
+  <p class="lead">The <b>disposition effect</b> is the tendency to sell winners too early and ride losers too long (Odean, 1998). The card measures it exactly the way Odean did: at every moment you <b>choose</b> to close something, it looks at everything you hold.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="One voluntary close: the closed position counts as realised, every other open position as a paper gain or loss">
+      <text x="20" y="22" class="b s-tx">You close EUR/USD by hand while holding three other positions</text>
+      <g class="s">
+        <rect x="20" y="40" width="320" height="34" class="s-box2"/><text x="32" y="61" class="s s-tx">EUR/USD buy · <tspan class="s-pos">+$120.00</tspan> · closed by you</text>
+        <rect x="20" y="84" width="320" height="34" class="s-box"/><text x="32" y="105" class="s s-tx">GBP/USD sell · <tspan class="s-neg">−$80.00</tspan> · still open</text>
+        <rect x="20" y="128" width="320" height="34" class="s-box"/><text x="32" y="149" class="s s-tx">USD/JPY buy · <tspan class="s-pos">+$40.00</tspan> · still open</text>
+        <rect x="20" y="172" width="320" height="34" class="s-box"/><text x="32" y="193" class="s s-tx">Gold buy · <tspan class="s-neg">−$15.00</tspan> · still open</text>
+      </g>
+      <path d="M340 57 H410" class="s-arrow" marker-end="url(#ah)"/><path d="M340 101 H410" class="s-arrow" marker-end="url(#ah)"/><path d="M340 145 H410" class="s-arrow" marker-end="url(#ah)"/><path d="M340 189 H410" class="s-arrow" marker-end="url(#ah)"/>
+      <g class="s">
+        <text x="420" y="61" class="s b s-tx">realised gain · rg + 1</text>
+        <text x="420" y="105" class="s s-tx2">paper loss · pl + 1</text>
+        <text x="420" y="149" class="s s-tx2">paper gain · pg + 1</text>
+        <text x="420" y="193" class="s s-tx2">paper loss · pl + 1</text>
+      </g>
+      <rect x="590" y="70" width="150" height="104" class="s-box"/>
+      <text x="665" y="92" text-anchor="middle" class="s b s-tx3">THIS DECISION</text>
+      <text x="665" y="114" text-anchor="middle" class="m s s-tx">rg 1 · rl 0</text>
+      <text x="665" y="134" text-anchor="middle" class="m s s-tx">pg 1 · pl 2</text>
+      <text x="665" y="158" text-anchor="middle" class="s s-tx3">added to the all-time totals</text>
+      <text x="20" y="236" class="s s-tx3">“Gain” and “loss” = the whole position’s net result to the cent: its closed parts plus the open rest, after commission. Exactly $0.00 is neither.</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>One sell decision, four positions. The closed one is realised; everything still open is “paper”.</figcaption></figure>
+  <div class="fml">
+    <div>PGR (gains realised) = rg ÷ (rg + pg)<span class="c"> · share of the winning positions you held that you chose to close</span></div>
+    <div>PLR (losses realised) = rl ÷ (rl + pl)<span class="c"> · share of the losing positions you held that you chose to close</span></div>
+    <div>PGR − PLR = the needle of the gauge<span class="c"> · above 0: winners go first</span></div>
+    <div>ratio = PGR ÷ PLR<span class="c"> · “you realise gains 1.50× as readily as losses”</span></div>
+  </div>
+  <h4>What counts as a decision</h4>
+  <table class="g-t">
+    <thead><tr><th>Close</th><th>Counted?</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Closed by hand (button, ticket, partial close)</td><td class="n">yes</td><td>An in-the-moment decision.</td></tr>
+      <tr><td>Close all, close winners, close losers, close by symbol</td><td class="n">yes, once</td><td>The whole batch is one decision, counted before any leg closes.</td></tr>
+      <tr><td>Stop loss, Take profit, Trailing stop, Time stop</td><td class="n mut">no</td><td>A plan made earlier, not a decision now.</td></tr>
+      <tr><td>Basket stop, Basket target, basket legs</td><td class="n mut">no</td><td>Basket legs are neither sold nor held in the count.</td></tr>
+      <tr><td>Only one position open (the one you close)</td><td class="n mut">no</td><td>Odean counts only portfolios of two or more positions.</td></tr>
+      <tr><td>Every position closed is at exactly $0.00</td><td class="n mut">no</td><td>Nothing realised that is a gain or a loss.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">The totals rg, rl, pg, pl are kept for all time. The last 300 decisions are also kept, only to draw the small line “PGR − PLR over your last N closes”.</p>
+</section>
+
+<section class="ch" id="verdict">
+  <div class="ch-h"><span class="n">06</span><h3>Disposition: verdict, gauge and readouts</h3></div>
+  <p>A gap between PGR and PLR can be chance. The card judges it with Odean’s <b>t-statistic</b> and gives one verdict, used everywhere (this card, its toast, the score, the Journal coach and the report).</p>
+  <div class="fml">
+    <div>SE = √( PGR(1 − PGR) ÷ (rg + pg) + PLR(1 − PLR) ÷ (rl + pl) )</div>
+    <div>t = (PGR − PLR) ÷ SE</div>
+    <div class="c">If every gain was sold and no loss (or the reverse), SE is 0: the pooled two-proportion SE is used instead, with p = (rg + rl) ÷ all positions counted.</div>
+    <div>n (Voluntary closes) = rg + rl<span class="c"> · positions you closed yourself that were a gain or a loss</span></div>
+  </div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 290" role="img" aria-label="Flowchart of the disposition verdict">
+      <rect x="10" y="30" width="170" height="54" class="s-box2"/><text x="95" y="52" text-anchor="middle" class="s b s-tx">Your record</text><text x="95" y="70" text-anchor="middle" class="s s-tx3">rg, rl, pg, pl</text>
+      <path d="M180 57 H206" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="208" y="30" width="180" height="54" class="s-box"/><text x="298" y="52" text-anchor="middle" class="s b s-tx">PGR and PLR</text><text x="298" y="70" text-anchor="middle" class="s s-tx">both defined?</text>
+      <path d="M388 57 H414" class="s-arrow" marker-end="url(#ah)"/><text x="401" y="50" text-anchor="middle" class="s s-tx3">yes</text>
+      <rect x="416" y="30" width="160" height="54" class="s-box"/><text x="496" y="52" text-anchor="middle" class="s b s-tx">|t| ≥ 2</text><text x="496" y="70" text-anchor="middle" class="s s-tx">and n ≥ 10?</text>
+      <path d="M576 57 H602" class="s-arrow" marker-end="url(#ah)"/><text x="589" y="50" text-anchor="middle" class="s s-tx3">yes</text>
+      <rect x="604" y="30" width="136" height="54" class="s-box"/><text x="672" y="52" text-anchor="middle" class="s b s-tx">PGR − PLR</text><text x="672" y="70" text-anchor="middle" class="s s-tx">above 0?</text>
+      <path d="M298 84 V128" class="s-arrow" marker-end="url(#ah)"/><text x="306" y="110" class="s s-tx3">no</text>
+      <path d="M496 84 V128" class="s-arrow" marker-end="url(#ah)"/><text x="504" y="110" class="s s-tx3">no</text>
+      <path d="M672 84 V128" class="s-arrow" marker-end="url(#ah)"/><text x="680" y="110" class="s s-tx3">yes</text>
+      <path d="M740 57 H752 V236 H742" class="s-arrow" marker-end="url(#ah)"/><text x="746" y="50" text-anchor="middle" class="s s-tx3">no</text>
+      <rect x="198" y="130" width="200" height="96" class="s-box2"/>
+      <text x="298" y="150" text-anchor="middle" class="s b s-tx">No reading yet</text>
+      <text x="208" y="170" class="s s-tx2">n &lt; 4: “Close N more trades</text>
+      <text x="208" y="184" class="s s-tx2">yourself … to get a first reading.”</text>
+      <text x="208" y="202" class="s s-tx2">else: “You need both winning and</text>
+      <text x="208" y="216" class="s s-tx2">losing positions in the record …”</text>
+      <rect x="416" y="130" width="160" height="96" class="s-box2"/>
+      <text x="496" y="150" text-anchor="middle" class="s b s-tx">Not clear yet.</text>
+      <text x="426" y="172" class="s s-tx2">needle dashed and muted</text>
+      <text x="426" y="190" class="s s-tx2">“a gap this size can</text>
+      <text x="426" y="204" class="s s-tx2">be chance”</text>
+      <text x="426" y="220" class="s s-tx3">score part: —</text>
+      <rect x="592" y="130" width="148" height="70" class="s-box2"/>
+      <text x="666" y="150" text-anchor="middle" class="s b s-tx">Disposition effect.</text>
+      <text x="602" y="170" class="s s-tx2">banks winners early</text>
+      <text x="602" y="190" class="s s-tx3">score: 100 − (ratio − 1)×100</text>
+      <rect x="592" y="212" width="148" height="56" class="s-box2"/>
+      <text x="666" y="230" text-anchor="middle" class="s b s-tx">The reverse of the</text>
+      <text x="666" y="244" text-anchor="middle" class="s b s-tx">typical bias.</text>
+      <text x="666" y="261" text-anchor="middle" class="s s-tx3">cuts losers · score 100</text>
+      <text x="10" y="282" class="s s-tx3">The same verdict drives the score part, the “Disposition check” toast and the Journal coach line.</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>The verdict. Anything short of |t| ≥ 2 over 10 voluntary closes is “Not clear yet”, never “balanced”.</figcaption></figure>
+  <div class="two">
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 520 250" role="img" aria-label="Disposition gauge from minus 0.5 to plus 0.5 with three zones and two example needles">
+        <path d="M100 190 A160 160 0 0 1 210.6 37.8" class="s-lup" stroke-width="16"/>
+        <path d="M210.6 37.8 A160 160 0 0 1 309.4 37.8" class="s-ln3" stroke-width="16"/>
+        <path d="M309.4 37.8 A160 160 0 0 1 420 190" class="s-ldn" stroke-width="16"/>
+        <line x1="260" y1="190" x2="347.7" y2="102.3" class="s-px" stroke-width="3"/>
+        <line x1="260" y1="190" x2="298.3" y2="72.1" class="s-ln3" stroke-width="3" stroke-dasharray="6 4"/>
+        <circle cx="260" cy="190" r="7" class="s-tx"/>
+        <text x="100" y="212" text-anchor="middle" class="m s s-tx3">−0.50</text>
+        <text x="260" y="16" text-anchor="middle" class="m s s-tx3">0</text>
+        <text x="420" y="212" text-anchor="middle" class="m s s-tx3">+0.50</text>
+        <text x="182" y="22" text-anchor="end" class="m s s-tx3">−0.10</text><text x="338" y="22" class="m s s-tx3">+0.10</text>
+        <text x="120" y="150" class="m s b s-tx">solid: +0.25 · clear</text>
+        <text x="120" y="168" class="m s s-tx3">dashed: +0.10 · not clear</text>
+        <text x="60" y="238" class="s s-tx2">cuts losers</text><text x="460" y="238" text-anchor="end" class="s s-tx2">banks winners</text>
+      </svg>
+    </div><figcaption><b>Fig. 4</b>The gauge shows PGR − PLR from −0.5 to +0.5 (clamped). Solid needle: a clear verdict. Dashed, muted: not clear yet.</figcaption></figure>
+    <div>
+      <h4 style="margin-top:0">Reading the gauge</h4>
+      <ul>
+        <li>Left zone (−0.5 to −0.1): you cut losers more readily; the app colours it as good.</li>
+        <li>Middle (±0.1): close to even.</li>
+        <li>Right zone (+0.1 to +0.5): you bank winners and keep losers; coloured as bad.</li>
+        <li>The number under it is PGR − PLR with its sign; “—” before both a gain and a loss have been held.</li>
+      </ul>
+      <p>The zones are <b>context, not the verdict</b>. A needle in the right zone with a dashed line means the gap could still be chance.</p>
+    </div>
+  </div>
+  <h4>Two worked examples</h4>
+  <table class="g-t">
+    <thead><tr><th></th><th>Trader A</th><th>Trader B</th></tr></thead>
+    <tbody>
+      <tr><td>Totals</td><td class="n">rg 14 · pg 26 · rl 6 · pl 54</td><td class="n">rg 9 · pg 21 · rl 6 · pl 24</td></tr>
+      <tr><td>PGR · PLR</td><td class="n">35% · 10%</td><td class="n">30% · 20%</td></tr>
+      <tr><td>PGR − PLR · ratio</td><td class="n">+0.25 · 3.50×</td><td class="n">+0.10 · 1.50×</td></tr>
+      <tr><td>SE · t</td><td class="n">0.085 · t = 2.9</td><td class="n">0.111 · t = 0.9</td></tr>
+      <tr><td>Voluntary closes (n)</td><td class="n">20</td><td class="n">15</td></tr>
+      <tr><td>Verdict</td><td><b>Disposition effect.</b> You realise gains 3.50× as readily as losses: 35% of your gains when you close something, but only 10% of your losses (t = 2.9) …</td><td><b>Not clear yet.</b> You realise 30% of gains and 20% of losses (PGR / PLR 1.50×, t = 0.9). Odean’s test needs |t| ≥ 2; a gap this size can be chance.</td></tr>
+      <tr><td>Score part</td><td class="n">0 (ratio ≥ 2)</td><td class="n">— (does not count)</td></tr>
+    </tbody>
+  </table>
+  <h4>The readouts under the verdict</h4>
+  <table class="g-t">
+    <thead><tr><th>Readout</th><th>What it shows</th><th>How to read it</th></tr></thead>
+    <tbody>
+      <tr><td>Gains realised (PGR)</td><td>PGR in %.</td><td>Compare with PLR, never alone.</td></tr>
+      <tr><td>Losses realised (PLR)</td><td>PLR in %.</td><td>Low PLR with high PGR = losers are kept.</td></tr>
+      <tr><td>Voluntary closes</td><td>n = rg + rl.</td><td>Under 10 there is no verdict.</td></tr>
+      <tr><td>Loser hold time</td><td>Average holding time of losing trades ÷ that of winners (at least 1 minute), e.g. “2.1×”.</td><td>Shown red above 1.3×: losers are given more time than winners.</td></tr>
+      <tr><td>Winners closed by hand</td><td>On hand-closed winners that had a target: the average share of the planned target you captured, and how many of the last 40 went on to hit the original target after you closed.</td><td>Low capture plus many “went on to hit” = exits taken out of fear.</td></tr>
+      <tr><td>Stops moved away</td><td>Trades that ended with a stop further away than planned, with their net.</td><td>“None — you kept your original stops.” is the goal.</td></tr>
+      <tr><td>Holding right now</td><td>Open positions in profit and in loss, with their average age.</td><td>“Losers are being held longer.” appears when the losers’ average age is above 1.5× the winners’.</td></tr>
+    </tbody>
+  </table>
+  <div class="call tip"><b class="t">The Disposition check toast</b><p>When the verdict is a clear disposition effect and you bank a winner while losers stay open, a toast asks: “Is the loser still a trade you would open today?” That is the practical test: a position you would not open now is one you are only holding to avoid realising the loss.</p></div>
+
+  <h4>Try it: the disposition calculator</h4>
+  <div class="calc" id="dcalc">
+    <div class="cin">
+      <label class="sw">Gains realised (rg) <input id="dRg" type="number" value="14" min="0" step="1" style="width:80px"></label>
+      <label class="sw">Gains held (pg) <input id="dPg" type="number" value="26" min="0" step="1" style="width:80px"></label>
+      <label class="sw">Losses realised (rl) <input id="dRl" type="number" value="6" min="0" step="1" style="width:80px"></label>
+      <label class="sw">Losses held (pl) <input id="dPl" type="number" value="54" min="0" step="1" style="width:80px"></label>
+      <p class="sub">Each voluntary close adds the position you closed to rg or rl, and every other open position to pg or pl.</p>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="dDe">+0.25</b><span class="tag nt">PGR − PLR</span></div>
+      <svg viewBox="0 0 260 120" style="max-width:260px" role="img" aria-label="Gauge for the calculator">
+        <path d="M50 100 A80 80 0 0 1 105.3 23.9" class="s-lup" stroke-width="10"/>
+        <path d="M105.3 23.9 A80 80 0 0 1 154.7 23.9" class="s-ln3" stroke-width="10"/>
+        <path d="M154.7 23.9 A80 80 0 0 1 210 100" class="s-ldn" stroke-width="10"/>
+        <line id="dNeedle" x1="130" y1="100" x2="173.8" y2="56.2" class="s-px" stroke-width="2.5"/>
+        <circle cx="130" cy="100" r="4" class="s-tx"/>
+        <text x="40" y="116" class="s s-tx3">cuts losers</text><text x="220" y="116" text-anchor="end" class="s s-tx3">banks winners</text>
+      </svg>
+      <div class="parts">
+        <span>Gains realised (PGR)</span><b id="dPgr">35%</b>
+        <span>Losses realised (PLR)</span><b id="dPlr">10%</b>
+        <span>PGR / PLR</span><b id="dRatio">3.50×</b>
+        <span>t-statistic</span><b id="dT">2.9</b>
+        <span>Voluntary closes (n)</span><b id="dN">20</b>
+        <span>Score part (Disposition)</span><b id="dScore">0</b>
+      </div>
+      <div class="verdict" id="dVerdict"></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="tilt">
+  <div class="ch-h"><span class="n">07</span><h3>Tilt guard and Pause</h3></div>
+  <p class="lead">“Tilt” is trading to win back a loss. The guard watches two things: <b>losing trades in a row</b> and <b>how far the account is down today</b>. When either reaches your limit, it trips.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 280" role="img" aria-label="States of the tilt guard: calm, cooling down, armed, paused, guard off">
+      <rect x="20" y="104" width="150" height="56" class="s-box2"/><text x="95" y="128" text-anchor="middle" class="b s-tx">Calm</text><text x="95" y="146" text-anchor="middle" class="s s-tx3">normal rules apply</text>
+      <rect x="300" y="20" width="200" height="60" class="s-wnbg" style="stroke:var(--warn)"/><text x="400" y="44" text-anchor="middle" class="b s-tx">Cooling down · m:ss</text><text x="400" y="64" text-anchor="middle" class="s s-tx2">new trades wait; pre-mortem + override</text>
+      <rect x="300" y="186" width="200" height="60" class="s-wnbg" style="stroke:var(--warn)"/><text x="400" y="210" text-anchor="middle" class="b s-tx">Armed — pre-mortem on every trade</text><text x="400" y="230" text-anchor="middle" class="s s-tx2">until the streak or the day recovers</text>
+      <path d="M170 116 L298 56" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="40" y="50" class="s s-tx2">a close completes</text><text x="40" y="64" class="s s-tx2">N losses in a row,</text><text x="40" y="78" class="s s-tx2">or the day hits −X%</text>
+      <path d="M400 80 V184" class="s-arrow" marker-end="url(#ah)"/><text x="408" y="128" class="s s-tx2">cool-down</text><text x="408" y="142" class="s s-tx2">runs out</text>
+      <path d="M298 222 L172 152" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="30" y="196" class="s s-tx2">a winning trade breaks the</text><text x="30" y="210" class="s s-tx2">streak, and today is above</text><text x="30" y="224" class="s s-tx2">the limit (new UTC day)</text>
+      <rect x="580" y="20" width="160" height="60" class="s-box"/><text x="660" y="44" text-anchor="middle" class="b s-tx">Paused · m:ss</text><text x="660" y="64" text-anchor="middle" class="s s-tx2">a pause you set yourself</text>
+      <rect x="580" y="186" width="160" height="60" class="s-box"/><text x="660" y="210" text-anchor="middle" class="b s-tx">Guard off</text><text x="660" y="230" text-anchor="middle" class="s s-tx2">no trips; Pause still works</text>
+      <text x="580" y="104" class="s s-tx3">Pause 15 min · Pause 1 hour ·</text><text x="580" y="118" class="s s-tx3">Pause Rest of day → Paused</text><text x="580" y="140" class="s s-tx3">Resume now → back</text>
+      <text x="20" y="272" class="s s-tx3">Times are on the terminal’s clock. You can always close positions; only new trades wait.</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The tilt guard’s states, with the words the card shows in bold.</figcaption></figure>
+  <h4>Settings (a sentence you complete)</h4>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Choices</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Guard on</td><td>on / off</td><td class="n">on</td></tr>
+      <tr><td>after … losses in a row</td><td class="n">2 · 3 · 4 · 5</td><td class="n">3</td></tr>
+      <tr><td>or a day down …</td><td class="n">1% · 2% · 3% · 5%</td><td class="n">3%</td></tr>
+      <tr><td>cool-down …</td><td class="n">5 · 15 · 30 · 60 min</td><td class="n">15 min</td></tr>
+    </tbody>
+  </table>
+  <h4>How the two triggers are computed</h4>
+  <ul>
+    <li><b>Streak</b>: finished positions (not basket legs), newest first; each one with a net loss adds 1, the first one at $0.00 or better stops the count.</li>
+    <li><b>Day</b>: the net of every close since 00:00 UTC (partial closes included, after commission), as a % of the balance at the start of the day: <code>day % = today’s net ÷ (balance − today’s net) × 100</code>. Armed when it is at or below −limit.</li>
+    <li>The guard <b>trips</b> once per closing trade: the cool-down starts, “Times triggered” goes up by one, and a toast says “Tilt guard on”. After the cool-down it stays <b>armed</b> (pre-mortem on every trade) as long as either condition holds.</li>
+  </ul>
+  <div class="call ex"><b class="t">Example</b><p>You start the UTC day with $10,000. Three closes lose $140, $100 and $80: the balance is $9,680, today’s net −$320. Day % = −320 ÷ (9,680 + 320) = <b>−3.20%</b>, and the streak is 3. Both reach the defaults; the card reads “Cooling down · 15:00” with “3 losing trades in a row”, and the ticket adds the line “Tilt guard: 3 losing trades in a row — cool-down 15:00 left.” A winner breaks the streak, but the day stays at or below −3% unless it recovers, so the guard stays armed for the rest of the UTC day.</p></div>
+  <table class="g-t">
+    <thead><tr><th>Readout</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Calm · “2 losses in a row · today −$120.00 (−1.20%)”</td><td>The guard is on and not armed; the line shows how close you are to each trigger.</td></tr>
+      <tr><td>Times triggered</td><td>How often the guard has tripped.</td></tr>
+      <tr><td>Overrides</td><td>How often you pressed “Override cool-down” (red when above 0). These count against Discipline in the score.</td></tr>
+      <tr><td>After-loss trades</td><td>Trades opened within 10 minutes of a losing close (the revenge red flag, chapter 15).</td></tr>
+    </tbody>
+  </table>
+  <div class="call tip"><b class="t">Step away on your own terms</b><p>The <b>Pause 15 min</b>, <b>Pause 1 hour</b> and <b>Pause Rest of day</b> buttons (the rest of the UTC day, at least 10 minutes) do the same as a cool-down, by your choice: until the pause ends every new trade gets a pre-mortem, with “Override pause” as the only way through. <b>Resume now</b> ends it. Set the triggers once while calm; changing them in the middle of a losing run defeats the point.</p></div>
+</section>
+
+<section class="ch" id="po">
+  <div class="ch-h"><span class="n">08</span><h3>Process vs outcome</h3></div>
+  <p>A good decision can lose and a bad one can win. Judging a trade by its P&amp;L alone is <b>outcome bias</b> (Baron &amp; Hershey, 1988). This card judges each of your last 60 trades by what was knowable at entry.</p>
+  <div class="fml">
+    <div>good process = a stop at entry (or an R recorded) <b>and</b> none of the flags No stop loss · Risk above 2% of equity · Costs large vs the stop</div>
+    <div class="c">That is: a stop, risk ≤ 2% of equity, spread under 15% of the stop distance. Trend and chase warnings are not part of it: only risk control is judged.</div>
+  </div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="Two by two matrix of process and outcome with example counts">
+      <text x="300" y="22" text-anchor="middle" class="s b s-tx3">WON</text><text x="560" y="22" text-anchor="middle" class="s b s-tx3">LOST</text>
+      <text x="110" y="88" text-anchor="end" class="b s-tx">Good process</text><text x="110" y="188" text-anchor="end" class="b s-tx">Poor process</text>
+      <rect x="170" y="34" width="260" height="96" class="s-box2"/><rect x="430" y="34" width="260" height="96" class="s-box"/>
+      <rect x="170" y="134" width="260" height="96" class="s-box"/><rect x="430" y="134" width="260" height="96" class="s-box2"/>
+      <text x="300" y="66" text-anchor="middle" class="m l b s-tx">14</text><text x="300" y="88" text-anchor="middle" class="s s-tx">Deserved win</text><text x="300" y="110" text-anchor="middle" class="m s s-pos">+$1,420.00</text>
+      <text x="560" y="66" text-anchor="middle" class="m l b s-tx">12</text><text x="560" y="88" text-anchor="middle" class="s s-tx">Bad break</text><text x="560" y="110" text-anchor="middle" class="m s s-neg">−$960.00</text>
+      <text x="300" y="166" text-anchor="middle" class="m l b s-tx">6</text><text x="300" y="188" text-anchor="middle" class="s s-tx">Dumb luck</text><text x="300" y="210" text-anchor="middle" class="m s s-pos">+$510.00</text>
+      <text x="560" y="166" text-anchor="middle" class="m l b s-tx">8</text><text x="560" y="188" text-anchor="middle" class="s s-tx">Poetic justice</text><text x="560" y="210" text-anchor="middle" class="m s s-neg">−$1,150.00</text>
+      <text x="700" y="88" class="s s-tx3">a loss with a</text><text x="700" y="102" class="s s-tx3">sound plan</text>
+      <text x="700" y="188" class="s s-tx3">deserved</text><text x="700" y="202" class="s s-tx3">loss</text>
+      <text x="170" y="246" class="s s-tx3">Example: 40 trades with entry context. Count, label and net P&amp;L in each cell.</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>The four cells. The row is the process, the column the result.</figcaption></figure>
+  <div class="fml">
+    <div>luck share = Dumb luck ÷ (Deserved win + Dumb luck) × 100</div>
+    <div class="c">Example: 6 ÷ (14 + 6) = 30% of your wins came from poor-process trades.</div>
+  </div>
+  <p>Under the table: “<b>30%</b> of your wins (n=20) came from poor-process trades — results you should not repeat on purpose. 12 good-process trades lost anyway — a loss with a sound plan is not a mistake.” The share is shown red above 40%. With fewer than 6 trades the card asks for a few more.</p>
+  <div class="call key"><b class="t">How to use it</b><p>Repeat what sits in the top row, win or lose. Dumb-luck wins are the dangerous ones: they reward exactly what will hurt later. Bad breaks need no fixing; poetic justice shows what to stop.</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>Pre-mortem</h2><p>The second page: stopping before a risky trade, then learning from what happened.</p></div></div>
+
+<section class="ch" id="when">
+  <div class="ch-h"><span class="n">09</span><h3>When a pre-mortem asks</h3></div>
+  <p class="lead">A <b>pre-mortem</b> (Klein, 2007) asks you to imagine that a decision has already failed and explain why. Imagining the failure as a fact (“prospective hindsight”) helps people name more of the real reasons in advance.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 440" role="img" aria-label="Flowchart of when the pre-mortem opens before an order">
+      <text x="20" y="18" class="s b s-tx3">AN ORDER FROM THE TICKET, A CHART, A BASKET …</text>
+      <g class="s">
+        <rect x="20" y="28" width="420" height="40" class="s-box"/><text x="32" y="52" class="s s-tx">Would its stop-out breach a running challenge attempt?</text>
+        <rect x="20" y="82" width="420" height="40" class="s-box"/><text x="32" y="106" class="s s-tx">Only reduces a position, a Reverse’s new leg, or no Coach here?</text>
+        <rect x="20" y="136" width="420" height="40" class="s-box"/><text x="32" y="160" class="s s-tx">Challenge warning: no stop, ≥ 50% of the room, or its cool-down?</text>
+        <rect x="20" y="190" width="420" height="40" class="s-box"/><text x="32" y="214" class="s s-tx">Any flag on this trade has a rule (pre-mortem or block)?</text>
+        <rect x="20" y="244" width="420" height="40" class="s-box"/><text x="32" y="268" class="s s-tx">Tilt guard armed, or a Pause running?</text>
+        <rect x="20" y="298" width="420" height="40" class="s-box"/><text x="32" y="322" class="s s-tx">“Ask before risky trades” off, or skipped for 1 hour?</text>
+        <rect x="20" y="352" width="420" height="40" class="s-box"/><text x="32" y="376" class="s s-tx">Has a stop? risk ≥ threshold : “always without a stop” on?</text>
+      </g>
+      <g class="s-arrow">
+        <path d="M230 68 V80" marker-end="url(#ah)"/><path d="M230 122 V134" marker-end="url(#ah)"/><path d="M230 176 V188" marker-end="url(#ah)"/>
+        <path d="M230 230 V242" marker-end="url(#ah)"/><path d="M230 284 V296" marker-end="url(#ah)"/><path d="M230 338 V350" marker-end="url(#ah)"/>
+        <path d="M440 48 H516" marker-end="url(#ah)"/><path d="M440 102 H516" marker-end="url(#ah)"/><path d="M440 156 H516" marker-end="url(#ah)"/>
+        <path d="M440 210 H516" marker-end="url(#ah)"/><path d="M440 264 H516" marker-end="url(#ah)"/><path d="M440 318 H516" marker-end="url(#ah)"/><path d="M440 372 H516" marker-end="url(#ah)"/>
+      </g>
+      <g class="s">
+        <text x="452" y="42" class="s s-tx3">yes</text><text x="452" y="96" class="s s-tx3">yes</text><text x="452" y="150" class="s s-tx3">yes</text><text x="452" y="204" class="s s-tx3">yes</text><text x="452" y="258" class="s s-tx3">yes</text><text x="452" y="312" class="s s-tx3">yes</text><text x="452" y="366" class="s s-tx3">yes</text>
+        <text x="236" y="78" class="s s-tx3">no</text><text x="236" y="132" class="s s-tx3">no</text><text x="236" y="186" class="s s-tx3">no</text><text x="236" y="240" class="s s-tx3">no</text><text x="236" y="294" class="s s-tx3">no</text><text x="236" y="348" class="s s-tx3">no</text>
+        <rect x="518" y="30" width="222" height="36" class="s-dnbg" style="stroke:var(--dn)"/><text x="530" y="52" class="s b s-tx">Order blocked (no pre-mortem)</text>
+        <rect x="518" y="84" width="222" height="36" class="s-box2"/><text x="530" y="106" class="s s-tx2">No pre-mortem</text>
+        <rect x="518" y="138" width="222" height="36" class="s-wnbg" style="stroke:var(--warn)"/><text x="530" y="160" class="s b s-tx">Pre-mortem</text>
+        <rect x="518" y="192" width="222" height="36" class="s-wnbg" style="stroke:var(--warn)"/><text x="530" y="214" class="s b s-tx">Pre-mortem</text>
+        <rect x="518" y="246" width="222" height="36" class="s-wnbg" style="stroke:var(--warn)"/><text x="530" y="268" class="s b s-tx">Pre-mortem</text>
+        <rect x="518" y="300" width="222" height="36" class="s-box2"/><text x="530" y="322" class="s s-tx2">No pre-mortem</text>
+        <rect x="518" y="354" width="222" height="36" class="s-wnbg" style="stroke:var(--warn)"/><text x="530" y="376" class="s b s-tx">Pre-mortem</text>
+        <text x="20" y="416" class="s s-tx3">Last box “no” (risk under the threshold, or no stop with the switch off): the order goes out without one.</text>
+        <text x="20" y="432" class="s s-tx3">Order of the checks as in the code: the first “yes” decides.</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>The gate. Rules, the tilt guard and challenge limits ask even when “Ask before risky trades” is off or skipped.</figcaption></figure>
+  <h4>The settings on the Pre-mortem card</h4>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>What it does</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Ask before risky trades</td><td>The main switch. Unticking it opens “Turn pre-mortems off?”, which first shows what they caught: how many trades they came before, how many with red flags, how many of your answered losses you foresaw, and how many trades you talked yourself out of. <b>Turn off</b> confirms.</td><td class="n">on</td></tr>
+      <tr><td>when risk ≥ …%</td><td>A slider from 0% to 3% in steps of 0.25%: the share of equity the stop would lose.</td><td class="n">1%</td></tr>
+      <tr><td>always without a stop</td><td>A trade without a stop always asks.</td><td class="n">on</td></tr>
+      <tr><td>Try it on the ticket</td><td>Turns pre-mortems on, sets the threshold to 0% and ends any skip, so the next order from the ticket shows the dialog.</td><td class="n">—</td></tr>
+      <tr><td>Skipped until hh:mm UTC · resume now</td><td>Shown while “Skip pre-mortems for 1 hour” is running; <b>resume now</b> ends it. “Skipped for an hour N times” counts every skip.</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+  <div class="call key"><b class="t">On the ticket</b><p>When an order will meet a pre-mortem, the order button ends in “ · pre-mortem next” and a note under it gives the reason: “Tilt guard is on”, “No stop loss”, “Risk 1.20% (pre-mortem from 1%)” or “Your rules ask for it”, followed by “: the pre-mortem opens before the order is sent.”</p></div>
+  <div class="call warn"><b class="t">Who gets it</b><p>Pre-mortems belong to Coach: on an account where the administrator did not give Coach, no order asks. Orders that only reduce a position you hold never ask (they add no new exposure), and neither does the new position opened by <b>Reverse</b>.</p></div>
+</section>
+
+<section class="ch" id="dialog">
+  <div class="ch-h"><span class="n">10</span><h3>The pre-mortem dialog, field by field</h3></div>
+  <figure><div class="fig-b">
+    <div class="mock pmk" style="max-width:620px;margin:0 auto">
+      <div class="mh"><span>Pre-mortem</span><span>✕</span></div>
+      <div class="r"><b>Tilt guard</b> · 3 losing trades in a row. Cool-down <b class="mono">12:40</b> left — losses cluster when we trade to win it back.</div>
+      <div class="r"><span class="tag nt">buy</span> <b>1.00 lot EUR/USD</b> <span class="mut">at market</span> · risk <b class="neg">−$80.00</b> <span class="mut">0.80%</span> · target <b class="pos">+$60.00</b></div>
+      <div class="r lead">It is 24 hours from now. <b>This trade lost.</b> Why did it fail?</div>
+      <div class="r"><span class="lab">Red flags already visible · 3</span>
+        <ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--tx2)">
+          <li>Stop of 8.0 pips sits inside normal 15-minute noise (ATR 9.0 pips) <span class="mut">your past trades with it: 29% (12–55%) · n=14 won, may be chance · −$410.00</span></li>
+          <li>Reward is only 0.75× the risk</li>
+          <li>3 losing trades in a row</li>
+        </ul></div>
+      <div class="r"><span class="lab">Most likely reasons — pick at least one, or write your own</span>
+        <span class="chip on">Stop too tight for current volatility</span><span class="chip">Entered against the trend</span><span class="chip">News or data surprise</span><span class="chip">Chased a move that was already done</span><span class="chip">Size too big — I panicked out</span><span class="chip">A hunch, not my setup</span><span class="chip">Correlated with another trade</span><span class="chip">Costs and spread ate the move</span>
+        <span class="fld">In my own words: it failed because…</span>
+        <div style="margin-top:8px;font-size:12px;color:var(--tx2)">Right now I feel <span class="chip">calm</span><span class="chip">confident</span><span class="chip">bored</span><span class="chip">anxious</span><span class="chip">FOMO</span><span class="chip on">frustrated</span></div>
+        <div style="margin-top:4px;font-size:12px;color:var(--tx2)">How likely is it to work? <span class="chip">10%</span><span class="chip">20%</span><span class="chip">30%</span><span class="chip">40%</span><span class="chip on">50%</span><span class="chip">60%</span><span class="chip">70%</span><span class="chip">80%</span><span class="chip">90%</span></div>
+        <span class="fld">Optional — I will get out early if…</span><span class="fld" style="display:inline-block">Time stop: none · 1h · 4h · 24h</span></div>
+      <div class="r acts"><span class="bt">Rethink — don't place</span><span class="bt">Override cool-down</span><span class="bt">Place buy</span></div>
+    </div>
+  </div><figcaption><b>Fig. 8</b>The dialog during a tilt cool-down, with three red flags. The amber outlines mark what can be clicked.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Part</th><th>What it is</th><th>Kept as</th></tr></thead>
+    <tbody>
+      <tr><td>Banner</td><td><b>Tilt guard</b> (with the cool-down left), <b>Paused</b> (a pause you set), or <b>Your rule</b> (“you decided not to take trades with: …”).</td><td>—</td></tr>
+      <tr><td>Trade line</td><td>Side, size, instrument, “at market” or the order type and price, the money at risk and its % of equity (“unlimited” without a stop), the target in money.</td><td>—</td></tr>
+      <tr><td>Red flags already visible · N</td><td>The automatic checks that fired (chapter 15). After a flag you have traded at least twice: “your past trades with it: win rate (95% interval) · n won · net”. When that net is positive it adds “— past wins do not make this risk smaller”. No flag: “No automatic red flags … Imagine the failure anyway.”</td><td>flags and their codes</td></tr>
+      <tr><td>Most likely reasons</td><td>Eight chips; tick at least one, or write more than 3 characters in “In my own words: it failed because…” (up to 160).</td><td>your reasons</td></tr>
+      <tr><td>Right now I feel</td><td>calm · confident · bored · anxious · FOMO · frustrated (optional).</td><td>mood (chapter 14)</td></tr>
+      <tr><td>How likely is it to work?</td><td>10% to 90% in steps of 10 (optional).</td><td>confidence (chapter 13)</td></tr>
+      <tr><td>I will get out early if…</td><td>Your exit plan in words (optional, up to 160).</td><td>shown in the review</td></tr>
+      <tr><td>Time stop</td><td>none · 1h · 4h · 24h. At the deadline the trade is closed if it is not in profit; in profit, it stays open and a toast says it “passed its time stop”. A closed market waits for its open.</td><td>a close “Time stop”</td></tr>
+    </tbody>
+  </table>
+  <h4>The buttons</h4>
+  <table class="g-t">
+    <thead><tr><th>Button</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Rethink — don't place</td><td>Nothing is sent. The trade is recorded and tracked against live prices (chapter 12). <kbd>Esc</kbd> does the same.</td></tr>
+      <tr><td>Place buy / Place sell (Buy basket / Sell basket)</td><td>Enabled once a reason is given. Sends the order with your answers attached. <kbd>Enter</kbd> in a text field does the same.</td></tr>
+      <tr><td>Override cool-down / Override pause</td><td>Shown during a cool-down or pause; the Place button stays disabled until you press it. Each press counts as an override.</td></tr>
+      <tr><td>Break my rule</td><td>Shown when a flag has a <b>block</b> rule; the same mechanism. Each press counts as a rule break and the trade is marked.</td></tr>
+      <tr><td>Skip pre-mortems for 1 hour</td><td>Places this trade without answers and pauses pre-mortems for one hour of the terminal’s clock (counted). Hidden while the tilt guard is armed, when a flag has a rule, or with a challenge warning: those always ask.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="review">
+  <div class="ch-h"><span class="n">11</span><h3>Review and automatic post-mortem</h3></div>
+  <p>Once a trade placed through a pre-mortem closes, it appears under <b>Review · automatic post-mortem</b> (the last five), with <b>Chart</b> (shows entry, exit and the planned stop on the chart for 20 seconds) and its net result.</p>
+  <ul>
+    <li><b>You expected:</b> the reasons you ticked and your own words.</li>
+    <li><b>What happened:</b> the evidence found after the trade (table below). While it still needs time: “Still watching the next 24h of price…”.</li>
+    <li><b>Exit plan:</b> what you wrote in “I will get out early if…”.</li>
+    <li>On a loss: “Did it fail for a reason you named?” <b>Yes</b> / <b>No, something else</b>. When the evidence matches one of your reasons, it says so first: “Evidence matches "Stop too tight for current volatility".”</li>
+  </ul>
+  <table class="g-t">
+    <thead><tr><th>Evidence</th><th>When it is recorded</th><th>Text</th></tr></thead>
+    <tbody>
+      <tr><td>Red flags at entry</td><td>Each flag the entry carried.</td><td>At entry: <i>flag name</i></td></tr>
+      <tr><td>News while open</td><td>A high-impact release for the instrument’s currencies came out while it was open.</td><td>… was released while it was open</td></tr>
+      <tr><td>Stop widened</td><td>The final stop was further from entry than the stop at entry.</td><td>The stop was moved further away than planned</td></tr>
+      <tr><td>Stopped, then target</td><td>A loss closed by Stop loss, after which price reached your target (or 1R in your favour without one) within 24 hours.</td><td>Stopped out, then price reached … later. A random walk touches that level within 24h about N% of the time, so on its own this says nothing about the idea or the stop</td></tr>
+      <tr><td>Panic close</td><td>A loss you closed by hand at less than half the planned loss.</td><td>Closed by hand at less than half the planned loss</td></tr>
+      <tr><td>Early exit</td><td>A winner you closed by hand before its target, after which price reached the target (before the stop) within 24 hours.</td><td>Closed before the target; price reached it … later</td></tr>
+      <tr><td>Time stop</td><td>Closed by the time stop you set.</td><td>Closed by your time stop</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Timeline: entry, stop-out, then a 24 hour watch window in which price reaches the target">
+      <path d="M40 170 H730" class="s-ln3"/>
+      <path d="M60 60 H730" class="s-lup" stroke-dasharray="5 4"/><text x="726" y="54" text-anchor="end" class="s s-tx2">target (or 1R)</text>
+      <path d="M60 100 H730" class="s-ln3" stroke-dasharray="2 3"/><text x="726" y="94" text-anchor="end" class="s s-tx3">entry</text>
+      <path d="M60 140 H730" class="s-ldn" stroke-dasharray="5 4"/><text x="726" y="154" text-anchor="end" class="s s-tx2">stop</text>
+      <polyline points="70,100 110,92 150,110 190,104 230,126 260,140 300,130 350,116 400,98 450,88 500,72 530,60 570,66" class="s-px"/>
+      <rect x="260" y="30" width="440" height="128" class="s-inbg"/>
+      <circle cx="70" cy="100" r="4" class="s-tx"/><text x="70" y="188" text-anchor="middle" class="s s-tx2">entry</text>
+      <circle cx="260" cy="140" r="4" class="s-tx"/><text x="260" y="188" text-anchor="middle" class="s s-tx2">stopped out</text>
+      <circle cx="530" cy="60" r="4" class="s-tx"/><text x="530" y="188" text-anchor="middle" class="s s-tx2">target reached</text>
+      <text x="480" y="22" text-anchor="middle" class="s s-tx2">24-hour watch after the close (first touch, minute by minute)</text>
+      <text x="40" y="204" class="s s-tx3">Within 24 hours the result is settled; until then the review says it is still watching.</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>“Stopped out, then price reached your target” is found by watching the 24 hours after the close.</figcaption></figure>
+  <h4>Why the random-walk sentence is there</h4>
+  <p>Price touching a level after you left is common even when nothing predicts it. The tab gives the chance that a market with no drift touches that level within 24 hours, from the reflection principle:</p>
+  <div class="fml">
+    <div>P(touch within 24h) = 2 × (1 − Φ( d ÷ (σ × √24) ))</div>
+    <div class="c">d = distance from your exit to the level, as a fraction of the exit price; σ = the standard deviation of hourly log returns over the last complete 1-hour bars (up to 101, at least 15). Without enough history: “That can happen by chance alone”.</div>
+  </div>
+  <div class="call ex"><b class="t">Example</b><p>EUR/USD stopped out at 1.0850; your target is 30 pips away (d = 0.0030 ÷ 1.0850 = 0.28%). With σ = 0.08% per hour, d ÷ (σ√24) = 0.71 and the touch chance is about <b>48%</b>. In a busier hour with σ = 0.12% it is about <b>64%</b>. One stop-out followed by the target is close to a coin flip, not proof that the stop was wrong.</p></div>
+  <h4>Which reasons the evidence can confirm</h4>
+  <table class="g-t">
+    <thead><tr><th>Your reason</th><th>Confirmed by</th></tr></thead>
+    <tbody>
+      <tr><td>Stop too tight for current volatility</td><td>stop inside normal noise at entry; stopped out, then target</td></tr>
+      <tr><td>Entered against the trend</td><td>against the 1-hour trend at entry</td></tr>
+      <tr><td>News or data surprise</td><td>high-impact news within 2h at entry; news while open</td></tr>
+      <tr><td>Chased a move that was already done</td><td>chasing an extended move at entry</td></tr>
+      <tr><td>Size too big — I panicked out</td><td>risk above 2% of equity at entry; panic close</td></tr>
+      <tr><td>Correlated with another trade</td><td>stacked, correlated exposure at entry</td></tr>
+      <tr><td>Costs and spread ate the move</td><td>costs large vs the stop at entry</td></tr>
+      <tr><td>A hunch, not my setup</td><td class="mut">nothing automatic: only you can answer</td></tr>
+    </tbody>
+  </table>
+  <h4>The four figures on the card</h4>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Pre-mortem trades</td><td>Closed trades placed through a pre-mortem.</td></tr>
+      <tr><td>Wins · red flags</td><td>Win rate (95% Wilson interval) and n of those that had at least one flag; red at n ≥ 10 under 45%.</td></tr>
+      <tr><td>Wins · no flags</td><td>The same for those without flags. Overlapping intervals mean no real difference yet.</td></tr>
+      <tr><td>Losses foreseen</td><td>Answered losses where you pressed Yes ÷ all answered losses, e.g. “5/8”.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="skipped">
+  <div class="ch-h"><span class="n">12</span><h3>Trades you talked yourself out of</h3></div>
+  <p>Every time you press <b>Rethink — don't place</b>, the trade you did not take is kept (the last 100): instrument, side, size, entry, stop, target, money at risk and the flags. Behaviour then follows live prices from that moment and records which level came first.</p>
+  <table class="g-t">
+    <thead><tr><th>Label</th><th>Meaning</th><th>Counted as</th></tr></thead>
+    <tbody>
+      <tr><td><span class="n-ok">avoided loss</span></td><td>Price reached the stop first.</td><td>its risk, “saved”</td></tr>
+      <tr><td><span class="n-bad">missed win</span></td><td>Price reached the target first.</td><td>its reward, “missed”</td></tr>
+      <tr><td>open</td><td>Neither level reached yet.</td><td>undecided</td></tr>
+      <tr><td>no levels</td><td>The trade had neither a stop nor a target.</td><td>undecided</td></tr>
+    </tbody>
+  </table>
+  <div class="call ex"><b class="t">Example</b><p>“Trades you talked yourself out of · 9”. Of the last nine: 4 reached the stop with $80, $50, $120 and $60 at risk, 2 reached the target with $90 and $140 of reward, 3 are still open. The line reads: “4 would have hit the stop (<b>$310.00 saved</b>), 2 the target (<b>$230.00 missed</b>), 3 undecided.” The six most recent are listed below it.</p></div>
+  <p class="mut">The tally covers the 30 most recent skips; a basket skip is followed on the basket’s own index. A minute bar that touches both levels counts as the stop.</p>
+</section>
+
+<section class="ch" id="cal">
+  <div class="ch-h"><span class="n">13</span><h3>Confidence calibration</h3></div>
+  <p class="lead">“How likely is it to work?” turns every rated trade into a forecast. Calibration asks whether your 70% trades really win about 70% of the time. The measure is the <b>Brier score</b> (Brier, 1950) with Murphy’s decomposition.</p>
+  <div class="fml">
+    <div>Brier = mean of (stated probability − outcome)²<span class="c"> · outcome 1 = net win, 0 = loss; lower is better</span></div>
+    <div>Brier = reliability − resolution + uncertainty</div>
+    <div class="c">reliability: how far each stated level sits from what happened at it (lower is better) · resolution: how well your odds separate winners from losers (higher is better) · uncertainty = base rate × (1 − base rate), what your own win rate alone leaves</div>
+    <div>BSS (skill) = 1 − Brier ÷ uncertainty<span class="c"> · 0 = no better than stating your own win rate every time; below 0 worse</span></div>
+  </div>
+  <div class="two">
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 360" role="img" aria-label="Calibration chart: stated probability against actual win rate, three dots with intervals">
+        <rect x="40" y="40" width="280" height="280" class="s-bg" style="stroke:var(--line2)"/>
+        <line x1="40" y1="320" x2="320" y2="40" class="s-ln3" stroke-dasharray="4 4"/>
+        <line x1="180" y1="259.8" x2="180" y2="100.3" class="s-ln3"/>
+        <line x1="236" y1="272.9" x2="236" y2="127.6" class="s-ln3"/>
+        <line x1="264" y1="278" x2="264" y2="82" class="s-ln3"/>
+        <circle cx="180" cy="180" r="12" class="s-up" style="fill-opacity:.75"/>
+        <circle cx="236" cy="208" r="14" class="s-dn" style="fill-opacity:.75"/>
+        <circle cx="264" cy="180" r="9" class="s-up" style="fill-opacity:.75"/>
+        <text x="40" y="336" text-anchor="middle" class="m s s-tx3">0</text><text x="180" y="336" text-anchor="middle" class="m s s-tx3">50</text><text x="320" y="336" text-anchor="middle" class="m s s-tx3">100</text>
+        <text x="32" y="324" text-anchor="end" class="m s s-tx3">0</text><text x="32" y="184" text-anchor="end" class="m s s-tx3">50</text><text x="32" y="44" text-anchor="end" class="m s s-tx3">100</text>
+        <text x="180" y="354" text-anchor="middle" class="s s-tx2">you said (%)</text>
+        <text x="10" y="180" text-anchor="middle" transform="rotate(-90 10 180)" class="s s-tx2">you won (%)</text>
+        <text x="254" y="234" class="s s-tx">70%: 4 of 10</text><text x="254" y="248" class="s s-tx3">outside → over</text>
+        <text x="164" y="160" text-anchor="end" class="s s-tx">50%: 4 of 8</text>
+        <text x="276" y="172" class="s s-tx">80%: 2 of 4</text>
+        <text x="48" y="56" class="s s-tx3">dashed: perfect calibration</text>
+      </svg>
+    </div><figcaption><b>Fig. 10</b>Each dot is one stated level: across = what you said, up = what you won; size = trades; the line is its 95% interval.</figcaption></figure>
+    <div>
+      <h4 style="margin-top:0">Reading the dots</h4>
+      <ul>
+        <li>On the dashed line: you win what you say.</li>
+        <li>Whole interval <b>below</b> the level you stated: overconfident at that level (the app colours the dot red).</li>
+        <li>Whole interval <b>above</b> it: underconfident (caution colour).</li>
+        <li>Otherwise: within chance (green). Hover a dot in the app: “Said 70% · won 4 of 10 = 40% (17–69%)”.</li>
+      </ul>
+      <h4>The verdict line</h4>
+      <ul>
+        <li>Under 20 rated trades: “Need N more rated trades before judging …”.</li>
+        <li><b>Overconfident by N points.</b> when your average stated % is above the whole 95% interval of your actual win rate.</li>
+        <li><b>Underconfident by N points</b> when it is below it.</li>
+        <li><b>No clear miscalibration.</b> otherwise.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="call ex"><b class="t">Example</b><p>22 rated trades: 8 at 50% (4 won), 10 at 70% (4 won), 4 at 80% (2 won). Average stated 64.5%, actual 10 of 22 = 45% (27–65%). Brier 0.303 = reliability 0.057 − resolution 0.002 + uncertainty 0.248; BSS = 1 − 0.303 ÷ 0.248 = <b>−0.22</b>, so the score part is 50 + 50 × (−0.22) = <b>39</b>. Yet the verdict is “No clear miscalibration”: 64.5% is just inside the interval’s top (65%). A 19-point gap over 22 trades is still within chance; the 70% level on its own is already outside its interval.</p></div>
+  <h4>Try it: the calibration calculator</h4>
+  <div class="calc" id="ccalc">
+    <div class="cin">
+      <table class="g-t" style="margin:0">
+        <thead><tr><th>Said</th><th>Trades</th><th>Won</th></tr></thead>
+        <tbody id="cRows"></tbody>
+      </table>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="cBss">−0.22</b><span class="tag nt">Skill (BSS)</span></div>
+      <div class="parts">
+        <span>Rated trades</span><b id="cN">22</b>
+        <span>Brier score</span><b id="cBs">0.303</b>
+        <span>reliability · resolution · uncertainty</span><b id="cParts">0.057 · 0.002 · 0.248</b>
+        <span>Base rate (your win rate)</span><b id="cBase">45%</b>
+        <span>Average stated · actual (95%)</span><b id="cMean">65% · 45% (27–65%)</b>
+        <span>Score part (Forecast skill)</span><b id="cScore">39</b>
+      </div>
+      <div class="verdict" id="cVerdict"></div>
+      <p class="sub" id="cLevels"></p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="mood">
+  <div class="ch-h"><span class="n">14</span><h3>Mood at entry</h3></div>
+  <p>The feeling you tick in the pre-mortem (“Right now I feel”) is kept with the trade. The card groups your closed trades by it, costliest first.</p>
+  <table class="g-t">
+    <thead><tr><th>Feeling</th><th>Trades</th><th>Win rate</th><th>Net</th></tr></thead>
+    <tbody>
+      <tr><td>frustrated</td><td class="n">12 <span class="mut">may be chance</span></td><td class="n">33% (14–61%)</td><td class="n neg">−$540.00</td></tr>
+      <tr><td>FOMO</td><td class="n mut">5 may be chance</td><td class="n mut">40% (12–77%)</td><td class="n mut">−$95.00</td></tr>
+      <tr><td>calm</td><td class="n">16 <span class="mut">may be chance</span></td><td class="n">56% (33–77%)</td><td class="n pos">+$310.00</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">Example values. Rows under 10 trades are muted (no colours); “may be chance” under 30; in the app the win rate turns red at 10+ trades under 40% (here: frustrated).</p>
+  <p>The sentence under the table: with a mood of 10+ trades that loses, “Trading while <b>frustrated</b>: −$540.00 over 12 trades (n=12, may be chance).” With none: “No mood has 10+ tagged trades yet — too few to say which states cost money.”</p>
+  <div class="call tip"><b class="t">Use</b><p>Tick a mood honestly every time. A mood that loses over 10+ trades is a candidate for a personal rule (for example: no new trades while frustrated, use Pause instead).</p></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Red flags</h2><p>The third page: what the terminal checks at every entry, and what each warning has cost you.</p></div></div>
+
+<section class="ch" id="flags">
+  <div class="ch-h"><span class="n">15</span><h3>The checks at entry</h3></div>
+  <p>Every new position is checked when it opens, whether or not a pre-mortem asks. The codes that fire are stored with the trade (its “entry context”) and feed the scoreboard. Distances are in the instrument’s unit (pips on FX, points otherwise) and money goes through its pip value, so a pair, an index and a stock read the same way.</p>
+  <table class="g-t">
+    <thead><tr><th>Warning at entry</th><th>Fires when</th><th>Message in the dialog</th></tr></thead>
+    <tbody>
+      <tr><td>No stop loss</td><td>No stop on the order.</td><td>No stop loss — the possible loss is open-ended</td></tr>
+      <tr><td>Risk above 2% of equity</td><td>Stop distance × pip value × lots &gt; 2% of equity (checked only when there is a stop).</td><td>Risking 2.5% of equity on one idea</td></tr>
+      <tr><td>Stop inside normal noise</td><td>Stop distance &lt; 1.2 × the average high-to-low range of the last 15 fifteen-minute bars.</td><td>Stop of 8.0 pips sits inside normal 15-minute noise (ATR 9.0 pips)</td></tr>
+      <tr><td>Reward smaller than risk</td><td>Target distance ÷ stop distance &lt; 1.</td><td>Reward is only 0.75× the risk</td></tr>
+      <tr><td>Against the 1-hour trend</td><td>With more than 60 one-hour bars: buying below a falling EMA50 (or selling above a rising one); falling/rising = lower/higher than 5 hours ago.</td><td>Buying below a falling 1-hour EMA50 — against the trend</td></tr>
+      <tr><td>Chasing an extended move</td><td>With more than 1,500 one-minute bars: the last 60 minutes moved in your direction more than 2.2× the average 60-minute move (the 23 most recent hours, this one included).</td><td>Price already ran 2.6× its usual hourly move in your direction — chasing</td></tr>
+      <tr><td>High-impact news within 2h</td><td>A high-impact calendar event for one of the instrument’s currencies is due within 2 hours.</td><td>High-impact USD <i>event</i> in 45m</td></tr>
+      <tr><td>Within 10 min of a loss</td><td>Your most recent closed trade lost and closed less than 10 minutes ago.</td><td>Opened 4 min after a −$120.00 loss</td></tr>
+      <tr><td>Stacked, correlated exposure</td><td>Same instrument and side already open, or another open position with ρ &gt; 0.7 the same way (or ρ &lt; −0.7 the opposite way), ρ over the last 1,440 one-minute returns.</td><td>Adds to an open EUR/USD buy · Stacks on open GBP/USD buy (ρ 0.82) — the same bet twice</td></tr>
+      <tr><td>Costs large vs the stop</td><td>Spread &gt; 15% of the stop distance.</td><td>Spread is 18% of the stop distance</td></tr>
+      <tr><td>Placed during tilt guard</td><td>The tilt guard is armed (or a pause runs).</td><td>3 losing trades in a row</td></tr>
+      <tr><td>Unusually many trades in the last hour</td><td>4 or more positions opened in the last hour <b>and</b> at least 2× your usual rate per trading hour (1.5 assumed until 3 earlier hours with trades exist).</td><td>6 trades in an hour — about 2.4× your usual pace</td></tr>
+      <tr><td>Could break a challenge limit</td><td>During a challenge attempt: no stop, half the room left or more at risk, or the cool-down after using 80% of today’s loss limit.</td><td>Risks 60% of the challenge room left ($300.00 of $500.00)</td></tr>
+      <tr><td>Market closes within the hour</td><td>The market is open and its session closes within 60 minutes.</td><td>Market closes in 25 min — held over the close, the reopening can gap through your stop</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="Two checks: a stop inside the 15 minute noise band, and a chase beyond 2.2 times the usual hourly move">
+      <text x="20" y="20" class="s b s-tx3">STOP INSIDE NORMAL NOISE</text>
+      <path d="M40 120 H340" class="s-ln3"/>
+      <rect x="40" y="74" width="180" height="26" class="s-box2"/><text x="130" y="92" text-anchor="middle" class="m s s-tx">avg 15-min range 9.0</text>
+      <rect x="40" y="104" width="216" height="10" class="s-wnbg" style="stroke:var(--warn)"/><text x="262" y="113" class="m s s-tx2">× 1.2 = 10.8</text>
+      <rect x="40" y="128" width="160" height="10" class="s-dnbg" style="stroke:var(--dn)"/><text x="206" y="137" class="m s s-tx">stop 8.0 → flag</text>
+      <rect x="40" y="148" width="280" height="10" class="s-box"/><text x="40" y="176" class="m s s-tx2">stop 14.0 → no flag</text>
+      <text x="40" y="200" class="s s-tx3">pips (FX) or points</text>
+      <text x="420" y="20" class="s b s-tx3">CHASING AN EXTENDED MOVE</text>
+      <g class="s-box">
+        <rect x="420" y="150" width="12" height="20"/><rect x="438" y="140" width="12" height="30"/><rect x="456" y="155" width="12" height="15"/><rect x="474" y="135" width="12" height="35"/><rect x="492" y="148" width="12" height="22"/><rect x="510" y="142" width="12" height="28"/><rect x="528" y="152" width="12" height="18"/><rect x="546" y="138" width="12" height="32"/><rect x="564" y="146" width="12" height="24"/><rect x="582" y="150" width="12" height="20"/><rect x="600" y="144" width="12" height="26"/>
+      </g>
+      <rect x="640" y="90" width="16" height="80" class="s-wnbg" style="stroke:var(--warn)"/>
+      <path d="M414 145 H690" class="s-ln3" stroke-dasharray="4 3"/><text x="694" y="148" class="s s-tx3">average</text>
+      <path d="M414 112 H690" class="s-lwn" stroke-dasharray="4 3"/><text x="694" y="115" class="s s-tx2">× 2.2</text>
+      <text x="648" y="82" text-anchor="middle" class="s b s-tx">last 60 min</text>
+      <text x="420" y="190" class="s s-tx2">|60-minute moves| of recent hours</text>
+      <text x="420" y="206" class="s s-tx3">only moves in your direction count as a chase</text>
+    </svg>
+  </div><figcaption><b>Fig. 11</b>Two of the checks drawn to scale. The trend and chase warnings are shown as context only (see below).</figcaption></figure>
+  <div class="call key"><b class="t">Directional warnings are context</b><p>“Against the 1-hour trend” and “Chasing an extended move” are shown, stored and scored on the board, but the tab never suggests a rule for them, they do not count against Clean entries and they are not part of “good process”. On a market with no drift, being with or against a recent move carries no edge either way. Your own record on the board is what tells you whether they matter for you.</p></div>
+
+  <h4>Try it: the entry check</h4>
+  <div class="calc" id="fcalc">
+    <div class="cin">
+      <label class="sw">Equity <span><input id="fEq" type="number" value="10000" min="1" step="100" style="width:96px"> $</span></label>
+      <label class="sw">Size <span><input id="fLots" type="number" value="1" min="0.01" step="0.01" style="width:80px"> lots</span></label>
+      <label class="sw">Pip value per lot <span><input id="fPv" type="number" value="10" min="0.01" step="0.01" style="width:80px"> $</span></label>
+      <label class="sw">Stop (0 = none) <span><input id="fSl" type="number" value="8" min="0" step="0.1" style="width:80px"> pips</span></label>
+      <label class="sw">Target (0 = none) <span><input id="fTp" type="number" value="6" min="0" step="0.1" style="width:80px"> pips</span></label>
+      <label class="sw">Spread <span><input id="fSp" type="number" value="0.9" min="0" step="0.1" style="width:80px"> pips</span></label>
+      <label class="sw">Avg 15-min range <span><input id="fAtr" type="number" value="9" min="0" step="0.1" style="width:80px"> pips</span></label>
+      <label class="sw">Last close: loss (0 = a win) <span><input id="fLoss" type="number" value="0" min="0" step="1" style="width:70px"> $</span></label>
+      <label class="sw">… closed this long ago <span><input id="fMin" type="number" value="30" min="0" step="1" style="width:70px"> min</span></label>
+      <label class="sw">High-impact news in (0 = none) <span><input id="fNews" type="number" value="0" min="0" step="1" style="width:70px"> min</span></label>
+      <label class="sw">Market closes in (0 = not soon) <span><input id="fGap" type="number" value="0" min="0" step="1" style="width:70px"> min</span></label>
+      <label class="sw">Ask before risky trades <input id="fOn" type="checkbox" checked></label>
+      <label class="sw">when risk ≥ <span><input id="fMinR" type="number" value="1" min="0" max="3" step="0.25" style="width:70px"> %</span></label>
+      <label class="sw">always without a stop <input id="fNoSl" type="checkbox" checked></label>
+      <label class="sw">Tilt guard armed <input id="fTilt" type="checkbox"></label>
+      <label class="sw">A flag here has a rule <input id="fRule" type="checkbox"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="fPm">No</b><span class="tag nt">pre-mortem</span></div>
+      <div class="parts">
+        <span>Money at risk</span><b id="fRisk">−$80.00</b>
+        <span>Share of equity</span><b id="fPct">0.80%</b>
+        <span>Reward ÷ risk</span><b id="fRr">0.75×</b>
+        <span>Red flags</span><b id="fN">2</b>
+      </div>
+      <ul class="fl" id="fList"></ul>
+      <div class="verdict" id="fNote"></div>
+      <p class="sub">Same thresholds and wording as the app. Trend, chase, correlation and overtrading need price history and your open positions, so they are left out here. Last close: the loss of your most recent closed trade (0 if it won) and how long ago it closed.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="board">
+  <div class="ch-h"><span class="n">16</span><h3>Red-flag scoreboard and rules</h3></div>
+  <p class="lead">One row per warning (all except “Placed during tilt guard”, which the tilt guard card covers), plus a <b>No warnings</b> row as the baseline. Rows with trades come first, the costliest at the top.</p>
+  <table class="g-t">
+    <thead><tr><th>Column</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td>Warning at entry</td><td>The flag’s name.</td></tr>
+      <tr><td>Trades</td><td>Closed trades whose entry carried it (a trade can count in several rows).</td></tr>
+      <tr><td>Win rate</td><td>Share with a net win, with its 95% Wilson interval: “29% (12–55%)”. Red at 10+ trades under 40%.</td></tr>
+      <tr><td>Avg R</td><td>Average result in R (net ÷ the risk at entry) of the trades that had a stop.</td></tr>
+      <tr><td>Net</td><td>Sum of their net P&amp;L, with its sign.</td></tr>
+      <tr><td>Rule</td><td>A selector: <b>warn</b> · <b>pre-mortem</b> · <b>block</b>, and a <b>suggest</b> button when the tab recommends a rule.</td></tr>
+    </tbody>
+  </table>
+  <h4>Warn, pre-mortem or block: a comparison</h4>
+  <table class="g-t">
+    <thead><tr><th></th><th>warn (default)</th><th>pre-mortem</th><th>block</th></tr></thead>
+    <tbody>
+      <tr><td>Flag shown in the dialog</td><td>yes, if a pre-mortem opens anyway</td><td>yes</td><td>yes</td></tr>
+      <tr><td>Forces a pre-mortem</td><td>no</td><td>yes, every time</td><td>yes, every time</td></tr>
+      <tr><td>Asks even when pre-mortems are off or skipped</td><td>—</td><td>yes</td><td>yes</td></tr>
+      <tr><td>Place button</td><td>after a reason</td><td>after a reason</td><td>disabled until <b>Break my rule</b></td></tr>
+      <tr><td>Banner</td><td>—</td><td>—</td><td><b>Your rule</b> · you decided not to take trades with: …</td></tr>
+      <tr><td>“Skip pre-mortems for 1 hour”</td><td>offered</td><td>hidden</td><td>hidden</td></tr>
+      <tr><td>Recorded</td><td>flag on the trade</td><td>flag on the trade</td><td>flag, the broken rule, a rule break (counts against Discipline)</td></tr>
+    </tbody>
+  </table>
+  <h4>When the tab suggests a rule</h4>
+  <p>A <b>suggest</b> button appears on a row when all of these hold; pressing it sets the rule to pre-mortem (toast “Rule added”, “<i>flag</i> → pre-mortem every time”):</p>
+  <ol>
+    <li>at least 10 trades carried the warning;</li>
+    <li>it is not the trend or chase warning;</li>
+    <li>their net is negative;</li>
+    <li>it has no rule yet;</li>
+    <li>their win rate is more than 10 points below the No warnings row (or there is no baseline yet).</li>
+  </ol>
+  <div class="call ex"><b class="t">Example</b><p>Stop inside normal noise: 14 trades, 4 won = 29% (12–55%), net −$410.00. No warnings: 30 trades, 16 won = 53% (36–70%). 29 is more than 10 points below 53, the net is negative and there are 10+ trades: <b>suggest</b> appears, and the score card links to it. The intervals still overlap, so the gap is not yet proof; the rule is cheap insurance while the evidence builds.</p></div>
+  <h4>Lines under the table</h4>
+  <ul>
+    <li>With rules: “N rules active · broken X times · trades that broke a rule: <i>net</i> over N.”</li>
+    <li>“After the fact, across recent losers:” the counts among your last 30 losers of: stopped out, then the target was reached · news hit while open · stop widened · closed in panic.</li>
+    <li>The same table feeds the Journal coach: “Costliest warning so far: …” (10+ trades, trend and chase excluded) and “Suggested rule: … → pre-mortem every time”.</li>
+  </ul>
+</section>
+
+<section class="ch" id="hours">
+  <div class="ch-h"><span class="n">17</span><h3>Your trading hours</h3></div>
+  <p>Net P&amp;L of your closed trades grouped by the <b>UTC hour you opened them</b>, as 24 bars: above the line hours that paid, below hours that cost; the tallest bar sets the scale. Hover a bar in the app: “14:00 UTC · 6 trades · −$230.00”.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Example of net P and L by UTC hour of entry, 24 bars">
+      <path d="M26 100 H726" class="s-ln3"/>
+      <rect x="30" y="99" width="22" height="2" class="s-box"/><rect x="59" y="99" width="22" height="2" class="s-box"/><rect x="88" y="99" width="22" height="2" class="s-box"/><rect x="117" y="99" width="22" height="2" class="s-box"/><rect x="146" y="99" width="22" height="2" class="s-box"/><rect x="175" y="99" width="22" height="2" class="s-box"/><rect x="204" y="99" width="22" height="2" class="s-box"/><rect x="233" y="99" width="22" height="2" class="s-box"/><rect x="262" y="78" width="22" height="22" class="s-pos"/><rect x="291" y="60" width="22" height="40" class="s-pos"/><rect x="320" y="85" width="22" height="15" class="s-pos"/><rect x="349" y="100" width="22" height="18" class="s-neg"/><rect x="378" y="72" width="22" height="28" class="s-pos"/><rect x="407" y="92" width="22" height="8" class="s-pos"/><rect x="436" y="100" width="22" height="70" class="s-neg"/><rect x="465" y="100" width="22" height="26" class="s-neg"/><rect x="494" y="88" width="22" height="12" class="s-pos"/><rect x="523" y="100" width="22" height="10" class="s-neg"/><rect x="552" y="99" width="22" height="2" class="s-box"/><rect x="581" y="99" width="22" height="2" class="s-box"/><rect x="610" y="99" width="22" height="2" class="s-box"/><rect x="639" y="99" width="22" height="2" class="s-box"/><rect x="668" y="99" width="22" height="2" class="s-box"/><rect x="697" y="99" width="22" height="2" class="s-box"/>
+      <text x="41" y="196" text-anchor="middle" class="m s s-tx3">00</text><text x="215" y="196" text-anchor="middle" class="m s s-tx3">06</text><text x="389" y="196" text-anchor="middle" class="m s s-tx3">12</text><text x="563" y="196" text-anchor="middle" class="m s s-tx3">18</text><text x="708" y="196" text-anchor="middle" class="m s s-tx3">23</text>
+      <text x="447" y="184" text-anchor="middle" class="s b s-tx">▼ 14:00</text>
+      <text x="302" y="52" text-anchor="middle" class="s b s-tx">▲ 09:00</text>
+      <text x="26" y="22" class="s s-tx2">▲ above the line: hours that paid · ▼ below: hours that cost · flat grey: no trades</text>
+    </svg>
+  </div><figcaption><b>Fig. 12</b>Example. The worst hour (14:00) and the best (09:00) are named under the chart.</figcaption></figure>
+  <p>The line under it: “Worst hour <b>14:00</b> (−$700.00, n=9, may be chance) · best <b>09:00</b> (+$400.00, n=7, may be chance). A gap between hours is mostly noise until each hour has 30+ trades.” It needs at least two hours with two or more trades each.</p>
+  <div class="call warn"><b class="t">Read with care</b><p>24 groups split a small record thin: with 40 trades the average hour has fewer than two. Treat a bad hour as a question (what do I trade then, and why?) until it has 30+ trades.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Using it, reference</h2><p>A routine, common situations, the limits, and every threshold in one place.</p></div></div>
+
+<section class="ch" id="use">
+  <div class="ch-h"><span class="n">18</span><h3>A routine and common situations</h3></div>
+  <h4>A weekly routine</h4>
+  <ol class="tl">
+    <li><span class="ph">Score</span><div><b>Read Focus next</b><span>Pick that one habit for the week, nothing else.</span></div></li>
+    <li><span class="ph">Red flags</span><div><b>The top row of the scoreboard</b><span>If it has a suggest button, press it; if it already has a rule, check “broken X times”.</span></div></li>
+    <li><span class="ph">Pre-mortem</span><div><b>Answer the review questions</b><span>Yes or No on every loss; that is what “Losses foreseen” counts.</span></div></li>
+    <li><span class="ph">Habits</span><div><b>Disposition and stops</b><span>Any “Stops moved away”? Losers held longer? Decide the exit rule before the next trade.</span></div></li>
+    <li><span class="ph">Report</span><div><b>Download report</b><span>Keep one a month to compare.</span></div></li>
+  </ol>
+  <div class="mx">
+    <div class="c"><div class="s">Clear disposition effect<div class="tags"><span class="tag nt">PGR / PLR 1.80× · t = 2.4</span></div></div><div class="m">You close winners far more readily than losers.</div><div class="u">Set the stop and target at entry and let them work; ask the toast’s question of every loser you hold.</div></div>
+    <div class="c"><div class="s">Tilt guard trips often<div class="tags"><span class="tag nt">Overrides 6</span></div></div><div class="m">The guard fires but you push through it.</div><div class="u">Use Pause Rest of day after a trip; overrides lower Discipline.</div></div>
+    <div class="c"><div class="s">Many dumb-luck wins<div class="tags"><span class="tag nt">luck 45%</span></div></div><div class="m">Wins without a stop, with big size or high costs.</div><div class="u">Do not repeat what won by luck; fix the process part that failed.</div></div>
+    <div class="c"><div class="s">Overconfident<div class="tags"><span class="tag nt">by 18 points</span></div></div><div class="m">Your stated odds are above what you win.</div><div class="u">Rate lower; do not size up on “high-confidence” trades that do not win more.</div></div>
+    <div class="c"><div class="s">Costliest warning<div class="tags"><span class="tag nt">Stop inside normal noise</span></div></div><div class="m">Tight stops lose more often than your clean entries.</div><div class="u">Make it a pre-mortem rule; widen the stop and cut size (see the Volatility guide).</div></div>
+    <div class="c"><div class="s">Many skipped trades “missed win”<div class="tags"><span class="tag nt">2 of 9</span></div></div><div class="m">Some trades you did not take would have won.</div><div class="u">Compare saved and missed in money over many skips, not single cases.</div></div>
+  </div>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">19</span><h3>Limits and caveats</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Small samples</h5><p>Every verdict has a minimum: 4 voluntary closes for a first reading and 10 with |t| ≥ 2 for a disposition verdict, 20 rated trades for calibration, 10 for suggestions and mood verdicts, 30 before “may be chance” goes away.</p></div>
+    <div class="card"><h5>Your answers matter</h5><p>Mood, confidence and “Did it fail for a reason you named?” are only as good as what you tick. Skipped answers leave parts of the tab empty.</p></div>
+    <div class="card"><h5>After the fact is not proof</h5><p>“Stopped out, then target” and “missed win” happen often by chance; the random-walk figure shows how often.</p></div>
+    <div class="card"><h5>Checks are simple</h5><p>The noise check uses the average range of 15 fifteen-minute bars; the trend check an EMA50 on 1-hour bars. They flag common mistakes; they do not judge a setup.</p></div>
+    <div class="card"><h5>Entry context needs the open</h5><p>Flags are recorded when a position opens. Trades from before entry checks existed, or without context, are left out of the scoreboard and Clean entries.</p></div>
+    <div class="card"><h5>Not advice</h5><p>Behaviour describes your own past decisions. Nothing here predicts the market or recommends a trade.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">20</span><h3>All definitions and thresholds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td>Trade record</td><td>One record per position: partial closes merged, net of commission, negative-balance credit left out.</td></tr>
+      <tr><td>Voluntary close</td><td>Any close not by Stop loss, Take profit, Trailing, Time stop, Basket stop or Basket target; with ≥ 2 positions held.</td></tr>
+      <tr><td>PGR · PLR</td><td class="n">rg ÷ (rg + pg) · rl ÷ (rl + pl)</td></tr>
+      <tr><td>Disposition verdict</td><td>|t| ≥ 2 and n ≥ 10; first reading from 4 voluntary closes.</td></tr>
+      <tr><td>Gauge</td><td class="n">PGR − PLR, clamped −0.5 … +0.5; zones at ±0.1</td></tr>
+      <tr><td>Loser hold time</td><td>Mean hold of losers ÷ mean hold of winners (≥ 1 min); red above 1.3×.</td></tr>
+      <tr><td>Tilt guard</td><td>Defaults: on, 3 losses in a row, day −3%, cool-down 15 min.</td></tr>
+      <tr><td>Revenge window</td><td class="n">10 minutes after a losing close</td></tr>
+      <tr><td>Pre-mortem threshold</td><td>Risk ≥ 1% of equity (slider 0–3%, step 0.25); always without a stop (default on).</td></tr>
+      <tr><td>Skip</td><td>1 hour of the terminal’s clock; not offered under tilt, rules or challenge warnings.</td></tr>
+      <tr><td>Post-mortem window</td><td>24 hours after the close (stop-out then target or 1R; early exit then target).</td></tr>
+      <tr><td>Panic close</td><td>Hand-closed loss smaller than half the planned loss.</td></tr>
+      <tr><td>Confidence levels</td><td class="n">10% … 90%, step 10</td></tr>
+      <tr><td>Calibration verdict</td><td>From 20 rated trades; average stated % outside the 95% Wilson interval of the win rate.</td></tr>
+      <tr><td>Noise check</td><td class="n">stop &lt; 1.2 × mean(high − low) of the last 15 bars of 15 min</td></tr>
+      <tr><td>Size check</td><td class="n">risk &gt; 2% of equity</td></tr>
+      <tr><td>Cost check</td><td class="n">spread &gt; 15% of the stop distance</td></tr>
+      <tr><td>Reward check</td><td class="n">target ÷ stop &lt; 1</td></tr>
+      <tr><td>Trend check</td><td>1-hour EMA50 (α = 2/51), slope over 5 bars, &gt; 60 bars of history.</td></tr>
+      <tr><td>Chase check</td><td>60-minute move in your direction &gt; 2.2 × mean |60-minute move| of 23 hours, &gt; 1,500 one-minute bars.</td></tr>
+      <tr><td>Correlation check</td><td>ρ &gt; 0.7 in effect (sign by side), 1,440 one-minute log returns.</td></tr>
+      <tr><td>Overtrading</td><td>≥ 4 opened in the last hour and ≥ 2× usual hourly rate (1.5 until 3 earlier hours).</td></tr>
+      <tr><td>News check</td><td>High-impact event for the instrument’s currencies within 2 hours.</td></tr>
+      <tr><td>Session check</td><td>Market closes within 60 minutes.</td></tr>
+      <tr><td>Rule suggestion</td><td>≥ 10 trades, not trend/chase, net &lt; 0, no rule, win rate &gt; 10 points under No warnings.</td></tr>
+      <tr><td>Good process</td><td>Stop at entry, no No stop loss / Risk above 2% / Costs large vs the stop flag; last 60 trades.</td></tr>
+      <tr><td>Score grades</td><td class="n">A ≥ 85 · B ≥ 70 · C ≥ 55 · D ≥ 40 · E</td></tr>
+      <tr><td>Sample words</td><td>“may be chance” under 30 trades; muted rows under 10.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">21</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Disposition effect</dt><dd>Selling winners too early and holding losers too long (Shefrin &amp; Statman; measured by Odean, 1998).</dd>
+    <dt>PGR / PLR</dt><dd>Proportion of gains realised / of losses realised: of the winning (losing) positions you held at a voluntary close, the share you closed.</dd>
+    <dt>Paper gain / loss</dt><dd>A position still open, in profit or in loss, at the moment you close something else.</dd>
+    <dt>t-statistic</dt><dd>The gap PGR − PLR divided by its standard error; |t| ≥ 2 means a gap this size is unlikely to be chance.</dd>
+    <dt>Tilt</dt><dd>Trading to win back losses, usually faster and bigger than planned.</dd>
+    <dt>Cool-down</dt><dd>A set time after the tilt guard trips during which new trades need a pre-mortem and an override.</dd>
+    <dt>Pre-mortem</dt><dd>Imagining a decision has already failed and naming why, before taking it (Klein, 2007).</dd>
+    <dt>Prospective hindsight</dt><dd>Treating a future outcome as certain; it helps people find more reasons for it (Mitchell, Russo &amp; Pennington, 1989).</dd>
+    <dt>Post-mortem</dt><dd>The evidence gathered after the trade: flags, news, stop changes, and what price did in the next 24 hours.</dd>
+    <dt>Red flag</dt><dd>A warning sign checked automatically at entry.</dd>
+    <dt>Rule</dt><dd>What a red flag does: warn, force a pre-mortem, or block until you deliberately break it.</dd>
+    <dt>R</dt><dd>The money at risk to the stop at entry; a result in R is net P&amp;L ÷ that risk.</dd>
+    <dt>Outcome bias</dt><dd>Judging a decision by its result instead of by what was knowable when it was made.</dd>
+    <dt>Brier score</dt><dd>Mean squared gap between stated probability and outcome (1 or 0); lower is better.</dd>
+    <dt>Reliability · resolution · uncertainty</dt><dd>Murphy’s parts of the Brier score: calibration error, separation of winners from losers, and what the base rate alone leaves.</dd>
+    <dt>BSS</dt><dd>Brier skill score, 1 − Brier ÷ uncertainty: skill over always stating your own win rate.</dd>
+    <dt>Wilson interval</dt><dd>A 95% range for a win rate that stays sensible with few trades.</dd>
+    <dt>Random walk</dt><dd>A price path with no drift; used here to say how often a level is touched by chance.</dd>
+    <dt>Time stop</dt><dd>A deadline set in the pre-mortem: at it, the trade is closed unless it is in profit.</dd>
+    <dt>EMA50</dt><dd>Exponential moving average over 50 bars; here on 1-hour bars.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">22</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Stops outside the noise</h5><p>Hourly ATR, stop distance and size from it: <a href="vol.html#stops">Volatility guide</a>.</p></div>
+    <div class="card"><h5>The same bet twice</h5><p>What ρ means and why stacked positions add up: <a href="corr.html#risk">Correlation guide</a>.</p></div>
+    <div class="card"><h5>Size from the stop</h5><p>Pip value and position size for a chosen risk: <a href="calc.html#psize">Calculators guide</a>.</p></div>
+    <div class="card"><h5>Your exits tested</h5><p>How your exits compare with simple alternatives: <a href="obs-exit.html">Exit lab guide</a>.</p></div>
+    <div class="card"><h5>Runs of losses</h5><p>How long losing streaks and drawdowns get by chance: <a href="lab.html#dd">Risk Lab guide</a>.</p></div>
+    <div class="card"><h5>Statistics in plain words</h5><p>Noise, intervals and small samples: <a href="obs.html#stats">Observatory overview</a>.</p></div>
+  </div>
+</section>
+
+<p class="g-foot">tradeBerry · Behaviour guide. Illustrations and examples use example values; every formula and threshold is the one the Behaviour tab uses. Behaviour describes your own past decisions; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const v = id => { const x = +$(id).value; return isFinite(x) ? x : 0; };
+  const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+  const nfx = (x, d) => { if (x == null || !isFinite(x)) return '—'; const s = Math.abs(x).toFixed(d); return (x < 0 && +s !== 0 ? '−' : '') + s; };
+  const usd = (x, sign) => x == null || !isFinite(x) ? '—' : (x < 0 ? '−' : sign && x > 0 ? '+' : '') + '$' + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function wilson(k, n, z = 1.96) {
+    if (!(n > 0) || k < 0 || k > n) return null;
+    const p = k / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, e = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+    return { lo: k === 0 ? 0 : Math.max(0, c - e), hi: k === n ? 1 : Math.min(1, c + e) };
+  }
+  const wrTxt = (k, n) => { const ci = wilson(k, n), pc = x => Math.round(x * 100); return ci ? `${pc(k / n)}% (${pc(ci.lo)}–${pc(ci.hi)}%) · n=${n}` : `— · n=${n > 0 ? n : 0}`; };
+
+  /* 1 · Disposition (behav.js dispoStats + dispoVerdict + the score part) */
+  function dDraw() {
+    const rg = Math.max(0, Math.round(v('dRg'))), pg = Math.max(0, Math.round(v('dPg'))), rl = Math.max(0, Math.round(v('dRl'))), pl = Math.max(0, Math.round(v('dPl')));
+    const nG = rg + pg, nL = rl + pl, pgr = nG ? rg / nG : null, plr = nL ? rl / nL : null, de = pgr != null && plr != null ? pgr - plr : null;
+    const se = de != null ? Math.sqrt(pgr * (1 - pgr) / nG + plr * (1 - plr) / nL) : null; let t = se ? de / se : null;
+    if (de && !se) { const pp = (rg + rl) / (nG + nL), sp = Math.sqrt(pp * (1 - pp) * (1 / nG + 1 / nL)); if (sp) t = de / sp; }
+    const n = rg + rl, ratio = pgr != null && plr ? pgr / plr : null, pc = x => (x * 100).toFixed(0) + '%';
+    const rt = ratio != null ? ratio.toFixed(2) + '×' : '—', tt = t != null ? `t = ${nfx(t, 1)}` : 't undefined at this sample';
+    let key, txt;
+    if (de == null && n < 4) { key = 'none'; txt = `Close ${4 - n} more trade${n === 3 ? '' : 's'} yourself (not by stop or target) while holding another position to get a first reading.`; }
+    else if (de == null) { key = 'none'; txt = `You need both winning and losing positions in the record to compare them — so far ${pgr == null ? 'none of the positions was in profit' : 'none was in loss'} when you closed something.`; }
+    else if (t != null && Math.abs(t) >= 2 && n >= 10) {
+      key = de > 0 ? 'dispo' : 'reverse';
+      txt = key === 'dispo' ? `<b>Disposition effect.</b> You realise gains ${ratio != null ? rt + ' as readily as' : 'far more readily than'} losses: ${pc(pgr)} of your gains when you close something, but only ${pc(plr)} of your losses (${tt}) — you bank winners early and give losers more time.`
+        : `<b>The reverse of the typical bias.</b> You cut losers (${pc(plr)}) more readily than you take gains (${pc(pgr)}; PGR / PLR ${rt}, ${tt}) — what trend-followers aim for.`;
+    } else { key = 'unclear'; txt = `<b>Not clear yet.</b> You realise ${pc(pgr)} of gains and ${pc(plr)} of losses (PGR / PLR ${rt}, ${tt}). Odean's test needs |t| ≥ 2${n < 10 ? ` and at least 10 voluntary closes (you have ${n})` : ''}; a gap this size can be chance.`; }
+    const score = key === 'dispo' ? (ratio == null ? 0 : clamp(100 - (ratio - 1) * 100, 0, 100)) : key === 'reverse' ? 100 : null;
+    $('dDe').textContent = de == null ? '—' : (de >= 0 ? '+' : '−') + Math.abs(de).toFixed(2);
+    $('dPgr').textContent = pgr == null ? '—' : pc(pgr); $('dPlr').textContent = plr == null ? '—' : pc(plr);
+    $('dRatio').textContent = rt; $('dT').textContent = t == null ? '—' : nfx(t, 1); $('dN').textContent = n;
+    $('dScore').textContent = score == null ? '— (does not count)' : score.toFixed(0);
+    $('dVerdict').innerHTML = txt;
+    const nd = $('dNeedle'), clear = key === 'dispo' || key === 'reverse';
+    if (de == null) nd.style.display = 'none';
+    else {
+      const a = Math.PI * (1 - (clamp(de, -.5, .5) + .5)), r = 62;
+      nd.style.display = ''; nd.setAttribute('x2', (130 + Math.cos(a) * r).toFixed(1)); nd.setAttribute('y2', (100 - Math.sin(a) * r).toFixed(1));
+      nd.setAttribute('class', clear ? 's-px' : 's-ln3'); if (clear) nd.removeAttribute('stroke-dasharray'); else nd.setAttribute('stroke-dasharray', '4 3');
+    }
+  }
+  ['dRg', 'dPg', 'dRl', 'dPl'].forEach(id => $(id).addEventListener('input', dDraw)); dDraw();
+
+  /* 2 · Calibration (shared.js brierParts + wilson; behav.js verdict and score part) */
+  const LV = [10, 20, 30, 40, 50, 60, 70, 80, 90], DEF = { 50: [8, 4], 70: [10, 4], 80: [4, 2] };
+  $('cRows').innerHTML = LV.map(l => `<tr><td class="n">${l}%</td><td><input type="number" id="cn${l}" min="0" step="1" value="${(DEF[l] || [0, 0])[0]}"></td><td><input type="number" id="ck${l}" min="0" step="1" value="${(DEF[l] || [0, 0])[1]}"></td></tr>`).join('');
+  function cDraw() {
+    const rows = [], lv = [];
+    for (const l of LV) {
+      const n = Math.max(0, Math.round(v('cn' + l))), k = clamp(Math.round(v('ck' + l)), 0, n);
+      for (let i = 0; i < n; i++) rows.push({ p: l / 100, y: i < k });
+      if (n) { const ci = wilson(k, n); lv.push(`${l}%: won ${k} of ${n} = ${Math.round(k / n * 100)}% (${Math.round(ci.lo * 100)}–${Math.round(ci.hi * 100)}%) · ${ci.hi * 100 < l ? 'overconfident' : ci.lo * 100 > l ? 'underconfident' : 'within chance'}`); }
+    }
+    const N = rows.length;
+    if (!N) { ['cBss', 'cN', 'cBs', 'cParts', 'cBase', 'cMean', 'cScore'].forEach(id => $(id).textContent = '—'); $('cN').textContent = '0'; $('cVerdict').textContent = 'No rated trades yet.'; $('cLevels').textContent = ''; return; }
+    let bs = 0, K = 0; const g = new Map();
+    for (const r of rows) { const y = r.y ? 1 : 0, b = g.get(r.p) || { p: r.p, n: 0, k: 0 }; b.n++; b.k += y; g.set(r.p, b); bs += (r.p - y) ** 2; K += y; }
+    const base = K / N, unc = base * (1 - base); let rel = 0, res = 0;
+    for (const b of g.values()) { const o = b.k / b.n; rel += b.n * (b.p - o) ** 2; res += b.n * (o - base) ** 2; }
+    bs /= N; rel /= N; res /= N; const bss = unc > 0 ? 1 - bs / unc : null;
+    const mean = rows.reduce((s, r) => s + r.p * 100, 0) / N, wr = base * 100, over = mean - wr, ci = wilson(K, N);
+    $('cBss').textContent = nfx(bss, 2); $('cN').textContent = N; $('cBs').textContent = bs.toFixed(3);
+    $('cParts').textContent = `${rel.toFixed(3)} · ${res.toFixed(3)} · ${unc.toFixed(3)}`; $('cBase').textContent = (base * 100).toFixed(0) + '%';
+    $('cMean').textContent = `${mean.toFixed(0)}% · ${wrTxt(K, N).replace(/ · n=\d+$/, '')}`;
+    $('cScore').textContent = bss != null && N >= 20 ? clamp(50 + 50 * bss, 0, 100).toFixed(0) : '— (does not count)';
+    $('cVerdict').innerHTML = N < 20 ? `Need ${20 - N} more rated trade${20 - N === 1 ? '' : 's'} before judging over- or underconfidence.`
+      : mean / 100 > ci.hi ? `<b>Overconfident by ${over.toFixed(0)} points.</b> You expect ${mean.toFixed(0)}% on average and win ${wrTxt(K, N)} — your average is above the whole 95% interval.`
+      : mean / 100 < ci.lo ? `<b>Underconfident by ${Math.abs(over).toFixed(0)} points</b> — you expect ${mean.toFixed(0)}% and win ${wrTxt(K, N)}.`
+      : `<b>No clear miscalibration.</b> You expect ${mean.toFixed(0)}% on average and win ${wrTxt(K, N)}; the gap is within the 95% interval.`;
+    $('cLevels').textContent = lv.join(' · ');
+  }
+  document.querySelectorAll('#ccalc input').forEach(i => i.addEventListener('input', cDraw)); cDraw();
+
+  /* 3 · Entry check (behav.js pmRisk + pmFlags, the parts without price history; pmNeedFor; the ticket's note) */
+  const dur = s => { const m = Math.round(s / 60); return m < 60 ? m + 'm' : m < 1440 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m` : `${(m / 1440).toFixed(1)}d`; };
+  function fDraw() {
+    const eq = v('fEq'), lots = v('fLots'), pv = v('fPv'), sl = v('fSl'), tp = v('fTp'), sp = v('fSp'), atr = v('fAtr'), loss = v('fLoss'), mins = v('fMin'), news = v('fNews'), gap = v('fGap');
+    const hasSl = sl > 0, risk = hasSl ? sl * pv * lots : null, pct = risk != null && eq > 0 ? risk / eq * 100 : null, reward = tp > 0 ? tp * pv * lots : null;
+    const f = [];
+    if (!hasSl) f.push('No stop loss — the possible loss is open-ended');
+    else if (pct > 2) f.push(`Risking ${pct.toFixed(1)}% of equity on one idea`);
+    if (hasSl && atr > 0 && sl < atr * 1.2) f.push(`Stop of ${sl.toFixed(1)} pips sits inside normal 15-minute noise (ATR ${atr.toFixed(1)} pips)`);
+    if (tp > 0 && hasSl) { const rr = tp / sl; if (rr < 1) f.push(`Reward is only ${rr.toFixed(2)}× the risk`); }
+    if (gap > 0 && gap <= 60) f.push(`Market closes in ${Math.max(1, Math.round(gap))} min — held over the close, the reopening can gap through your stop`);
+    if (hasSl && sp / sl > .15) f.push(`Spread is ${(sp / sl * 100).toFixed(0)}% of the stop distance`);
+    if (news > 0 && news < 120) f.push(`High-impact <ccy> <event> in ${dur(news * 60)}`);
+    if (loss > 0 && mins < 10) f.push(`Opened ${Math.max(1, Math.round(mins))} min after a ${usd(-loss)} loss`);
+    const tilt = $('fTilt').checked, rule = $('fRule').checked && f.length > 0, on = $('fOn').checked, minR = v('fMinR'), noSl = $('fNoSl').checked;
+    if (tilt) f.push('Tilt guard armed: its reason, e.g. “3 losing trades in a row”');
+    const need = rule || tilt || (on && (hasSl ? pct >= minR : noSl));
+    $('fPm').textContent = need ? 'Yes' : 'No';
+    $('fRisk').textContent = risk != null ? usd(-risk) : 'unlimited'; $('fPct').textContent = pct != null ? pct.toFixed(2) + '%' : '—';
+    $('fRr').textContent = reward != null && hasSl ? (tp / sl).toFixed(2) + '×' : '—'; $('fN').textContent = f.length;
+    $('fList').innerHTML = f.length ? f.map(x => `<li>${x.replace(/</g, '&lt;')}</li>`).join('') : '<li>No automatic red flags</li>';
+    const why = !need ? '' : tilt ? 'Tilt guard is on' : !hasSl ? 'No stop loss' : pct >= minR ? `Risk ${pct.toFixed(2)}% (pre-mortem from ${minR}%)` : 'Your rules ask for it';
+    $('fNote').innerHTML = need ? `Order button ends in “ · pre-mortem next”. Note: “${why}: the pre-mortem opens before the order is sent.”` : 'The order goes out without a pre-mortem. The flags above are still stored with the trade and appear on the scoreboard.';
+  }
+  document.querySelectorAll('#fcalc input').forEach(i => { i.addEventListener('input', fDraw); i.addEventListener('change', fDraw); }); fDraw();
+})();
+</script>
+</body>
+</html>

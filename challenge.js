@@ -241,10 +241,34 @@ const CH_RO_WHY = 'Read-only tab: this account is open in another tab. Use “Ta
 const chRoRefuse = () => { toast('Not changed — read-only tab', 'The challenge belongs to the account open in another tab. Use “Take over here” to change it in this tab.', 'dn'); };
 // a control that changes the attempt: disabled (and labelled) in a read-only tab; data-ro-title lets persist.js re-enable it on take-over
 const chRoAttr = (off = false) => chRO() ? ` disabled data-ro-title="" title="${CH_RO_TITLE}"` : off ? ' disabled' : '';
+// the live account: the challenge choices (rules chosen, custom rules, sampling options) are the server's too
+function chCfgSend() { if (!TradeLink.live) return; const c = chCfg(); TradeLink.send('settings', { chal: { do: 'cfg', sel: c.sel, opt: c.opt, custom: c.custom } }).then(r => { if (!r.ok) toast('Challenge settings not saved', r.text || 'Refused by the execution server', 'dn'); }); }
+/* what the execution server reports about the attempt without a text of its own (notice {kind: 'chal', what}): the toast
+   today's chTick shows for the same event, from the attempt as the server holds it (S.chal, the gw 'chal' state) */
+function chNotice(m) {
+  setTimeout(() => safe('challenge', () => {
+    const att = S.chal && S.chal.att; if (!att) return;
+    const R = att.rules;
+    if (m.what === 'warn') {
+      const lv = m.level, rule = m.rule, room = typeof m.room === 'number' ? m.room : 0;
+      if (rule === 'daily' && lv === 80) { const cool = typeof tiltCfg === 'function' ? tiltCfg().cool : 15; toast(`Challenge: 80% of today's loss limit used`, `Room left ${usdFmt(room)}. For ${cool} min every new trade gets a pre-mortem.`, 'dn'); beep('alert'); }
+      else toast(`Challenge: ${lv}% of the ${rule === 'daily' ? 'daily' : 'max'} loss room used`, `Room left ${usdFmt(room)} before the ${chWhyName(rule)}.`, lv === 80 ? 'dn' : 'info');
+    } else if (m.what === 'target') {
+      const pd = chPhaseDone(att, S.balance, !S.positions.length);
+      toast('Target reached', pd.pending.length ? `Still needed: ${pd.pending.join(' · ')}. Limits still apply.` : 'Phase complete.', 'up');
+    } else if (m.what === 'phase') {
+      const ph = m.phase ?? att.phase, last = att.phases[att.phases.length - 1], tg = R.phases[ph] ? R.phases[ph].target : 0;
+      toast(`Phase ${ph} passed in ${chPl(last ? last.days : 0, 'trading day')}`, `Phase ${ph + 1} starts now as a fresh account of the initial capital (${usdFmt(att.b0)}): your phase ${ph} profit does not count toward it. Target +${tg}% (${usdFmt(tg / 100 * att.b0)}), same limits.`, 'up');
+    } else if (m.what === 'pass') toast('All phases passed', 'A pass shows your risk control held on this path. It is not evidence of an edge.', 'info');
+    if (typeof renderChal === 'function' && activeTab === 'chal') renderChal();
+  }), 150); // the attempt's new state comes in the gw event next to the notice
+}
 function chStart(id) {
   if (chRO()) return { ok: false, why: CH_RO_WHY, ro: true };
   const c = chCfg(), can = chCanStart(); if (!can.ok) return { ok: false, why: can.why };
   const rules = chRules(id); if (!rules) return { ok: false, why: 'Unknown rules.' };
+  // the live account: the execution server runs the attempt (Task 9); it arrives as the gw 'chal' state
+  if (TradeLink.live) { TradeLink.send('settings', { chal: { do: 'start', id, rules } }).then(r => { if (!r.ok) toast('Challenge not started', r.text || 'Refused by the execution server', 'dn'); }); return { ok: true, sent: true, att: { rules } }; }
   const t = Engine.simTime, bal = S.balance, k = chDayKey(t, rules.reset);
   const att = {
     id: 'A' + Math.round(t), rules, status: 'active', phase: 0, start: t, e0: bal, ph0: t, hw: bal, b0: bal,
@@ -267,6 +291,7 @@ function chFinish(att, status, why, eq, floor) {
 // the user stops the attempt (the panel asks first)
 function chStop() {
   if (!chActive() || chRO()) return false;
+  if (TradeLink.live) { TradeLink.send('settings', { chal: { do: 'stop' } }).then(r => { if (!r.ok) toast('Challenge not stopped', r.text || 'Refused by the execution server', 'dn'); }); return true; }
   const att = S.chal.att; chFinish(att, 'stopped', 'user', account().eq, null);
   chEmit('stop', att); save(); return true;
 }
@@ -309,6 +334,8 @@ function chFlatten(att) {
   return k;
 }
 function chTick() {
+  // the live account's attempt is evaluated on the execution server (Task 9: rules, MAE/MFE, breach flatten)
+  if (TradeLink.live) return;
   // while a replay is open (or this is the replay document) the main account is frozen: nothing to track
   if (typeof RP !== 'undefined' && (RP.role === 'child' || (RP.role === 'host' && RP.state !== 'idle' && RP.state !== 'error'))) return;
   for (const p of S.positions) { const pl = posPnl(p).pnl; p.mae = Math.min(p.mae || 0, pl); p.mfe = Math.max(p.mfe || 0, pl); }
@@ -365,7 +392,7 @@ function chTick() {
       chEmit('phase', att);
     } else {
       chFinish(att, 'passed', 'target', eq, null);
-      toast('All phases passed', 'On a simulated, zero-edge market a pass shows your risk control held on this path. It is not evidence of an edge.', 'info');
+      toast('All phases passed', 'A pass shows your risk control held on this path. It is not evidence of an edge.', 'info');
       chEmit('pass', att);
     }
     save();
@@ -450,11 +477,13 @@ if (typeof tkWarnings === 'function') {
 // fills count trading days; closes copy MAE/MFE and the risk of the closed part onto the history row
 if (typeof openPosition === 'function') {
   const _chOpen = openPosition;
-  openPosition = function (o) { const p = _chOpen.apply(this, arguments); if (p) { p.mae = 0; p.mfe = 0; if (chActive()) S.chal.att.day.n++; } return p; };
+  // live: MAE/MFE, trading days and the breach flatten are the execution server's (Task 9); nothing is counted here
+  openPosition = function (o) { const p = _chOpen.apply(this, arguments); if (p instanceof Promise) return p; if (p) { if (netNew()) { p.mae = 0; p.mfe = 0; } if (chActive()) S.chal.att.day.n++; } return p; };
 }
 if (typeof closePosition === 'function') {
   const _chClose = closePosition;
   closePosition = function (id) {
+    if (TradeLink.live) return _chClose.apply(this, arguments);
     const p = S.positions.find(x => x.id === id), was = p ? { mae: p.mae || 0, mfe: p.mfe || 0, risk: p.risk, lots: p.lots } : null, h0 = S.history[0];
     const r = _chClose.apply(this, arguments), h = S.history[0];
     if (was && h && h !== h0 && h.id === id) {
@@ -474,7 +503,7 @@ if (typeof checkTriggers === 'function') {
 if (typeof setSpeed === 'function') {
   const _chSpeed = setSpeed;
   setSpeed = function (v) {
-    if (v > CH_SPEED_CAP && chActive()) { v = CH_SPEED_CAP; toast(`Speed capped at ${CH_SPEED_CAP}× during a challenge attempt`, 'Rules are checked every 250 ms; at 300× that is 75 simulated seconds between checks, and a breach in between would be missed.', 'info'); }
+    if (v > CH_SPEED_CAP && chActive()) { v = CH_SPEED_CAP; toast(`Speed capped at ${CH_SPEED_CAP}× during a challenge attempt`, 'Rules are checked every 250 ms; at 300× that is 75 market seconds between checks, and a breach in between would be missed.', 'info'); }
     return _chSpeed.call(this, v);
   };
 }
@@ -623,7 +652,7 @@ function chChecks(sample, sim, rules) {
   if (R.daily) for (const d of sample.days) { let E = 1, low = 1; for (const x of d.tr) { low = Math.min(low, E * (1 + x.mae)); E *= 1 + x.ret; low = Math.min(low, E); } if (low <= 1 - R.daily.pct / 100) bad++; }
   out.push({ id: 'D4', ok: bad === 0, text: R.daily ? `On ${bad} of your ${sample.nDays} trading days you went past the ${R.daily.pct}% daily limit.` : '' });
   const z = sim && sim.zero;
-  out.push({ id: 'D5', ok: !R.daily || !z || z.ci.daily[1] <= CH_DAILY_ODDS, text: z ? `At this sizing, ${chP(z.daily)} of simulated attempts break the daily limit (90%: ${chP(z.ci.daily[0])}–${chP(z.ci.daily[1])}).` : '' });
+  out.push({ id: 'D5', ok: !R.daily || !z || z.ci.daily[1] <= CH_DAILY_ODDS, text: z ? `At this sizing, ${chP(z.daily)} of random attempts break the daily limit (90%: ${chP(z.ci.daily[0])}–${chP(z.ci.daily[1])}).` : '' });
   const c = S.chal || { log: [] }, same = [...(c.att ? [chSummary(c.att)] : []), ...c.log].filter(x => x.pid === R.id && x.status !== 'void');
   out.push({ id: 'D6', ok: same.some(x => x.status === 'passed' || (x.status !== 'breached' && x.days >= CH_PRACTICE_DAYS)), text: 'Run a practice attempt on these rules first — none has finished without a breach yet.' });
   return out;
@@ -632,7 +661,7 @@ const chPerPass = z => z.pass < .01 ? 'fewer than 1 pass in 100 attempts' : `abo
 function chVerdict(sample, sim, checks, opt) {
   if (!sample.ok) {
     const x = opt && opt.risk !== 'asis' && sample.excluded.noR ? `Only ${sample.n} trades have a known stop — need ${CH_MIN_N} for a what-if at ${opt.risk}%.` : null;
-    return { level: 'nodata', title: 'No verdict yet', body: x || `Close at least ${CH_MIN_N} trades over ${CH_MIN_DAYS} trading days of your own. Demo trades never count.`, reasons: [], progress: `${sample.n} / ${CH_MIN_N} trades · ${sample.nDays} / ${CH_MIN_DAYS} days` };
+    return { level: 'nodata', title: 'No verdict yet', body: x || `Close at least ${CH_MIN_N} trades over ${CH_MIN_DAYS} trading days of your own. Example trades never count.`, reasons: [], progress: `${sample.n} / ${CH_MIN_N} trades · ${sample.nDays} / ${CH_MIN_DAYS} days` };
   }
   const order = ['D5', 'D4', 'D2', 'D1', 'D3', 'D6'], failed = order.map(id => checks.find(c => c.id === id)).filter(c => c && !c.ok);
   if (failed.length) return { level: 'not-ready', title: "Not ready — don't buy a challenge yet.", body: 'Each of these is in your control. Fix them in practice first; a paid attempt will not be kinder.', reasons: failed.slice(0, 3).map(c => c.text) };
@@ -640,7 +669,7 @@ function chVerdict(sample, sim, checks, opt) {
   const z = sim.zero;
   return {
     level: 'borderline', title: 'Borderline — practise more before paying for a challenge.', reasons: [],
-    body: `Your risk fits these rules; your edge is unproven. On this simulated market every directional edge is zero before costs, so a pass here is discipline plus luck. With zero edge, these rules end in a pass ${chP(z.pass)} of the time (90% interval ${chP(z.ci.pass[0])}–${chP(z.ci.pass[1])}) and a breach ${chP(z.breach)} — ${chPerPass(z)}. A real challenge is a paid bet; decide with that number.`
+    body: `Your risk fits these rules; your edge is unproven, so a pass here is discipline plus luck. With zero edge, these rules end in a pass ${chP(z.pass)} of the time (90% interval ${chP(z.ci.pass[0])}–${chP(z.ci.pass[1])}) and a breach ${chP(z.breach)} — ${chPerPass(z)}. A real challenge is a paid bet; decide with that number.`
   };
 }
 
@@ -679,7 +708,7 @@ const chLvSt = u => u >= 1 ? 'Breached' : u >= .5 ? 'Warning' : 'OK';
 function chAttHtml() {
   const c = chCfg(), att = c.att, R = chRules(c.sel) || chRules('2s-static'), can = chCanStart();
   const empty = (pre = '') => `${pre}<div class="es ch-es">${chIcon}<b class="es-t">No practice attempt running</b>
-    <p class="es-p">Runs on your simulator account from its balance at start. Equity is checked on every market update; the daily limit resets at ${String(R.reset.hour).padStart(2, '0')}:00 ${chE(R.reset.tz)}. Nothing is real money.</p>
+    <p class="es-p">Runs on your demo account from its balance at start. Equity is checked on every market update; the daily limit resets at ${String(R.reset.hour).padStart(2, '0')}:00 ${chE(R.reset.tz)}. Nothing is real money.</p>
     <div class="es-act"><button type="button" class="es-b btn-pri" id="chStartB"${chRoAttr(!can.ok)}>${chE(can.ok ? 'Start practice attempt' : can.btn || can.why)}</button>${!can.ok && S.positions.length ? '<button type="button" class="es-b" data-ch="positions">Go to positions</button>' : !can.ok && S.orders.length ? '<button type="button" class="es-b" data-ch="orders">Go to orders</button>' : ''}</div></div>`;
   if (!att) return empty();
   const Ra = att.rules, tz = Ra.reset.tz;
@@ -704,7 +733,7 @@ function chAttHtml() {
       ${L.tgtOk ? `<div class="ch-note">Target reached — ${chE(L.pending.join(' · ') || 'completing the phase')}. Limits still apply until the phase is complete.</div>` : ''}
       ${L.cooling ? `<div class="ch-note warn">Cool-down after 80% of today's loss limit: every new trade gets a pre-mortem for ${fd(att.coolUntil - Engine.simTime)}.</div>` : ''}
       ${hero}<div class="ch-meters">${chMHead()}${meters.join('')}</div>
-      <p class="muted small">Checked every market update — ${(.25 * Engine.speed).toFixed(Engine.speed < 4 ? 2 : 0)} simulated seconds apart at ${Engine.speed}×. Day resets at ${String(Ra.reset.hour).padStart(2, '0')}:00 ${chE(tz)}; next reset in ${fd(nr)}.${CH.tzBad ? ` Your browser does not know ${chE(CH.tzBad)}; days reset at 00:00 UTC.` : ''}</p>
+      <p class="muted small">Checked every market update — ${(.25 * Engine.speed).toFixed(Engine.speed < 4 ? 2 : 0)} market seconds apart at ${Engine.speed}×. Day resets at ${String(Ra.reset.hour).padStart(2, '0')}:00 ${chE(tz)}; next reset in ${fd(nr)}.${CH.tzBad ? ` Your browser does not know ${chE(CH.tzBad)}; days reset at 00:00 UTC.` : ''}</p>
       <div class="ch-act"><button type="button" class="ghost sm" id="chStopB"${chRoAttr()}>Stop attempt</button></div>`;
   }
   if (att.status === 'breached') {
@@ -719,7 +748,7 @@ function chAttHtml() {
   if (att.status === 'passed') {
     const tot = att.phases.reduce((s, p) => s + p.days, 0);
     return `<div class="ch-banner pass"><b>All phases passed in ${chPl(tot, 'trading day')}</b>
-      <p>On a simulated, zero-edge market a pass shows your risk control held on this path. It is not evidence of an edge.</p>
+      <p>A pass shows your risk control held on this path. It is not evidence of an edge.</p>
       <p class="mono small">${att.phases.map((p, i) => `Phase ${i + 1}: ${p.ret >= 0 ? '+' : '−'}${Math.abs(p.ret).toFixed(1)}% in ${chPl(p.days, 'day')}`).join(' · ')}</p></div>
       <div class="es-act ch-act"><button type="button" class="es-b" id="chNewB"${chRoAttr(!can.ok)}>${chE(can.ok ? 'Start a new attempt' : can.btn || can.why)}</button><button type="button" class="es-b" data-ch="ready">See the readiness odds</button></div>`;
   }
@@ -731,14 +760,14 @@ function chLogHtml() {
   const res = x => x.status === 'passed' ? 'Passed' : x.status === 'breached' ? `Breached · ${x.why}` : x.status === 'stopped' ? 'Stopped' : 'Void';
   return `<h3>Attempt log</h3>${L.length ? `<div class="tbl-wrap ch-logt"><table class="tbl"><thead><tr><th>Started</th><th>Rules</th><th>Result</th><th>Phase</th><th>Days</th><th>Return</th></tr></thead><tbody>${L.map(x => `<tr><td class="mono">${dts(x.start)}</td><td>${chE(x.label)}</td><td>${res(x)}</td><td class="mono">${x.phase + 1}</td><td class="mono">${x.days}</td><td class="mono ${x.ret >= 0 ? 'up' : 'dn'}">${x.ret >= 0 ? '+' : '−'}${Math.abs(x.ret).toFixed(2)}%</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted small">Your finished attempts appear here.</p>'}`;
 }
-const CH_FIXED = 'Simulated market: every directional edge is zero before costs. These odds describe your sizing and rule discipline, not your chances on a live account.';
+const CH_FIXED = 'These odds describe your sizing and rule discipline with no edge assumed, not your chances on a live account.';
 function chReadyHtml() {
   const c = chCfg(), R = chRules(c.sel) || chRules('2s-static'), o = c.opt, smp = chSample(R, o), mc = CH.mc && CH.mc.sig === smp.sig ? CH.mc : null;
   const checks = mc ? chChecks(smp, mc, R) : null, v = mc ? chVerdict(smp, mc, checks, o) : !smp.ok ? chVerdict(smp, null, [], o) : null;
   const sel = (id, lab, opts, cur) => `<label class="ch-ctl">${lab}<select id="${id}">${opts.map(([val, t]) => `<option value="${val}"${String(val) === String(cur) ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
   const ctl = `<div class="ch-ctls">${sel('chRisk', 'Risk per trade', [['asis', 'As traded'], ['0.25', '0.25%'], ['0.5', '0.5%'], ['1', '1%'], ['2', '2%']], o.risk)}${sel('chHor', 'Horizon', CH_HOR.map(h => [h, h + ' trading days']), o.horizon)}</div>`;
   let vh;
-  if (!v) vh = `<div class="ch-verdict" aria-live="polite"><p role="status">${CH.busy != null ? `Running 20,000 simulated attempts… ${Math.round(CH.busy * 100)}%` : 'Preparing the simulation…'}</p></div>`;
+  if (!v) vh = `<div class="ch-verdict" aria-live="polite"><p role="status">${CH.busy != null ? `Running 20,000 random attempts… ${Math.round(CH.busy * 100)}%` : 'Preparing the run…'}</p></div>`;
   else vh = `<div class="ch-verdict lv-${v.level}" aria-live="polite"><b class="ch-vt">${v.level === 'not-ready' ? '<span aria-hidden="true">✕</span> ' : v.level === 'borderline' ? '<span aria-hidden="true">●</span> ' : ''}${chE(v.title)}</b>
     ${v.reasons.length ? `<ul>${v.reasons.map(x => `<li>${chE(x)}</li>`).join('')}</ul>` : ''}<p>${chE(v.body)}</p>${v.progress ? `<p class="mono small">${chE(v.progress)}</p>` : ''}</div>`;
   let nums = '';
@@ -768,7 +797,7 @@ function chRulesHtml() {
     <ul class="small">${chExplain(R).map(x => `<li>${chE(x)}</li>`).join('')}${R.notes.map(x => `<li>${chE(x)}</li>`).join('')}</ul>
     <p class="small">Source: ${chE(R.source)}. Rules as published from ${R.validFrom} · checked ${R.checked}. Firms change rules often — check the current page before you pay.${R.url ? ` <a href="${chE(R.url)}" target="_blank" rel="noopener noreferrer">Source</a>` : ''}</p>
     ${act && cur && cur.pv !== R.pv ? `<p class="small">This attempt uses rules v${R.pv}; the current preset is v${cur.pv}.</p>` : ''}
-    <p class="small muted">Runs on your simulator account from its balance at start. Saved with your account. Export / Import in Help carries it.</p></details>`;
+    <p class="small muted">Runs on your demo account from its balance at start. Saved with your account. Export / Import in Help carries it.</p></details>`;
   return `<div class="ch-rh"><h3>Rules</h3><label class="ch-ctl">Preset<select id="chPreset"${act ? ' disabled title="Stop the attempt to change rules"' : chRoAttr()}>${opts}</select></label><span class="ch-sum mono">${chE(chSum(R))}</span></div>${about}`;
 }
 // custom rules: derived from the selected preset, validated by chValidRules
@@ -823,7 +852,7 @@ function chKickMC() {
   const c = chCfg(), R = chRules(c.sel) || chRules('2s-static'), smp = chSample(R, c.opt);
   if (!smp.ok || (CH.mc && CH.mc.sig === smp.sig) || (CH.busy != null && CH.busySig === smp.sig)) return;
   CH.busy = 0; CH.busySig = smp.sig;
-  const prog = p => { CH.busy = p; const s = document.querySelector('#chReady [role=status]'); if (s) s.textContent = `Running 20,000 simulated attempts… ${Math.round(p * 100)}%`; };
+  const prog = p => { CH.busy = p; const s = document.querySelector('#chReady [role=status]'); if (s) s.textContent = `Running 20,000 random attempts… ${Math.round(p * 100)}%`; };
   chSimulate(smp, R, c.opt, prog).then(r => { CH.mc = r; CH.busy = null; const rd = document.getElementById('chReady'); if (rd && !rd.contains(document.activeElement)) rd.innerHTML = chReadyHtml(); else renderChal(); })
     .catch(e => { CH.busy = null; if (e && e.message !== 'cancelled') console.error('[Meridian] challenge simulation failed:', e); });
 }
@@ -949,7 +978,7 @@ const CH_CSS = `/* challenge readiness */
 .ch-strip.warn{border-left:3px solid var(--warn)}
 .ch-strip[hidden]{display:none}
 .ch-src::before{content:''}
-html[data-demo] .tab[data-pane=chal]::before{content:'Demo account — synthetic trades on a simulated market. Demo trades never count here.';display:block;padding:4px 12px;font-size:var(--fs-xs);line-height:1.4;color:var(--warn);background:color-mix(in srgb,var(--warn) 7%,transparent);border-bottom:1px solid color-mix(in srgb,var(--warn) 25%,transparent)}
+html[data-demo] .tab[data-pane=chal]::before{content:'Demo account — example trades. Example trades never count here.';display:block;padding:4px 12px;font-size:var(--fs-xs);line-height:1.4;color:var(--warn);background:color-mix(in srgb,var(--warn) 7%,transparent);border-bottom:1px solid color-mix(in srgb,var(--warn) 25%,transparent)}
 @media (max-width:900px){.ch-grid{grid-template-columns:minmax(0,1fr)}}
 body.mnav-on .chal{padding:10px}body.mnav-on .ch-ctl{display:grid;width:100%}body.mnav-on .ch-ctl select{width:100%}
 body.mnav-on .chal button,body.mnav-on .chal select,body.mnav-on .chal summary,body.mnav-on .chal input{min-height:44px}
@@ -985,16 +1014,16 @@ function bindChal() {
     el.addEventListener('change', e => {
       const id = e.target.id, c = chCfg();
       if (id === 'chPreset' && chRO()) { chRoRefuse(); renderChal(); return; }
-      if (id === 'chPreset') { if (e.target.value === '+edit') { CH.edit = true; } else { CH.edit = false; c.sel = e.target.value; CH.mc = null; } save(); renderChal(); if (CH.edit) document.getElementById('ceLabel')?.focus(); return; }
-      if (id === 'chRisk') { c.opt.risk = e.target.value === 'asis' ? 'asis' : +e.target.value; save(); e.target.blur(); renderChal(); return; }
-      if (id === 'chHor') { c.opt.horizon = +e.target.value; save(); e.target.blur(); renderChal(); return; }
+      if (id === 'chPreset') { if (e.target.value === '+edit') { CH.edit = true; } else { CH.edit = false; c.sel = e.target.value; CH.mc = null; } save(); if (!CH.edit) chCfgSend(); renderChal(); if (CH.edit) document.getElementById('ceLabel')?.focus(); return; }
+      if (id === 'chRisk') { c.opt.risk = e.target.value === 'asis' ? 'asis' : +e.target.value; save(); chCfgSend(); e.target.blur(); renderChal(); return; }
+      if (id === 'chHor') { c.opt.horizon = +e.target.value; save(); chCfgSend(); e.target.blur(); renderChal(); return; }
     });
     el.addEventListener('input', e => { if (e.target.closest('#chEdit')) { const m = document.getElementById('ceErr'), err = chEditErr(), b = document.getElementById('ceSave'); if (m) m.textContent = err; if (b) { b.disabled = !!err; b.textContent = err ? 'Fix the values to save' : 'Save rules'; } } });
     el.addEventListener('submit', e => {
       if (e.target.id !== 'chEdit') return; e.preventDefault();
       if (chRO()) { chRoRefuse(); return; }
       const r = chValidRules(chEditRead()); if (!r) { const m = document.getElementById('ceErr'); if (m) m.textContent = chEditErr(); return; }
-      const c = chCfg(); c.custom = r; c.sel = 'custom'; CH.edit = false; CH.mc = null; save(); renderChal(); toast('Custom rules saved', r.label, 'info');
+      const c = chCfg(); c.custom = r; c.sel = 'custom'; CH.edit = false; CH.mc = null; save(); chCfgSend(); renderChal(); toast('Custom rules saved', r.label, 'info');
     });
   }
   const pill = document.getElementById('chalPill'), strip = document.getElementById('tkChal'), lab = document.getElementById('labToChal');

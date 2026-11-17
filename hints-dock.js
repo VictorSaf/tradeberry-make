@@ -1,0 +1,1 @@
+/* Hint cards: empty on purpose. the whole zone (the Trade dock: tab strip, Positions, Orders, History, Alerts, the SL/TP window, every data table) is opted out by Victor on 16.11.2026 in hints-optouts.json. The cards written by the zone task are in git history (commit before this one) if Victor wants them back. */

@@ -81,14 +81,13 @@ const tfLab = tf => tf >= 60 ? tf / 60 + 'H' : tf + 'm';
 function mcBuild() {
   const c = mcCfg(), L = MC_LAYOUTS[c.layout] || MC_LAYOUTS['1'], grid = $('#mcGrid');
   // destroy old
-  MC.panes.forEach(p => { try { p.chart.remove(); } catch (e) { } p.el.remove(); });
+  MC.panes.forEach(p => { if (p.pager) p.pager.reset(); try { p.chart.remove(); } catch (e) { } p.el.remove(); });
   MC.panes = [];
   grid.dataset.layout = c.layout; delete grid.dataset.max; grid.querySelectorAll('.is-max').forEach(x => x.classList.remove('is-max'));
   document.body.classList.toggle('mc-on', L.n > 1); $('#mcMainMax').hidden = L.n < 2; $('#mcMainMax').classList.remove('on');
   $('.chartp').classList.toggle('mc-multi', L.n > 1); rsiFit();
   $$('#mcSeg [data-l]').forEach(b => b.classList.toggle('on', b.dataset.l === c.layout));
-  // the layout cell in the chart header shows the active layout's icon; its menu holds all five
-  { const on = $('#mcSeg [data-l].on svg'), ic = $('#layIc'); if (on && ic) ic.innerHTML = on.outerHTML; }
+  // the layout cell in the chart header keeps one fixed icon (several layouts); its menu marks the active one of the five
   $('#mcMoreWrap').hidden = L.n < 2; $('#mcOpts').hidden = true;
   mcSplitters(); mcApplySplit();
   for (let i = 0; i < L.n - 1; i++) MC.panes.push(mcPane(i, c.panes[i]));
@@ -104,7 +103,7 @@ function mcPane(i, cfg) {
       <div class="mc-tf">${MC_TFS.map(([v, l]) => `<button data-tf="${v}" class="${v === cfg.tf ? 'on' : ''}">${l}</button>`).join('')}</div>
       <span class="mc-pnl mono" hidden></span>
       <span class="mc-sp"></span>
-      ${['sell', 'buy'].map(sd => { const l = sd === 'buy' ? 'Buy' : 'Sell'; return `<button class="mc-b ${sd}" data-q="${sd}" title="${S.set.oneClick ? `${l} at market now (one-click on)` : `${l}: fills in the order ticket — one-click trading is off`}">${l[0]}</button>`; }).join('')}
+      ${''/* the secondary panes are for reading only: trading is from the main chart and the ticket (decision 45, Victor 10.11.2026) */}
       <button class="mc-ic" data-act="max" title="Focus this chart (Esc to restore)" aria-label="Focus chart"><svg viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button>
       <button class="mc-ic" data-act="swap" title="Swap into the main chart (or double-tap the chart)"><svg viewBox="0 0 16 16"><path d="M3 5h9l-2.5-2.5M13 11H4l2.5 2.5"/></svg></button>
     </div><div class="mc-chart"></div><div class="mc-legend mono"></div>`;
@@ -112,7 +111,12 @@ function mcPane(i, cfg) {
   const ch = LightweightCharts.createChart(el.querySelector('.mc-chart'), { ...chartOpts(col), layout: { ...chartOpts(col).layout, attributionLogo: false }, autoSize: true, rightPriceScale: { borderColor: col.grid, minimumWidth: 64 } });
   const cs = ch.addSeries(LightweightCharts.CandlestickSeries, { upColor: col.up, downColor: col.dn, wickUpColor: col.up, wickDownColor: col.dn, borderVisible: false });
   const ln = color => ch.addSeries(LightweightCharts.LineSeries, { color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-  const p = { i, cfg, el, chart: ch, candle: cs, e20: ln(col.ind1), e50: ln(col.info), bars: [], E20: [], E50: [], lines: [], sig: '' };
+  const p = { i, cfg, el, chart: ch, candle: cs, e20: ln(col.ind1), e50: ln(col.info), bars: [], E20: [], E50: [], lines: [], sig: '', pgN: 0, pgMute: 0 };
+  // back-paging into the platform's history (histpage.js), one pager per pane; the shared liveRange cache makes two panes on the same instrument and timeframe one series of requests
+  if (typeof makePager === 'function') {
+    p.pager = makePager({ host: el.querySelector('.mc-chart'), getKey: () => mcPageKey(p), onOlder: () => mcGlue(p) });
+    ch.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!p.pgMute) p.pager.maybeLoad(r); });
+  }
   // crosshair sync: only the chart under the mouse broadcasts
   el.querySelector('.mc-chart').addEventListener('pointerenter', () => MC.lock = 'p' + i);
   el.querySelector('.mc-chart').addEventListener('pointerdown', () => MC.lock = 'p' + i);
@@ -126,12 +130,31 @@ function mcPane(i, cfg) {
   let lastTap = 0; el.querySelector('.mc-chart').addEventListener('touchend', e => { const n = performance.now(); if (n - lastTap < 320 && e.changedTouches.length === 1) { e.preventDefault(); mcSwap(i); lastTap = 0; } else lastTap = n; });
   return p;
 }
+// paging is off where the pane is not the platform's candles: no live feed, a replay (panes draw candles whatever the main chart type)
+function mcPageKey(p) {
+  const sym = p.cfg.sym, rp = window.RP;
+  if (!MC.panes.includes(p) || typeof liveHas !== 'function' || !liveHas(sym) || Engine.isReplayDoc) return null;
+  return rp && (rp.role === 'child' || rp.state === 'open' || rp.state === 'loading') ? null : { sym, tf: p.cfg.tf };
+}
+// older candles arrived: redraw the pane with them in front, the view kept on the same candles
+function mcGlue(p) {
+  if (!MC.panes.includes(p)) return;
+  const ts = p.chart.timeScale(), r = ts.getVisibleLogicalRange(), len = p.bars.length;
+  mcFull(p, false);
+  const k = p.bars.length - len;
+  if (r && k) ts.setVisibleLogicalRange({ from: r.from + k, to: r.to + k });
+}
 function mcFull(p, fit) {
   const sym = p.cfg.sym, m = M(sym);
   // as on the main chart: a hand-dragged price axis follows the pane again on a new symbol or a reset view
   if (p.candle && (fit || sym !== p.drawnSym)) p.candle.priceScale().applyOptions({ autoScale: true });
   p.drawnSym = sym;
-  p.bars = Engine.aggregate(sym, p.cfg.tf, 900);
+  let agg = Engine.aggregate(sym, p.cfg.tf, 900);
+  // the pager owns the aggregate's first bucket (the engine's history starts mid-bucket) and the candles before it; see fullChart in chart.js
+  const old = p.pager ? p.pager.older(agg.length > 1 ? agg[1].time : agg.length ? agg[0].time : 0, p.bars) : [];
+  if (old.length) { const e = old[old.length - 1].time; let i = 0; while (i < agg.length && agg[i].time <= e) i++; if (i) agg = agg.slice(i); }
+  p.pgN = old.length;
+  p.bars = p.pgN ? old.concat(agg) : agg;
   p.E20 = []; p.E50 = [];
   p.bars.forEach((b, i) => { p.E20[i] = i ? p.E20[i - 1] + 2 / 21 * (b.close - p.E20[i - 1]) : b.close; p.E50[i] = i ? p.E50[i - 1] + 2 / 51 * (b.close - p.E50[i - 1]) : b.close; });
   p.candle.applyOptions({ priceFormat: { type: 'price', precision: m.digits, minMove: Math.pow(10, -m.digits) } });
@@ -139,7 +162,10 @@ function mcFull(p, fit) {
   p.e20.setData(p.bars.map((b, i) => ({ time: b.time, value: p.E20[i] })));
   p.e50.setData(p.bars.map((b, i) => ({ time: b.time, value: p.E50[i] })));
   p.e20.applyOptions({ visible: !!S.set.ind.ema20 }); p.e50.applyOptions({ visible: !!S.set.ind.ema50 });
-  if (fit) { const n = p.bars.length; p.chart.timeScale().setVisibleLogicalRange({ from: n - 110, to: n + 6 }); }
+  if (fit) { // a fit is not the user scrolling: the range event it causes pages nothing (two frames, as on the main chart)
+    const n = p.bars.length; p.pgMute++; p.chart.timeScale().setVisibleLogicalRange({ from: n - 110, to: n + 6 });
+    requestAnimationFrame(() => requestAnimationFrame(() => p.pgMute--));
+  }
   p.sig = ''; mcLines(p); mcHead(p); mcLegend(p, null);
 }
 function mcTickPane(p) {
@@ -291,6 +317,7 @@ function initMC() {
     const pe = e.target.closest('.mc-pane'); if (!pe) return; const p = MC.panes[+pe.dataset.i];
     const tb = e.target.closest('.mc-tf button');
     if (tb && tb.classList.contains('on')) { const all = [...pe.querySelectorAll('.mc-tf button')], hid = all.some(b => b !== tb && getComputedStyle(b).display === 'none'); if (!hid) return; const nx = all[(all.indexOf(tb) + 1) % all.length]; nx.click(); return; }
+    if (tb && mcCfg().linkTf) { setTF(+tb.dataset.tf); return; }
     if (tb) { p.cfg.tf = +tb.dataset.tf; pe.querySelectorAll('.mc-tf button').forEach(b => b.classList.toggle('on', b === tb)); mcFull(p, true); save(); return; }
     if (e.target.closest('[data-act=swap]')) { mcSwap(p.i); return; }
     if (e.target.closest('[data-act=max]')) { mcMax(String(p.i)); return; }

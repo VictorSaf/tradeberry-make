@@ -301,7 +301,7 @@ function renderObs() {
   if (!OBS_VIEWS.some(v => v[0] === c.view)) c.view = 'const';
   if (el.dataset.built && el.querySelectorAll('.obs-nav button').length !== OBS_VIEWS.length) el.dataset.built = '';
   const [, name] = OBS_VIEWS.find(v => v[0] === c.view), src = OBS_SRC[c.view];
-  $('#obsHead').innerHTML = `<div class="obs-title"><h3${OBS_ASK[c.view] ? ` tabindex="0" data-tip="${escHtml(OBS_ASK[c.view])}"` : ''}>${name}</h3><span class="obs-sym">${c.view === 'bask' ? 'synthetic index' : c.view === 'const' || c.view === 'regime' || c.view === 'tap' || c.view === 'scan' ? 'G8 currencies · 16 pairs' : c.view === 'exit' ? 'your closed trades' : pretty(S.set.sym)}</span><span class="obs-asof" id="obsAsOf"></span></div><div class="obs-ctrl" id="obsCtrl">${obsCtrl(c)}</div><a class="obs-src" href="${src[1]}" target="_blank" rel="noopener" title="Research basis">${src[0]}</a>`;
+  $('#obsHead').innerHTML = `<div class="obs-title"><h3${OBS_ASK[c.view] ? ` tabindex="0" data-tip="${escHtml(OBS_ASK[c.view])}"` : ''}>${name}</h3><span class="obs-sym">${c.view === 'bask' ? 'currency index' : c.view === 'const' || c.view === 'regime' || c.view === 'tap' || c.view === 'scan' ? 'G8 currencies · 16 pairs' : c.view === 'exit' ? 'your closed trades' : pretty(S.set.sym)}</span><span class="obs-asof" id="obsAsOf"></span></div><div class="obs-ctrl" id="obsCtrl">${obsCtrl(c)}</div><a class="obs-src" href="${src[1]}" target="_blank" rel="noopener">${src[0]}</a>`;
   OBS.cache = {};
   obsDraw();
 }
@@ -584,7 +584,7 @@ function drawConst(b, c) {
   const unuTxt = un.thin ? `<p class="small">Too few returns to compare with normal: n = ${nR} per pair now (needs ${CONST_MIN_N}).</p>`
     : !un.n2 ? `<p class="small">Not enough history beyond this window to define a normal.</p>`
     : `${unu.links.length ? unu.links.slice(0, unuMax).map(unuPill).join('') + (unu.links.length > unuMax ? `<span class="small muted"> +${unu.links.length - unuMax} more</span>` : '') : `<p>No link is unusual right now: every ρ is within ${CONST_BRK_Z} standard errors of its normal.</p>`}
-      ${obsHow(`Marked beyond ${CONST_BRK_Z} standard errors of normal. On this simulated market a mark is most likely a sampling swing.`, `<p class="small muted">All 120 links, ρ now (n =${nR} ${constRetW(fq)} returns) against the whole history, ${normDays} (n = ${un.n2}). Marked beyond ${obsV(`${CONST_BRK_Z} standard errors`, '', `How a link is marked|z = atanh(ρ) now against z over the whole history, which contains this window: their difference has a standard error of √(1/(n₁−3) − 1/(n₂−3)) for independent normal returns (Fisher)${cal.raw ? `, widened ×${cal.k.toFixed(2)} because ρ varies that much more between ${cal.K} consecutive windows of ${cal.len} returns in the history (fat tails, news, activity by hour)` : ''}. Beyond ${CONST_BRK_Z} of them: with 120 links checked, about one window in four still shows a mark by chance alone. On this simulated market the links between currencies are set in the engine and shift only with each currency's activity by hour, so a mark is most likely a sampling swing.`)}${cal.raw ? `, widened ×${cal.k.toFixed(2)} to this market's own spread` : ''}. Broke = weaker than normal, new = stronger. On this simulated market a mark is most likely a sampling swing.</p>`)}`;
+      ${obsHow(`Marked beyond ${CONST_BRK_Z} standard errors of normal. A single mark is most likely a sampling swing.`, `<p class="small muted">All 120 links, ρ now (n =${nR} ${constRetW(fq)} returns) against the whole history, ${normDays} (n = ${un.n2}). Marked beyond ${obsV(`${CONST_BRK_Z} standard errors`, '', `How a link is marked|z = atanh(ρ) now against z over the whole history, which contains this window: their difference has a standard error of √(1/(n₁−3) − 1/(n₂−3)) for independent normal returns (Fisher)${cal.raw ? `, widened ×${cal.k.toFixed(2)} because ρ varies that much more between ${cal.K} consecutive windows of ${cal.len} returns in the history (fat tails, news, activity by hour)` : ''}. Beyond ${CONST_BRK_Z} of them: with 120 links checked, about one window in four still shows a mark by chance alone. On this simulated market the links between currencies are set in the engine and shift only with each currency's activity by hour, so a mark is most likely a sampling swing.`)}${cal.raw ? `, widened ×${cal.k.toFixed(2)} to this market's own spread` : ''}. Broke = weaker than normal, new = stronger. A single mark is most likely a sampling swing.</p>`)}`;
   // the return interval: what changes with it on real data, and what this market shows on the same window
   const eRange = Math.max(...epps.map(x => x.r)) - Math.min(...epps.map(x => x.r));
   const eppsTxt = `<p class="small">On real FX data ρ usually rises with the interval (the Epps effect: pairs are not quoted at the same instants, which damps correlations measured on short returns). Here every pair is quoted on the same clock. On this window, mean |ρ| of the 120 links: ${epps.map(x => `${x.fq}m ${obsV(x.r.toFixed(2), '', `Mean |ρ| at ${x.fq} minute${x.fq > 1 ? 's' : ''}|The average strength of the 120 links on ${constRetW(x.fq)} returns of this window: ${x.n} returns per pair.${x.n < CONST_MIN_N ? ' Too few for a stable value.' : ''}`)} (n = ${x.n})`).join(' · ')}: ${eRange <= .05 ? 'about the same at every interval, no Epps effect here.' : 'they differ by more than 0.05; longer intervals give fewer returns, and the noise of a short sample raises a mean of |ρ|.'}</p>${nR < CONST_MIN_N ? `<p class="small">Thin data: ${nR} returns per pair on this window at ${fq}m, too few for a stable ρ; read the tree loosely.</p>` : ''}`;
@@ -604,6 +604,302 @@ function drawConst(b, c) {
   // an SVG node has no .click(): Enter / Space open it here, before the page's generic role="button" handler
   wrap.addEventListener('keydown', e => { const g = e.target.closest && e.target.closest('.cnode'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); setSymbol(g.dataset.sym); } });
 }
+
+/* Teach me for the Constellation: every part of the tool with the values on screen now (teachTour, brief.js) */
+function constTeach() {
+  if (typeof teachTour !== 'function' || !OBS.constTree) return;
+  const c = obsCfg(), fq = constFq(c), { syms, C, still } = corrMatrix(c.lb, 0, fq), { E } = OBS.constTree;
+  const lbN = { 240: '4 hours', 1440: '1 day', 4320: '3 days' }[c.lb] || `${c.lb} bars`, P = pretty;
+  const deg = syms.map((_, i) => E.filter(e => e.includes(i)).length);
+  const hubI = deg.indexOf(Math.max(...deg)), hub = syms[hubI];
+  let tight = null; E.forEach(([a, b]) => { if (!tight || Math.abs(C[a][b]) > Math.abs(tight.r)) tight = { a: syms[a], b: syms[b], r: C[a][b] }; });
+  const neg = E.map(([a, b]) => ({ a: syms[a], b: syms[b], r: C[a][b] })).filter(x => x.r < 0).sort((x, y) => x.r - y.r)[0];
+  const D = constDist(C), iso = syms.map((s2, i) => [s2, Math.min(...D[i].filter((_, j) => j !== i)), i]).filter(x => !still[x[2]]).sort((a, b) => b[1] - a[1])[0];
+  const r2 = v => obsMinus(v.toFixed(2)), st = OBS.constStab, un = OBS.constUnu, ep = OBS.constEpps || [];
+  const Q = sel => () => document.querySelector(sel);
+  const ins = t => () => [...document.querySelectorAll('#constSide .ins')].find(x => ((x.querySelector('label') || {}).textContent || '').startsWith(t));
+  const node = s2 => () => document.querySelector(`#constWrap .cnode[data-sym="${s2}"]`);
+  const edge = (a, b) => () => [...document.querySelectorAll('#constWrap svg > g[data-tip]')].find(g => { const t = g.dataset.tip.split('|')[0]; return t.includes(P(a)) && t.includes(P(b)); });
+  const held = [...new Set(S.positions.map(p => p.sym))].filter(x => syms.includes(x));
+  teachTour([
+    [Q('#obs .obs-nav'), 'Observatory tools', () => [
+      'The Observatory is a set of research tools that look at the market in ways a price chart cannot: correlation structure, memory, activity by hour, analogues, and more. Each entry names the tool and the question it answers.',
+      'Constellation (highlighted) answers: which of the 16 pairs of the G8 currencies move together right now. It covers FX pairs only; CFDs are not part of it.',
+      'Use the Constellation before you add a position: it tells you whether the new trade is really new, or the same bet you already hold under another name.']],
+    [Q('#obsHead .obs-title'), 'Title and data', () => [
+      `Constellation on the G8 currencies, 16 pairs. The time after “as of” is the last bar used${mktState('EURUSD').open ? '' : '; FX is closed now, so the picture is the one at the close'}.`,
+      'Hover the title for the one-line question the tool answers.',
+      'Check the time first: a structure measured before the weekend says how the pairs moved then, not how they will move at the open.']],
+    [Q('#obsCtrl [data-k="lb"]'), 'Window: 4H · 1D · 3D', () => [
+      `How much history the correlations are measured on. Now: ${lbN} of trading.`,
+      '4H is the most recent picture and the noisiest; 3D the steadiest. A link that appears on all three windows is real structure; one that shows only on 4H may be a passing coincidence.',
+      'Switch between the windows before relying on a link. For a trade held for hours look at 4H and 1D; for days, at 3D.']],
+    [Q('#obsCtrl [data-k="cFreq"]'), 'Returns: 1m · 5m · 15m', () => [
+      `The step of the price changes compared: now ${fq}-minute returns.`,
+      'Two pairs are correlated when their returns go up and down together at the same steps. Longer steps mean fewer returns, so ρ is noisier on a short window, but closer to what a slower trader experiences.',
+      'Keep 1m for the finest picture; use 15m with the 3D window to check that a link holds for slower trading too.']],
+    [Q('#obsHead .obs-src'), 'Research basis', () => [
+      'The paper behind the method: Mantegna (1999) used a minimum spanning tree of correlations to show the hidden structure of a market.',
+      'The method is standard in academic finance; the link opens the paper.',
+      'Read it if you want to know why only the tree’s links are drawn and why the distance is √(2(1−|ρ|)).']],
+    [Q('#constWrap svg'), 'The tree', () => [
+      `Each circle is one of the 16 pairs; each line a direct link. Of all ${syms.length * (syms.length - 1) / 2} possible pairs of pairs, the tree keeps only the ${E.length} strongest links that connect everything.`,
+      'Only the drawn lines mean something: two pairs joined by a line move together (or opposite). Two pairs far apart on a branch are NOT implied to be related, and where a circle sits on the screen means nothing.',
+      'Look for clusters: a group of circles joined by thick lines is one trade expressed several ways.']],
+    [node(hub), 'A pair (circle)', () => [
+      `${P(hub)}: the colour is its move over the last 4 hours of trading (green up, red down; deeper = larger), the size its volatility over the window (bigger = more active).`,
+      'Hover a circle for its exact return, its volatility in basis points and the list of its links with their ρ.',
+      'Click a circle (or press Enter) to open that pair on the chart and in every panel of the terminal.']],
+    [edge(tight.a, tight.b), 'A link (line)', () => [
+      `${P(tight.a)} ↔ ${P(tight.b)}, ρ ${r2(tight.r)}. ρ is the correlation of their returns, from −1 to +1.`,
+      'Orange: they move the same way (ρ ≥ 0). Blue: they move opposite ways (ρ < 0). The thicker and more opaque the line, the stronger the link; the number on it is ρ when there is room for it.',
+      'Beyond ±0.7 two pairs are close to the same trade: buying both (or, if ρ is negative, buying one and selling the other) doubles one bet rather than spreading two.']],
+    ...(neg ? [[edge(neg.a, neg.b), 'An inverse link', () => [
+      `${P(neg.a)} ↔ ${P(neg.b)}, ρ ${r2(neg.r)}: when one rises the other tends to fall.`,
+      'Inverse links usually come from a shared currency on opposite sides (for example EUR as base in one pair and USD as base in the other).',
+      'Buying both is a partial hedge; buying one and selling the other doubles the exposure.']]] : []),
+    ...(syms.includes(S.set.sym) ? [[Q('#constWrap .cnode.cur'), 'The open pair', () => [
+      `${P(S.set.sym)} has its name in amber: it is the pair open in the terminal.`,
+      'Its neighbours in the tree are the pairs that move most like it.',
+      'Before trading it, check its neighbours: a position on one of them is already part of this trade.']]] : []),
+    ...(held.length ? [[Q('#constWrap .cnode.held'), 'Pairs you hold', () => [
+      `A blue ring marks a pair with an open position: ${held.map(P).join(', ')}.`,
+      'Held pairs joined by a thick line carry the same risk.',
+      'The Your positions panel on the right tells you which of them add up and which offset each other.']]] : []),
+    [Q('#constSide .const-not'), 'Open instrument outside the tree', () => [
+      `${P(S.set.sym)} is not one of the 16 pairs of the G8 currencies, so it has no circle here.`,
+      'The tree is built only on the G8 currency pairs; CFDs and other FX pairs are left out.',
+      'Open a G8 pair to see where it sits, or use Correlation (next tab) for other instruments.']],
+    [ins('Hubs'), 'Hubs', () => [
+      `The pairs with the most links: ${P(hub)} leads with ${deg[hubI]}. The number on each button is its count of links.`,
+      'A hub shares moves with many pairs at once, often because one of its currencies (frequently USD or JPY) is driving the market. A count of links, not a cause: it does not mean the hub moves the others.' + (st ? ` Under it: ${st.same} of ${st.total} links also existed in the previous window — ${st.same >= CONST_STABLE ? 'a settled structure' : 'the tree is reshuffling, so read single links loosely'}.` : ' The previous-window check needs a full window before this one, which the 3D window does not have.'),
+      'A position on a hub is exposed to whatever moves its neighbours; two positions on pairs around the same hub are rarely independent. Click a hub to open it.']],
+    [ins('Unusual links'), 'Unusual links now', () => [
+      `Every one of the 120 possible links, ρ now against its normal over the whole history kept (${un ? (un.normLb / 1440).toFixed(1) : '?'} days). ${un && un.links.length ? `${un.links.length} link${un.links.length > 1 ? 's are' : ' is'} unusual now.` : 'No link is unusual now.'}`,
+      `“Broke” = weaker than normal, “new” = stronger. A link is marked when it moves more than ${CONST_BRK_Z} standard errors (Fisher z, widened ×${un ? un.k.toFixed(2) : '1'} to this market’s own variability) — a strict bar, because 120 links are tested at once.`,
+      'A broken link means a usual hedge may not work right now; a new link means two positions you thought independent are moving together. A single mark is most likely a sampling swing.']],
+    [ins('Tightest link'), 'Tightest link', () => [
+      `The strongest link in the tree: ${P(tight.a)} – ${P(tight.b)}, ρ ${r2(tight.r)}.`,
+      Math.abs(tight.r) >= .7 ? 'Above 0.7: the two pairs move almost as one.' : Math.abs(tight.r) >= .4 ? 'Between 0.4 and 0.7: related, not interchangeable.' : 'Below 0.4: even the strongest link is loose; the market is moving pair by pair.',
+      'Do not hold both the same way thinking you are diversified; pick the one with the better setup or the lower spread.']],
+    [ins('Least linked'), 'Least linked to your positions', () => [
+      'Among the pairs you do not hold, the one whose strongest link to your positions is the weakest.',
+      'Its |ρ| tells you how much it still shares with what you hold; the pair named after it is its closest held relative.',
+      'A candidate to spread risk on this window, not a recommendation to trade it.']],
+    [ins('Most independent'), 'Most independent pair', () => [
+      iso ? `${P(iso[0])}: its distance to its closest neighbour is ${iso[1].toFixed(2)} (0 = moves as one, 1.41 = unrelated), the largest of the 16.` : 'No pair can be measured.',
+      'It moves on its own story right now: even its nearest relative shares little of its moves. Pairs whose quotes did not move are left out, never called independent.',
+      'A trade on it adds the least overlap to a book of other pairs on this window.']],
+    [ins('Your positions'), 'Your positions', () => [
+      held.length ? `Your positions on the tree: ${held.map(P).join(', ')}.` : 'You hold no position on a pair of the tree.',
+      'Two positions on strongly correlated pairs (|ρ| > 0.7) held so that they win and lose together are marked as concentrated risk (red); held so that one offsets the other, as a hedge (green).',
+      'If it says concentrated risk, size the positions as one trade: their stops are likely to be hit together.']],
+    [ins('Your currency exposure'), 'Your currency exposure', () => [
+      'The net USD amount of all your open positions in each currency: a pair is long its base currency and short its quote.',
+      'A currency of a hub pair is marked: that exposure overlaps with much of the board.',
+      'Several pairs can add up to one big bet on one currency; read this before adding another trade with the same currency.']],
+    [ins('Return interval'), 'Return interval and the Epps effect', () => [
+      `Mean |ρ| of the 120 links at 1, 5 and 15 minutes on this window: ${ep.map(x => `${x.fq}m ${x.r.toFixed(2)}`).join(', ')}.`,
+      'On real FX, correlations measured on very short returns come out weaker, because pairs are not quoted at the same instants (Epps effect). Here every pair is quoted on the same clock.',
+      'If the means differ a lot, prefer the longer interval for decisions held over hours.']],
+    [Q('#constSide .obs-how'), 'How to read this', () => [
+      'The method in short: correlation distance d = √(2(1−|ρ|)), and the tree keeps the strongest links that connect all pairs.',
+      'Click it to open the full note. Returns across a closed market (the weekend jump) are left out.',
+      'Come back to it when a link surprises you: it explains what the tree can and cannot say.']],
+    [Q('#constSide .const-leg'), 'Legend', () => [
+      'Line colour: orange = move together, blue = move opposite; line width = strength. Circle colour: up or down over 4 hours of trading; circle size = volatility.',
+      'Amber ring: the open pair. Blue ring: a pair you hold. Dashed halo on a line: unusual against its normal.',
+      'Use it to read the tree without hovering. Hover any line or circle for the exact numbers.']]
+  ], 'obsTT');
+}
+/* Teach me for the other tools: the same frame (question, controls, research basis), then every part of the tool.
+   Steps read the values on screen when they are shown; parts that are not on screen now are skipped. */
+const obsQ = sel => () => document.querySelector('#obsBody ' + sel);
+const obsIns = pre => () => [...document.querySelectorAll('#obsBody .ins')].find(x => { const t = ((x.querySelector('label') || {}).textContent || '').trim().toLowerCase(); return t.startsWith(pre.toLowerCase()) || (pre === 'right now' && t.endsWith(' right now')); });
+const obsKpi = n => () => document.querySelectorAll('#obsBody .kpi')[n];
+const obsCard = pre => () => [...document.querySelectorAll('#obsBody .bh-card')].find(c => ((c.querySelector('h3') || {}).textContent || '').trim().startsWith(pre));
+const obsCtl = k => () => document.querySelector(`#obsCtrl [data-k="${k}"]`);
+// the last small note of the tool that has text (some tools keep an empty placeholder after it)
+const obsNote = () => [...document.querySelectorAll('#obsBody p.small.muted')].filter(x => x.innerText.trim()).pop();
+const obsTx = (get, n = 220) => { const e = typeof get === 'function' ? get() : document.querySelector(get); return e ? e.innerText.replace(/\s+/g, ' ').trim().slice(0, n) : ''; };
+function obsTour(view, ctrls, parts) {
+  const ask = (OBS_ASK[view] || '|').split('|'), src = OBS_SRC[view];
+  teachTour([
+    [() => document.querySelector(`#obs .obs-nav [data-v="${view}"]`), ask[0], () => [
+      ask[1],
+      'Each tool in the list on the left answers one question; the line under its name says which. The highlighted one is open.',
+      'Pick the tool by the question you have, not by the picture: each one is built to answer exactly its own question.']],
+    [() => document.querySelector('#obsHead .obs-title'), 'Title, instrument and time', () => [
+      `${obsTx('#obsHead .obs-title', 160)}.`,
+      'The instrument (or group) the tool is measuring, and the time of the last bar it used. When the market is closed the picture is the one at the close.',
+      'Check the time before acting: a reading from before a close or a weekend describes the past session, not the next one.']],
+    ...ctrls.map(([k, title, body]) => [obsCtl(k), title, body]),
+    ...(src ? [[() => document.querySelector('#obsHead .obs-src'), 'Research basis', () => [
+      `${src[0]}.`,
+      'The published method the tool follows; the link opens the source.',
+      'Read it when a result surprises you: it explains what the method can and cannot say.']]] : []),
+    ...parts,
+    [obsQ('.obs-how'), 'How to read this', () => [
+      obsTx(obsQ('.obs-how summary'), 260),
+      'Click it to open the full note on the method, its inputs and its limits.',
+      'Open it once for every tool you use often; it is where the caveats are.']]
+  ], 'obsTT');
+}
+const lbCtl = (what, use) => ['lb', 'Window: 4H · 1D · 3D', () => [what, '4H is the most recent picture and the noisiest; 3D the steadiest. A reading that holds on all three is structure; one that shows only on 4H may be chance.', use]];
+
+const regimeTeach = () => obsTour('regime', [lbCtl('How much history each pair is measured on: the last 4 hours, 1 day or 3 days of 1-minute bars.', 'Look at 1D first; switch to 4H to see whether a pair has just changed character.')], [
+  [obsQ('#rgCv'), 'The map', () => [
+    'Every one of the 16 pairs is a dot. Across: the Hurst exponent, the memory of the path over 1–32 minutes. Up and down: permutation entropy, how random the order of the moves was.',
+    'The shaded noise band is where the same returns land after their signs are shuffled at random. Right of the band = persistent (moves kept going more than chance), left = anti-persistent (moves reversed more than chance). Lower entropy = more ordered.',
+    'A pair outside the band behaved differently from noise over the window. That describes the recent path; it does not forecast the next move.']],
+  [obsQ('#rgHits'), 'Pairs on the map', () => [
+    'Each pair has an invisible target on its dot: hover it for its Hurst, entropy and zone, click it to open the pair.',
+    'Dot colour = up or down over the window, dot size = volatility, the amber ring = the open pair.',
+    'Use it to find the pairs that are trending cleanly (right of the band) or chopping (left) without opening each chart.']],
+  [obsIns('right now') , 'The open pair right now', () => [
+    obsTx(obsIns('right now'), 260),
+    'Hurst against its noise band (persistent / within noise / anti-persistent), entropy against its band, and the efficiency ratio: the share of the path that was net progress.',
+    'Persistent + low entropy + higher efficiency = a cleaner trend in the window; within noise on both = treat moves as random.']],
+  [obsIns('largest deviations'), 'Largest deviations', () => [
+    obsTx(obsIns('largest deviations'), 200),
+    'The pairs furthest from their noise band, and how many of the 16 sit inside it.',
+    'If most pairs are inside the band, the market is mostly noise right now; the few outside are the ones worth a look.']],
+  [obsIns('reading it'), 'Reading it honestly', () => [
+    'The limits of the method in two lines.',
+    'A dot outside the band describes the path; it does not predict.',
+    'Use the map to describe character, then let your plan decide entries and exits.']],
+  [obsQ('.rg-tbl-wrap'), 'The table', () => [
+    'The same numbers as the map, for all 16 pairs, in a table you can open.',
+    'Read it from the keyboard or when dots overlap on the map.',
+    'Sort your attention by zone: persistent pairs first if you follow trends, anti-persistent if you fade moves.']]
+]);
+
+const dcTeach = () => obsTour('dc', [['dcTh', 'Threshold δ', () => [
+  'The size of a reversal that counts as an event: 0.05%, 0.10%, 0.20% or 0.50% back from the last extreme.',
+  'Small δ = many small events (a busy clock); large δ = only the big swings. Every number on the page is measured with this δ.',
+  'Pick a δ close to the size of moves you trade: 0.05–0.10% for intraday, 0.20–0.50% for swings.']]], [
+  [obsKpi(0), 'Reversal level', () => [obsTx(obsKpi(0)), 'The price at which a reversal of δ from the current extreme would be confirmed: the one level this method defines in advance.', 'A natural place for an alert (Alert at reversal, below): when it fires, the current leg is over by this definition.']],
+  [obsKpi(1), 'Events', () => [obsTx(obsKpi(1)), 'How many reversals of δ happened in the history, and the average per hour of open market. Each event is one tick of intrinsic time.', 'More events per hour = a busier, choppier market at this scale.']],
+  [obsKpi(2), 'Heartbeat', () => [obsTx(obsKpi(2)), 'Events in the last 6 hours against what the average pace predicts, with the band chance alone produces.', 'Outside the band (highlighted): the market is unusually busy or unusually quiet at this scale now.']],
+  [obsKpi(3), 'Average overshoot', () => [obsTx(obsKpi(3)), 'After a reversal is confirmed, how much further price went on average, in multiples of δ. FX research finds about 1 × δ.', 'It is the typical extra distance after confirmation; useful to size a target that is realistic at this scale.']],
+  [obsKpi(4), 'Coastline', () => [obsTx(obsKpi(4)), 'The length of the zigzag: every leg added up, against the net move over the same time.', 'A long coastline with a small net move = a lot of travel for little progress: a ranging market.']],
+  [obsKpi(5), 'Last leg', () => [obsTx(obsKpi(5)), 'The direction of the last confirmed move of δ.', 'It says which way the last reversal went, nothing more; the next leg is not predicted.']],
+  [obsKpi(6), 'Overshoot so far', () => [obsTx(obsKpi(6)), 'How far the current leg has run past its confirmation, against past overshoots.', 'Far beyond the average overshoot, the leg is long by this history; that is a description, not a turning signal.']],
+  [obsKpi(7), 'Average leg ends at', () => [obsTx(obsKpi(7)), 'Where the current leg would end if it were exactly average: δ plus the average overshoot from its extreme.', 'A reference price, not a target: legs end early or run long at random.']],
+  [obsQ('.dc-act'), 'Alert at reversal', () => ['The reversal level and the current extreme, with a button that sets an alert at the reversal level.', 'The alert fires when the current leg is confirmed over.', 'Set it instead of watching the chart; decide when it fires.']],
+  [obsQ('#dcCv'), 'Intrinsic-time chart', () => ['Price drawn once per event, not per minute: each step is a reversal of δ. The levels on the right are scale references.', 'Steep runs of steps in one direction = a trend at this scale; alternating steps = a range.', 'Compare with the normal chart: a quiet hour with many steps was choppy, a busy hour with few was one clean move.']],
+  [obsQ('#dcBeat'), 'Heartbeat strip', () => ['Events per hour over the last hours of trading.', 'Spikes = busy, choppy periods; flat = calm.', 'Avoid tight stops when the heartbeat is high: small reversals are frequent.']],
+  [obsIns('leg duration'), 'Leg duration', () => [obsTx(obsIns('leg duration'), 260), 'How long legs last from extreme to extreme, and where the current leg stands among them.', 'A long leg by this history is a description, not a reason to fade it.']],
+  [obsIns('scaling law'), 'Scaling law', () => [obsTx(obsIns('scaling law'), 200), 'How the number of events falls as δ doubles. A random walk falls about 4× per doubling.', 'Clearly less than 4: more big swings than a random walk (trending at larger scales); clearly more: moves stall before getting large.']]
+]);
+
+const djTeach = () => obsTour('deja', [
+  ['dvTf', 'Bar size', () => ['The bar the pattern is measured on: 5 minutes, 15 minutes or 1 hour.', 'Larger bars cover more time with the same number of bars.', 'Match it to how long you hold a trade.']],
+  ['dvW', 'Pattern length', () => ['How many recent bars form the shape that is searched for: 16, 32 or 64.', 'Shorter patterns find more matches but each says less; longer ones are rarer and more specific.', '32 is a sensible default; change it to see whether the answer holds.']],
+  ['dvH', 'Look ahead', () => ['How many bars after each match are measured: 6, 12 or 24.', 'What the matches did over that horizon is what the page reports.', 'Use the horizon you would actually hold the trade for.']]], [
+  [obsQ('#djCv'), 'The chart', () => ['The last bars of the open pair (left of “now”) and, to the right, what the closest past shapes did next: their median and middle half, against all windows with no match.', 'If the matches’ band sits inside the no-match band, the shape added nothing.', 'Hover a match in the table to draw its own path.']],
+  [obsQ('.dj-leg'), 'Legend', () => [obsTx(obsQ('.dj-leg'), 200), 'Median of the matches, the middle half of their outcomes, and the outcomes of all windows for comparison.', 'Read the comparison band first: it is what “no information” looks like.']],
+  [obsQ('.dj-verdict'), 'Verdict', () => [obsTx(obsQ('.dj-verdict'), 220), 'Whether this kind of search has ever predicted anything on this pair, tested over many past settings with a correction for testing many at once.', 'If it says no edge, treat the matches as a curiosity, not as a forecast.']],
+  [obsQ('.dj-cov'), 'Shape distance', () => [obsTx(obsQ('.dj-cov'), 200), '0 = identical shape. The closest match against a random window tells you how special the matches are.', 'Close to a random window: the “matches” are not really similar.']],
+  [obsIns('what the'), 'What the matches did next', () => [obsTx(obsIns('what the'), 260), 'How many rose, the median move and the middle half, against all windows of the same length.', 'A majority up is common by chance with 12 matches; only a clear gap from the all-windows band means anything.']],
+  [obsIns('closest matches'), 'Closest matches', () => ['Each match: the pair, when it happened, and what it did next in pips.', 'Matches come from all 16 pairs; one per moment so the same move is not counted twice.', 'Hover a row to see that match on the chart; read the spread of outcomes, not the best one.']]
+]);
+
+const rpTeach = () => obsTour('rp', [
+  ['rpTf', 'State size', () => ['One state per 5-minute, 15-minute or 1-hour bar.', 'Larger bars cover more days with the same picture size.', 'Use 15m for the last few days, 1H for a longer view.']],
+  ['rpMode', 'Distance · Recurrences', () => ['Distance shades every pixel by how similar two moments are; Recurrences shows only the 10% most similar pairs of moments.', 'Distance shows gradients; Recurrences shows the lines and blocks the statistics count.', 'Switch to Recurrences to see what determinism and laminarity measure.']]], [
+  [obsQ('#rpCv'), 'Recurrence plot', () => ['Each pixel compares two moments (one on each axis); bright = similar states. “Now” is at the top right corner.', 'Diagonal lines = sequences that repeat; square blocks = periods stuck in one state; a pale cross = an unusual period.', 'Streaks are most likely similar volatility coming back, not a repeated direction.']],
+  [obsQ('.rp-leg'), 'Legend', () => [obsTx(obsQ('.rp-leg'), 200), 'Shading by rank: the closest half of all pairs of states is shaded.', 'Read it together with the mode switch above.']],
+  [obsQ('.dj-verdict'), 'Verdict', () => [obsTx(obsQ('.dj-verdict'), 200), 'The structure measured against 120 shuffled copies of the same returns: what chance alone produces.', 'Only results beyond the shuffled band say the market has structure here.']],
+  [obsIns('regime now'), 'Regime now', () => [obsTx(obsIns('regime now'), 280), 'How much the last 6 hours resemble the rest of the window, and how big their moves are against the average.', 'Unusual = a period unlike the rest: expect volatility to behave differently from the recent past.']],
+  [obsIns('determinism'), 'Determinism', () => [obsTx(obsIns('determinism'), 260), 'The share of recurrences that form diagonal lines, against shuffled data.', 'Above the band: sequences of states repeat more than chance — most likely calm and busy stretches, not price direction.']],
+  [obsIns('laminarity'), 'Laminarity', () => [obsTx(obsIns('laminarity'), 220), 'The share of recurrences in vertical blocks: the market staying in one state.', 'Above the band: quiet or busy phases persist; useful to expect the current pace to continue a while.']],
+  [obsIns('now resembles'), 'Now resembles', () => ['The past moments most similar to now, their distance, and the range of the next 8 bars.', 'Distances under 1× count as a recurrence. The range is a size, not a direction.', 'Use the ranges to size stops for the next hours; they say nothing about which way.']],
+  [obsIns('reading the picture'), 'Reading the picture', () => ['The limits of the plot in one line.', 'Bright streaks are similar volatility, not repeated direction.', 'Use it for pace and phases, never as a direction signal.']]
+]);
+
+const drvTeach = () => obsTour('drv', [['drvW', 'Window: 1H · 4H · 1D', () => ['The span the moves are measured over.', 'Shorter windows show who is driving right now; longer ones the theme of the day.', 'Compare 1H with 1D: a driver that changed recently shows up only on the short window.']]], [
+  [obsQ('.drv-verdict'), 'Verdict', () => [obsTx(obsQ('.drv-verdict'), 260), 'Which currency of the pair did the moving: each currency is measured against an equal-weighted basket of all eight, so the pair’s move splits exactly into its two legs.', 'If the quote currency did the moving, a view on the base currency is the wrong reason for this trade.']],
+  [obsQ('.drv-iso'), 'Cleaner expressions', () => ['Pairs that isolate one of the two currencies.', 'If one currency is the driver, another pair with it may express the move with less noise from the second currency.', 'Click a pill to open that pair.']],
+  [obsQ('table'), 'Legs by window', () => ['For each window: the base leg, the quote leg (its effect on the pair), the pair’s move and which leg led.', 'The two legs add up to the pair. Bars show their size and direction.', 'Look for a window where one leg dominates: that currency is the story.']],
+  [obsQ('#drvCv'), 'Cumulative legs chart', () => [obsTx(obsQ('.dj-leg'), 160), 'The two legs drawn cumulatively over the last 24 trading hours; their sum is the pair.', 'Where the lines separate is when one currency took over.']],
+  [obsIns('currency board'), 'Currency board', () => [obsTx(obsIns('currency board'), 200), 'All eight currencies ranked by their move against the basket.', 'Strongest against weakest is where the biggest relative move of the window was.']],
+  [obsIns('widest strength gap'), 'Widest strength gap', () => [obsTx(obsIns('widest strength gap'), 260), 'The tradable pair made of the strongest and weakest currency, and the gap between them.', 'Descriptive: it says where the move was, not where it will be.']]
+]);
+
+const clkTeach = () => obsTour('clock', [['clkAll', 'This pair · All pairs', () => ['The usual activity profile of the open instrument, or the average of the 16 pairs.', 'All pairs shows the global FX rhythm; This pair its own (some pairs wake up with their local session).', 'Use This pair before trading it; All pairs to plan your day.']]], [
+  [obsQ('#clkCv'), 'The clock', () => ['A 24-hour UTC clock. Each petal is the usual activity of one 15-minute slot; dots are today; the hand is now.', 'Long petals = busy times (usually the London and New York sessions), short = quiet (late US, early Asia).', 'Expect wider moves and faster fills in long petals; tighter ranges and wider spreads in short ones.']],
+  [obsIns('now'), 'Now', () => [obsTx(obsIns('now'), 220), 'The current slot, its usual activity and how today compares.', 'Today much busier than usual: something is moving this market; much quieter: expect small ranges.']],
+  [obsIns('next hour'), 'Next hour', () => [obsTx(obsIns('next hour'), 220), 'The slots of the next hour for the open instrument.', 'Know whether activity is about to rise or fade before placing a stop.']],
+  [obsIns('next two hours'), 'Next two hours', () => [obsTx(obsIns('next two hours'), 220), 'The usual activity of the next eight slots.', 'Place entries before activity rises if you need movement; avoid tight stops just before it.']],
+  [obsIns('busiest'), 'Busiest and quietest hour', () => [obsTx(obsIns('busiest'), 200), 'The peak and the trough of the day, as multiples of the average.', 'Trade breakouts around the peak; expect ranges around the trough.']],
+  [obsNote, 'Legend', () => ['Petal colours: busier than 1.3× average, quieter than 0.7×; the hand and today’s dots; the ring marks the sessions.', 'Read the petal length first, the colour second.', 'Hover a petal for its exact numbers.']]
+]);
+
+const tapTeach = () => obsTour('tap', [
+  ['tapLb', 'Window: 4H · 1D · 3D', () => ['Where each line starts: 4 hours, 1 day or 3 days of trading ago (a weekend is skipped).', 'Every row shows the move since that start.', 'Use 1D for the day’s story, 3D for the week’s theme.']],
+  ['tapSort', 'Sort: Return · A–Z · Cluster', () => ['Order of the rows: by move, alphabetical, or by cluster (pairs linked in the Constellation side by side).', 'Cluster puts pairs that move together next to each other, so themes show as blocks.', 'Use Cluster to see themes, Return to see winners and losers.']],
+  ['tapScale', 'Scale: Common · Per pair', () => ['One scale for all rows, or each row on its own scale.', 'Common makes rows comparable; Per pair shows the shape of calm pairs too.', 'Start on Common; switch to Per pair to read a quiet pair’s path.']],
+  ['tapCcy', 'Currency filter', () => ['All 16 pairs, or only the pairs with one currency.', 'With one currency the theme line becomes that currency’s average move.', 'Pick the currency you have a view on to see whether all its pairs agree.']]], [
+  [obsQ('.tap-head'), 'Theme', () => [obsTx(obsQ('.tap-head'), 260), 'The strongest and weakest currency of the window and how many of their pairs moved the same way.', 'A theme that holds on all its pairs is broad; one that holds on few is a single-pair story.']],
+  [obsQ('#tapCv'), 'The tapestry', () => ['Every pair as a horizon chart: coloured bands above or below the start of the window, darker = further. Each row ends with its move in bp and points.', 'Rows that light up at the same time moved together; dashed lines mark closed-market gaps; the News strip marks releases.', 'Scan for the moment several rows changed colour together: that is when the theme started.']],
+  [obsNote, 'News note', () => [obsTx(obsNote, 200), 'Which releases of the calendar fall in the window.', 'A colour change right after a release is the release’s effect.']]
+]);
+
+const baskTeach = () => obsTour('bask', [], [
+  [obsQ('.bk-list'), 'Baskets', () => ['Presets and your own baskets: weighted groups of currencies, each traded as one index.', 'The highlighted one is open. + creates a new basket.', 'Use a basket when your view is on a currency group (for example commodity currencies against safe havens), not on one pair.']],
+  [obsQ('.bk-head'), 'Index and timeframe', () => [obsTx(obsQ('.bk-head'), 200), 'The basket’s name, its index value and the chart timeframe.', 'Read the index like a price: up means the long side outperformed the short side.']],
+  [obsQ('#bkChart'), 'Index chart', () => ['The basket drawn as one price, with its EMA20, your index alerts and the ticket’s stop and target.', 'Dashed lines are alerts; the stop and target are measured on the index and close every leg together.', 'Judge the trade on the index chart, not on each pair.']],
+  [obsQ('.bk-cmp'), 'Compare', () => ['Overlay the 8 currency indices or other baskets on the chart.', 'It shows whether your basket is just one currency in disguise.', 'If it tracks one currency index closely, trading that currency may be simpler.']],
+  [obsQ('.obs-kpis'), 'Moves', () => [obsTx(obsQ('.obs-kpis'), 200), 'The basket’s move over 1H, 4H, 1D and 3D, in basis points (0.01%).', 'Compare the short and long windows: same sign = a steady move; opposite = a turn.']],
+  [obsQ('.bk-an'), 'Analysis', () => ['What moved the basket (by leg), its behaviour by hour, and its overlap with other baskets.', 'Switch the tabs to see which legs did the work.', 'If one leg did all the work, the basket is really a single-pair trade.']],
+  [obsQ('.bk-pane'), 'Analyse · Trade', () => ['The right panel has two views: Analyse (composition, stretch, alerts, behaviour) and Trade (one ticket for all legs).', 'Analyse first, then Trade.', 'Nothing is sent until you confirm in the Trade view.']],
+  [obsIns('composition'), 'Composition', () => [obsTx(obsIns('composition'), 200), 'The long and short currencies and their weights, as shares of each side.', 'Presets cannot be edited; Duplicate & edit makes your own copy.']],
+  [obsIns('stretch'), 'Stretch', () => [obsTx(obsIns('stretch'), 260), 'How far the index sits from its 20-bar mean, in standard deviations, and how often such moves came back, against a random walk.', 'Beyond ±2σ the index is stretched; check the random-walk comparison before treating it as a reversal.']],
+  [obsIns('index alerts'), 'Index alerts', () => ['An alert when the basket moves a set number of bp either way.', 'They appear as dashed lines on the chart.', 'Set one instead of watching the basket.']],
+  [obsIns('behaviour'), 'Behaviour', () => [obsTx(obsIns('behaviour'), 280), 'Daily volatility and the closest single pair (proxy) with how much of the index it follows and what it would cost instead.', 'A proxy that follows most of the index for a fraction of the spread is often the better trade.']]
+]);
+
+const scanTeach = () => obsTour('scan', [
+  ['scH', 'Look ahead: 1H · 2H · 4H', () => ['How long after each past signal the move is measured.', 'A signal can work at one horizon and not at another.', 'Use the horizon you would hold the trade for.']],
+  ['scF', 'With a record · All live', () => ['Only live signals that fired often enough to judge, or every live signal.', 'All live includes signals with too few past cases to say anything.', 'Keep With a record; look at All live only out of curiosity.']]], [
+  [obsQ('.dj-verdict'), 'Verdict', () => [obsTx(obsQ('.dj-verdict'), 260), 'Whether any signal survives the correction for testing many signals at once, and how many passes chance alone would give.', 'If passes are in line with luck, no signal has shown an edge here.']],
+  [obsQ('.lab-intro'), 'What it does', () => [obsTx(obsQ('.lab-intro'), 260), 'Every past trigger in the last week of 15-minute bars, measured at the horizon.', 'A signal is worth something only if it paid on this pair, not just because it fired.']],
+  [obsQ('.sc-live'), 'Live signals', () => ['The signals firing now on the open pair, each with its own track record and verdict colour.', 'Robust and significant are the only colours that mean an edge; noise and too few mean none.', 'Ignore a live signal whose record is noise, however convincing it looks on the chart.']],
+  [obsQ('.sc-vleg'), 'Verdict colours', () => [obsTx(obsQ('.sc-vleg'), 200), 't > 2 is the usual bar for “not luck”; robust also holds across pairs and halves of the week.', 'Read the colour before the numbers.']],
+  [obsQ('.sc-card'), 'All signals', () => ['Every signal across the 16 pairs: cases, hit rate against base, average bp, pooled t and how many pairs pass.', 'Pooled t combines all pairs; a high count of pairs with t > 2 is more convincing than one strong pair.', 'Compare with the expected passes by luck shown under the table.']],
+  [() => document.querySelector('#scAlert'), 'Alert', () => ['Notifies you when a signal with a real record fires.', 'It stays silent for signals that only look good.', 'Turn it on and let the record decide when to look.']]
+]);
+
+const coneTeach = () => obsTour('cone', [
+  ['cnH', 'Horizon', () => ['How far ahead the cone looks: 1 hour, 4 hours, 8 hours or 1 day.', 'The cone widens with time; longer horizons have wider ranges.', 'Use the horizon you would hold the trade for.']],
+  ['cnMode', 'Session model · Conformal', () => ['Session model widens with the usual activity of each hour and the recent pace. Conformal corrects it by how often it missed in the past, so its stated odds hold.', 'If the two differ a lot, the recent past was unusual.', 'Use Conformal when you need the 68%/95% to mean exactly that.']]], [
+  [obsQ('.lab-intro'), 'What it answers', () => [obsTx(obsQ('.lab-intro'), 260), 'A range for where price is likely to be at the horizon, shaped by the time of day and the recent pace.', 'It gives sizes, not direction.']],
+  [obsQ('.dj-verdict'), 'Market state', () => [obsTx(obsQ('.dj-verdict'), 200), 'The cone is drawn only while the instrument trades.', 'When closed, come back after the open.']],
+  [obsKpi(0), '68% range', () => [obsTx(obsKpi(0)), 'About two times in three, price should end the horizon inside it.', 'A stop inside it is likely to be touched; a target inside it is realistic.']],
+  [obsKpi(1), '95% range', () => [obsTx(obsKpi(1)), 'About 19 times in 20, price should end inside it.', 'A target beyond it is unlikely within this time.']],
+  [obsKpi(2), 'Typical move', () => [obsTx(obsKpi(2)), 'Half the width of the 68% range: the move to expect either way.', 'Size stops at least this far if you want to survive normal noise over the horizon.']],
+  [obsKpi(3), 'Pace', () => [obsTx(obsKpi(3)), 'How much the cone is scaled by the last two hours against what this time of day usually moves.', 'Above 1× the market is livelier than usual; ranges are wider.']],
+  [obsQ('#cnSvg'), 'The cone', () => [obsTx(obsQ('.cn-leg'), 160), 'Price now on the left, the 68% and 95% bands widening to the right, and the constant-volatility band for comparison.', 'Where the cone widens fastest is the busiest time ahead.']],
+  [obsCard('Did the cone'), 'Did the cone keep its promise?', () => [obsTx(obsCard('Did the cone'), 240), 'How often price actually ended inside the 68% and 95% bands last week, for this model, the conformal one and constant volatility.', 'Close to 68% and 95% = well calibrated; trust it more.']],
+  [obsCard('Your levels'), 'Your levels against the cone', () => [obsTx(obsCard('Your levels'), 240), 'Your ticket stop and target in standard deviations from now, the chance each is beyond the price at the end and the chance it is touched on the way.', 'A stop with a high touch chance will likely be hit by noise; a target with near-zero chance will not be reached in this time.']]
+]);
+
+const exitTeach = () => obsTour('exit', [], [
+  [obsQ('.lab-intro'), 'What it does', () => [obsTx(obsQ('.lab-intro > p'), 260), 'Your closed trades replayed on the real price path with nine exit rules, with the same entries.', 'Use it to judge your exits, not your entries.']],
+  [obsQ('.lab-src'), 'Trades and unit', () => ['My trades or the Sample trader; R = your stop or R = volatility.', 'The sample trader takes random entries with no edge: its numbers show costs only. R is the risk of each trade.', 'Try the sample first to learn the page; switch to your trades when you have at least 5 that can be replayed.']],
+  [obsQ('.dj-verdict'), 'Verdict', () => [obsTx(obsQ('.dj-verdict'), 220), 'Whether any rule beat your exits by more than chance, after picking the best of the rules.', 'No reliable difference = keep your exits; a reliable one = test that rule going forward.']],
+  [obsKpi(0), 'Trades replayed', () => [obsTx(obsKpi(0)), 'How many closed trades could be replayed on the price history kept.', 'Fewer than about 30 makes every comparison loose.']],
+  [obsKpi(1), 'Your exits', () => [obsTx(obsKpi(1)), 'The total of your trades as you closed them, in R.', 'The benchmark every rule is compared with.']],
+  [obsKpi(2), 'Best rule (hindsight)', () => [obsTx(obsKpi(2)), 'The rule with the best total, picked after the fact.', 'Hindsight always finds a winner; see the walk-forward check before believing it.']],
+  [obsKpi(3), 'Exit efficiency', () => [obsTx(obsKpi(3)), 'How much of the best open profit (MFE) your exits kept on average.', 'Low efficiency = you give back most of what trades offered; trailing exits may help.']],
+  [obsQ('.bh-board-w table'), 'Exit rules', () => ['Each rule: total R, average R, win rate, worst drawdown and P&L on the same trades.', 'Compare totals and drawdowns together: a higher total with a much deeper drawdown is not better.', 'Look for rules that beat yours on both.']],
+  [obsCard('Stop × target'), 'Stop × target map', () => ['Total R for every combination of stop distance and target multiple, on the same entries.', 'The outlined cell is the best; smooth areas of colour matter more than one bright cell.', 'Prefer a stop and target in a broad good area, not the single best cell.']],
+  [obsCard('Walk-forward'), 'Walk-forward check', () => [obsTx(obsCard('Walk-forward'), 260), 'The best rule picked on older trades, then scored on newer ones.', 'Only a rule that also wins on the newer trades is worth switching to.']],
+  [obsCard('Where you lose'), 'Where you lose', () => ['Your trades grouped by how they ended (stop, target, manual, time) with their totals.', 'The type that lost the most is where to look first.', 'Change the habit behind the worst type before changing rules.']],
+  [() => [...document.querySelectorAll('#obsBody .bh-board-w table')].pop(), 'Trades', () => ['The most recent replayed trades: your result, the best seen (MFE) and the best rule’s result.', 'A large gap between Best seen and Yours means profit was available and given back.', 'Open a trade from Actions to see it on the chart.']]
+]);
+const OBS_TEACH = { const: constTeach, regime: regimeTeach, dc: dcTeach, deja: djTeach, rp: rpTeach, drv: drvTeach, clock: clkTeach, tap: tapTeach, bask: baskTeach, scan: scanTeach, cone: coneTeach, exit: exitTeach };
 
 /* ---------------- 2. Regime map: Hurst × permutation entropy ---------------- */
 /* The zone of a window by its Hurst value against the noise band, and how long a pair has stayed in its zone now: the
@@ -714,7 +1010,7 @@ function drawRegime(b, c) {
   const rgLines = p => [`Hurst ${f2(p.H)} · noise band ${f2(p.bH.lo)}–${f2(p.bH.hi)} · ${rgWord(p.H, p.bH)}`, `Entropy ${f3(p.pe)} · noise band from ${f3(p.bP.lo)} · ${p.pe < p.bP.lo ? 'below: some repeating patterns' : 'like noise'}`, `Efficiency ${pct(p.er)} · typical noise ≈ ${pct(band.er.mid)}`, `Move over the window ${obsBp(p.ret)}`];
   $('#rgHits').innerHTML = OBS.rgPts.map(p => `<button class="rg-hit" data-sym="${p.s}" style="left:${p.x.toFixed(1)}px;top:${p.y.toFixed(1)}px" aria-label="${escHtml(pretty(p.s))}" data-tip="${escHtml(`${pretty(p.s)}|${rgLines(p).join('. ')}. Click or press Enter to open the pair.`)}"></button>`).join('');
   CV_HOVER.rgCv = e => {
-    if (!e) return; const r = e.target.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (!e) return; if (!document.body.classList.contains('no-hints')) return brTipHide(); // with Hints on, a dot has its "?" and its card const r = e.target.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     const hit = OBS.rgPts.map(p => [p, Math.hypot(p.x - x, p.y - y)]).filter(([, d]) => d < 16).sort((a, b2) => a[1] - b2[1])[0];
     if (!hit) return brTipHide(); const p = hit[0];
     cvTip(e, pretty(p.s), rgLines(p));
@@ -735,7 +1031,7 @@ function drawRegime(b, c) {
       <div class="spark-h" id="rgSpark" role="img" title="Rolling 12-hour Hurst of ${pretty(me.s)}, one point per hour of trading; shaded = 5–95% band of its own returns with randomised signs; dashed = 0.50"></div><div class="rg-spk-ax"></div><small class="muted">${pretty(me.s)} · rolling 12h Hurst · ${roll.length} points · shaded = noise band</small><p class="small rg-per">${perTxt}</p></div>
     <div class="ins"><label>Largest deviations (${nIn} of ${pts.length} within noise band)</label>${ranked.slice(0, 4).map(pill).join('')}</div>
     ${out.length ? `<div class="ins"><label>Not on the map</label><p class="small">${out.map(([s, why]) => `<b>${escHtml(pretty(s))}</b>: ${why}.`).join(' ')}</p></div>` : ''}
-    <div class="ins"><label>Reading it honestly</label>${obsHow('A point outside the band describes the recent path; on this simulated market it does not predict the next move.', `<p class="small">The shaded band is where 90% of copies of these same returns land when their signs are randomised: same sizes, same busy and quiet hours, no memory of direction. Measured noise sits at an entropy of about ${f3(bP.mid)}, not 1, and around, not exactly at, a Hurst of 0.5. Persistent or anti-persistent describes the window at scales of 1 to 32 minutes. With 16 pairs, a few will fall outside by chance alone. A point outside the band describes the recent path; on this simulated market it does not predict the next move.</p>`)}</div>
+    <div class="ins"><label>Reading it honestly</label>${obsHow('A point outside the band describes the recent path; it does not predict the next move.', `<p class="small">The shaded band is where 90% of copies of these same returns land when their signs are randomised: same sizes, same busy and quiet hours, no memory of direction. Measured noise sits at an entropy of about ${f3(bP.mid)}, not 1, and around, not exactly at, a Hurst of 0.5. Persistent or anti-persistent describes the window at scales of 1 to 32 minutes. With 16 pairs, a few will fall outside by chance alone. A point outside the band describes the recent path; it does not predict the next move.</p>`)}</div>
     <p class="small muted rg-legend"><span style="white-space:nowrap"><i class="rg-zone" aria-hidden="true" style="background:color-mix(in srgb,var(--tx2) 22%,transparent)"></i>noise band</span> <span style="white-space:nowrap"><i class="rg-zone" aria-hidden="true" style="background:color-mix(in srgb,var(--ind1) 14%,transparent)"></i>persistent</span> <span style="white-space:nowrap"><i class="rg-zone" aria-hidden="true" style="background:color-mix(in srgb,var(--info) 14%,transparent)"></i>anti-persistent</span> ${obsSw('--up', 'up', 'up over the window')} ${obsSw('--dn', 'dn', 'down over the window')} <span style="white-space:nowrap">dot size = volatility</span> <span style="white-space:nowrap"><i class="const-ring" aria-hidden="true" style="border-color:var(--acc)"></i>open pair</span></p>
     ${obsHow(`Method: the last ${n} one-minute bars, noise band from 160 sign-randomised copies.`, `<p class="small muted">The last ${n} one-minute bars; returns across a closed market are left out. Hurst from the aggregated-variance method on 1-minute returns summed over 1 to 32 minutes; entropy is the normalised Shannon entropy of 4-point ordinal patterns in 5-minute returns, averaged over the five ways to cut the 5-minute grid (patterns with a tie are skipped). Noise band from 160 sign-randomised copies of the measured windows (fixed seed).</p>`)}`;
   const sp = $('#rgSpark'); if (sp && roll.length > 1) {
@@ -868,7 +1164,7 @@ function drawDC(b, c) {
   // for the tests and the ds-research block paints it in ink
   b.innerHTML = `<div class="obs-kpis">
       ${kpi('Reversal level', `${fp(sym, rev)} <small>${revPips.toFixed(1)} ${un} · ${f2(revD)} × δ</small>`, 'acc', `Reversal level|A ${dS} move back from the current extreme (${fp(sym, ext)}) would confirm a ${upL ? 'down' : 'up'} leg at this price, ${revPips.toFixed(1)} ${un} from the price now (${f2(revD)} × δ). The one level the method defines in advance: a natural place for an alert or a stop.`, 'hero')}${kpi('Events', ev.length + ` <small>${rate.toFixed(1)}/h</small>`, '', `Events|${obsPl(ev.length, 'reversal')} of ${dS} in ${hours.toFixed(0)} hours of trading, ${rate.toFixed(1)} per hour on average (closed hours left out). Each one is a step of intrinsic time.`)}${kpi('Heartbeat · last 6h', `${f2(beat)}× <small>${obsPl(nRecent, 'event')}</small>`, hot ? 'acc' : '', `Heartbeat|${obsPl(nRecent, 'event')} in the last 6 hours of trading; at the average pace ${lam.toFixed(1)} are expected, and a window of 6 hours lands between ${band[0]}–${band[1]} events 19 times in 20 by chance alone. ${hot ? (nRecent > band[1] ? 'Busier than that band: highlighted.' : 'Quieter than that band: highlighted.') : 'Inside that band: normal variation, not highlighted.'} The hour of day changes the pace too: London and New York hours bring more events than Asia.`)}${kpi('Avg overshoot', `${f2(avgOs)} × δ <small>n=${osN}</small>`, '', `Average overshoot|After a reversal is confirmed, price kept going ${f2(avgOs)} × δ further on average (n=${osN} legs; 95% interval ${f2(osCi[0])}–${f2(osCi[1])}). Research on FX finds about 1 × δ.`)}${kpi('Coastline', `${(coast * 100).toFixed(1)}% <small>${obsPl(zz.length - 1, 'leg')}</small>`, '', `Coastline|The length of the zigzag: every leg from extreme to extreme added up, ${(coast * 100).toFixed(1)}% of price over ${hours.toFixed(0)} hours of trading, against a net move of ${obsMinus(sgn(net * 100, 2))}%. How much the price travelled to get where it is.`)}
-      ${kpi('Last leg', `<span class="${upL ? 'up' : 'dn'}">${upL ? 'up' : 'down'}</span> <small>δ ${dS}</small>`, '', `Last leg|The last confirmed move of δ = ${dS} was ${upL ? 'up from a low' : 'down from a high'}, and price has not reversed ${dS} back since. It says which way the last reversal went, nothing more: on a zero-drift market the next leg is as likely to be up as down.`)}${kpi('Overshoot so far', `${f2(curOs)} × δ`, '', `Overshoot so far|The current leg has run ${f2(curOs)} × δ past its confirmation, longer than ${(osRank * 100).toFixed(0)}% of the ${osN} past overshoots (average ${f2(avgOs)}). How long it runs on is not predicted.`)}${kpi('Average leg ends at', `${fp(sym, target)} <small>${legP.toFixed(legP < 10 ? 1 : 0)} ${un} leg</small>`, '', `Average leg|A price, not a forecast: where the current leg would end if it were exactly average (δ plus the average overshoot, ${legP.toFixed(1)} ${un} from its extreme). Legs end early or run long at random.`)}    </div><div class="dc-act"><span>The reversal level ${fp(sym, rev)} is <b class="mono">${revPips.toFixed(1)} ${un}</b> (<b class="mono">${f2(revD)} × δ</b>) from the price now.</span><button class="ghost sm" data-dc-alert${tipAttr(`Alert at reversal|Adds a price alert at ${fp(sym, rev)} on ${pretty(sym)} (${upL ? 'below' : 'above'} the price now), in the Alerts list like one set from the chart. It fires if the price crosses it; it is not an order.`)}>Alert at reversal</button><span class="muted dc-hist">${hist}</span></div>
+      ${kpi('Last leg', `<span class="${upL ? 'up' : 'dn'}">${upL ? 'up' : 'down'}</span> <small>δ ${dS}</small>`, '', `Last leg|The last confirmed move of δ = ${dS} was ${upL ? 'up from a low' : 'down from a high'}, and price has not reversed ${dS} back since. It says which way the last reversal went, nothing more; it does not say where the next leg goes.`)}${kpi('Overshoot so far', `${f2(curOs)} × δ`, '', `Overshoot so far|The current leg has run ${f2(curOs)} × δ past its confirmation, longer than ${(osRank * 100).toFixed(0)}% of the ${osN} past overshoots (average ${f2(avgOs)}). How long it runs on is not predicted.`)}${kpi('Average leg ends at', `${fp(sym, target)} <small>${legP.toFixed(legP < 10 ? 1 : 0)} ${un} leg</small>`, '', `Average leg|A price, not a forecast: where the current leg would end if it were exactly average (δ plus the average overshoot, ${legP.toFixed(1)} ${un} from its extreme). Legs end early or run long at random.`)}    </div><div class="dc-act"><span>The reversal level ${fp(sym, rev)} is <b class="mono">${revPips.toFixed(1)} ${un}</b> (<b class="mono">${f2(revD)} × δ</b>) from the price now.</span><button class="ghost sm" data-dc-alert${tipAttr(`Alert at reversal|Adds a price alert at ${fp(sym, rev)} on ${pretty(sym)} (${upL ? 'below' : 'above'} the price now), in the Alerts list like one set from the chart. It fires if the price crosses it; it is not an order.`)}>Alert at reversal</button><span class="muted dc-hist">${hist}</span></div>
     <div class="obs-cv tall"><canvas id="dcCv"></canvas></div><div class="obs-cv strip"><canvas id="dcBeat"></canvas></div>
     <div class="dc-more"><div class="ins dc-legs"><label>Leg duration · minutes of open market</label><p>Average leg <b class="mono">${dcFm(legAvg)}</b> (median ${dcFm(legMed)}, n=${legN}), extreme to extreme. The current leg has run <b class="mono">${dcFm(legNow)}</b> since its extreme, longer than ${(legRank * 100).toFixed(0)}% of past legs. How long it lasts is not predicted.</p></div>
     <div class="ins dc-scale"><label>Scaling law · events as δ doubles</label><table class="tbl sm dc-sc"><thead><tr><th>δ</th><th>Events</th><th>Ratio</th><th class="l">Reading</th></tr></thead><tbody>${scRows}</tbody></table><p class="small muted">For a random walk the count falls about 4× (≈ 4) each time δ doubles. A ratio is read against the rough noise of the two counts. It describes this history, not what comes next.</p></div></div>
@@ -1032,7 +1328,7 @@ function drawDeja(b, c) {
   const ivl = ci ? `${pc(ci.lo)}–${pc(ci.hi)}%` : '', how = `${obsPl(tests, 'past moment')} one look-ahead apart, each searched only in the history before it`;
   const fine = `The interval is widened for the ${DJ_SET} settings this tool offers on a pair (it would be ${(() => { const c95 = wilson(hits, tests); return c95 ? `${pc(c95.lo)}–${pc(c95.hi)}%` : '—'; })()} for one setting alone).`;
   const verdict = rel == null ? ['none', `Not enough tests (${tests} of ${DJ_MIN})`, `The method could be checked at only ${how}; a verdict needs at least ${DJ_MIN}. A shorter timeframe, pattern or look-ahead leaves more history to test on. Read the matches below as a description only.`]
-    : edge === 1 ? ['ok', `Edge in this sample · ${rel.toFixed(0)}%`, `At ${how}, the median of the matches called the next ${djDur(Hh * tf)} right ${rel.toFixed(0)}% of the time and the whole interval (${ivl}) is above a coin flip. ${fine} With 16 pairs (${DJ_SET * 16} settings in all) some still clear it by chance: expect false hits${obsSim() ? '; on this simulated random walk it does not persist' : ' and check it on new data before trusting it'}.`]
+    : edge === 1 ? ['ok', `Edge in this sample · ${rel.toFixed(0)}%`, `At ${how}, the median of the matches called the next ${djDur(Hh * tf)} right ${rel.toFixed(0)}% of the time and the whole interval (${ivl}) is above a coin flip. ${fine} With 16 pairs (${DJ_SET * 16} settings in all) some still clear it by chance: expect false hits and check it on new data before trusting it.`]
     : edge === -1 ? ['none', `Worse than a coin flip · ${rel.toFixed(0)}%`, `At ${how}, the matches were wrong more often than right (interval ${ivl}). ${fine} On a random walk that is chance too, not a contrarian signal.`]
     : ['none', `No edge on ${pretty(sym)} · ${rel.toFixed(0)}%`, `At ${how}, the median of the matches called the next ${djDur(Hh * tf)} right ${rel.toFixed(0)}% of the time; the interval ${ivl} includes 50%, so the method is no better than a coin flip here. ${fine} Read the direction below as noise; the spread still shows how far price moved after similar shapes.`];
   // the band check: how often the real outcome landed in the middle half of its matches; 50% when the band is as wide as the outcomes
@@ -1047,7 +1343,7 @@ function drawDeja(b, c) {
     <div class="dj-verdict ${verdict[0]}" tabindex="0"${tipAttr(`${verdict[1]}|${verdict[2]}`)}><b>${verdict[1]}</b>${rel == null ? '' : `<span class="mono">${ivl} · ${obsPl(tests, 'test')} · ${DJ_SET} settings</span>`}</div>${covHtml}
     <div class="ins"><label>What the ${an.length} closest matches did next · ${Hh} bars (${djDur(Hh * tf)})</label><p><b class="${tone(up - an.length / 2)}" tabindex="0"${tipAttr(`Matches that rose|${up} of the ${an.length} closest matches were higher ${djDur(Hh * tf)} later. About half is what chance alone gives.`)}>${up} of ${an.length} rose</b>. Median <b class="mono ${tone(med)}" tabindex="0"${tipAttr(`Median move|The middle result of the matches after ${Hh} bars, rescaled by bar volatility to ${pretty(sym)}: half did better, half worse. Its sign is what the check above scores.`)}>${obsSgn(med, 1)} ${un}</b>, middle half <b class="mono" tabindex="0"${tipAttr(`Middle half|A quarter of the matches did worse than ${obsSgn(djQ(end, .25), 0)} ${un} and a quarter better than ${obsSgn(djQ(end, .75), 0)} ${un}: the range of the usual outcome.`)}>${obsSgn(djQ(end, .25), 0)} to ${obsSgn(djQ(end, .75), 0)} ${un}</b>. All ${unc.n.toLocaleString('en-US')} windows of the same length, no match: middle half <b class="mono" tabindex="0"${tipAttr(`Without matching|What followed every ${W}-bar window in the same history (all 16 pairs, every 5th window, look-ahead ended before the pattern), rescaled the same way: the reference the matches are drawn against (grey band). Matches that say something differ from it.`)}>${obsSgn(uQ(Hh - 1, .25), 0)} to ${obsSgn(uQ(Hh - 1, .75), 0)} ${un}</b>.</p></div>
     <div class="ins"><label>Closest matches · ${an.length}, one per moment</label><div class="dj-list"><div class="dj-hdr" aria-hidden="true"><span>#</span><span>Pair</span><span>When (UTC)</span><span>Next ${un}</span></div>${an.map(res).join('')}</div><p class="small muted">Shape distance: closest ${an[0].d.toFixed(1)}, a random window about ${dRef.toFixed(0)} (0 = identical).</p></div>
-    <p class="small muted">The last ${W} bars are normalised (shape only, not size) and compared with every ${W}-bar window across all 16 pairs whose look-ahead ended before the pattern started, so the search never sees its own answer. One match per moment: the same hour on correlated pairs counts once. Each match's moves are rescaled by bar volatility (σ of the bar returns in our pattern against theirs) and shown in ${pretty(sym)}'s ${un}. The check runs the same search at earlier moments, on what was known then. ${obsSim() ? 'The prices are the engine\'s simulated random walk: no shape can predict its next move, so the check shows how often chance alone looks like skill.' : 'The prices are recorded or live market data: the check is the only evidence here, for one pair and one setting.'}</p></aside></div>`;
+    <p class="small muted">The last ${W} bars are normalised (shape only, not size) and compared with every ${W}-bar window across all 16 pairs whose look-ahead ended before the pattern started, so the search never sees its own answer. One match per moment: the same hour on correlated pairs counts once. Each match's moves are rescaled by bar volatility (σ of the bar returns in our pattern against theirs) and shown in ${pretty(sym)}'s ${un}. The check runs the same search at earlier moments, on what was known then. ${obsSim() ? 'The check shows how often chance alone looks like skill.' : 'The prices are recorded or live market data: the check is the only evidence here, for one pair and one setting.'}</p></aside></div>`;
   const cv = $('#djCv'), tot = W + Hh;
   const qp = cl.slice(N - W).map(v => Math.log(v / cl[N - 1]));
   // a match drawn on our scale: the shape that was matched (its z-scores at our spread), then its moves rescaled by bar volatility
@@ -1359,7 +1655,7 @@ function drawDrivers(b, c) {
   const cbBar = v => `<div class="drv-bar"><i style="${v >= 0 ? 'left:50%' : 'right:50%'};width:${Math.abs(v) / bMax * 50}%;background:${v >= 0 ? col.up : col.dn}"></i></div>`;
   const side = `<aside class="obs-side">
       <div class="ins"><label>Currency board · last ${WD.hrs} of trading vs basket</label>${st.map(x => `<div class="cb-row" tabindex="0"${tipAttr(`${x.c} · ${obsBp(x.v)}|Its move over the last ${WD.span} of trading against the equal-weighted basket of all eight currencies: ${x.v >= 0 ? 'stronger' : 'weaker'} than the basket average. The bars share one scale: the largest move fills its half.`)}><span class="mono">${x.c}</span>${cbBar(x.v)}<span class="mono small ${cls(x.v)}">${obsBp(x.v)}</span></div>`).join('')}${ext ? `<div class="cb-ext-note small muted">Outside the eight · not in the basket</div><div class="cb-row cb-ext" data-ccy="${ext.c}" tabindex="0"${tipAttr(`${ext.c} · ${obsBp(ext.v)} · outside the eight|${ext.c} is not one of the eight currencies of the basket. It moved ${obsBp(ext.vsUsd)} against USD over the last ${WD.span} of trading (from ${pretty(ext.via)}); adding USD's own move against the basket puts it on this board's scale. It is not part of the basket, the strongest and weakest, or the widest gap.`)}><span class="mono">${ext.c}</span>${cbBar(ext.v)}<span class="mono small ${cls(ext.v)}">${obsBp(ext.v)}</span></div>` : ''}</div>
-      ${best ? `<div class="ins"><label>Widest strength gap · last ${WD.hrs} of trading (descriptive, not a trade idea)</label><p>Strongest: <b>${st[0].c}</b>, weakest: <b>${st[st.length - 1].c}</b>. Of the ${pool.length} tradable pairs between the eight currencies, the widest strength gap is <button class="pill" data-sym="${best.p.sym}">${pretty(best.p.sym)}</button>: ${best.p.base} ${best.gap >= 0 ? 'stronger' : 'weaker'} than ${best.p.quote} by <b>${bp(Math.abs(best.gap)).replace('+', '')}</b>. This describes the last ${WD.span} of trading; ${obsSim() ? 'on this simulated market it does not predict the next move' : 'a past gap is not a forecast of the next move'}.</p></div>` : ''}
+      ${best ? `<div class="ins"><label>Widest strength gap · last ${WD.hrs} of trading (descriptive, not a trade idea)</label><p>Strongest: <b>${st[0].c}</b>, weakest: <b>${st[st.length - 1].c}</b>. Of the ${pool.length} tradable pairs between the eight currencies, the widest strength gap is <button class="pill" data-sym="${best.p.sym}">${pretty(best.p.sym)}</button>: ${best.p.base} ${best.gap >= 0 ? 'stronger' : 'weaker'} than ${best.p.quote} by <b>${bp(Math.abs(best.gap)).replace('+', '')}</b>. This describes the last ${WD.span} of trading; a past gap is not a forecast of the next move.</p></div>` : ''}
       <p class="small muted">Each currency is measured against an equal-weighted basket of all eight, so a pair's move splits exactly into its base leg and its quote leg. The idea comes from currency research, where a common dollar factor explains much of the moves of the dollar pairs.</p>
     </aside>`;
   if (mt.kind === 'cfd' || (!inG8(mt.base) && !inG8(mt.quote))) {
@@ -1536,7 +1832,7 @@ function drawClock(b, c) {
     ${nh ? `<div class="ins clk-nh"><label>Next hour · ${pretty(S.set.sym)}</label><p>In the next hour (until ${hhmm(now + 3600)} UTC) a typical move is <b class="mono" tabindex="0"${tipAttr(`Next hour, 1σ|One standard deviation of the move over the coming 60 minutes: the usual variances of those minutes added (σ per minute from the usual 1-minute moves, × √(π/2)). About two hours in three stay within it. No direction: the move is as likely up as down.`)}>±${nh.sig.toFixed(0)} ${un} (1σ)</b>, about two hours in three; <b class="mono">±${nh.sig2.toFixed(0)} ${un} (2σ)</b> holds 95% on a normal curve.${nh.min < 60 ? ` Only ${nh.min} minutes of trading are left in it (the market closes at ${hhmm(nh.end)} UTC).` : ''} ${tail.n >= CLK_TAIL_MIN ? `Past hours went beyond their ±2σ in <b class="mono" tabindex="0"${tipAttr(`Beyond ±2σ|Non-overlapping 60-minute windows of ${pretty(S.set.sym)} before ${dayWord}, without a closed-market gap, each against ±2σ of its own minutes: ${tail.k} of ${tail.n} (${(tail.k / tail.n * 100).toFixed(1)}%). A normal curve gives 5%.`)}>${tail.k} of ${tail.n} past hours</b> (${(tail.k / tail.n * 100).toFixed(0)}%), ${tail.k / tail.n < .03 ? 'less often than' : tail.k / tail.n > .07 ? 'more often than' : 'close to'} the 5% of a normal curve.` : `Too few past hours (${tail.n}) to check how often moves went beyond ±2σ.`} The 1-minute moves have fat tails, so ±2σ is not a hard limit.</p><p>Busiest hour (${hh(hiH)}) ±${hourSig(hiH).toFixed(0)} ${un}, quietest (${hh(loH)}) ±${hourSig(loH).toFixed(0)} ${un}. A ${stopU}-${un1} stop (the ticket's) is ${xr(stopU / Math.max(nh.sig, 1e-9))}× the next hour's 1σ${ratio ? ` (${xr(stopU / (nh.sig * Math.max(ratio, .25) || 1e-9))}× at the last hour's pace)` : ''}.</p></div>` : ''}
     <div class="ins"><label>Next two hours</label>${strip}<p>${aOpen.length ? `Usually <b>${aheadR.toFixed(2)}×</b> the daily average — ${aheadR > 1.2 ? 'usually wider swings; give stops room.' : aheadR < .8 ? 'usually quiet trade.' : 'about average.'} Busiest coming slot: <b class="mono">${slT(peakAhead)}</b> (${(avg[peakAhead] / overall).toFixed(2)}×).${closedN ? ` The market is closed for ${closedN} of these 8 slots.` : ''}` : `The market is closed for the next two hours.`}</p></div>
     <div class="ins"><label>Busiest and quietest hour</label><p>Peak <b class="mono" tabindex="0"${tipAttr(`Busiest hour|The hour of the day (UTC) with the largest average 1-minute move. Activity is set hour by hour, so a single 15-minute slot is too noisy to name a peak.`)}>${hh(hiH)}–${hh(hiH + 1)}</b> UTC (${(hourAvg[hiH] / overall).toFixed(2)}× average). Quietest <b class="mono">${hh(loH)}–${hh(loH + 1)}</b> UTC (${(hourAvg[loH] / overall).toFixed(2)}×).</p></div>
-    ${obsHow(`Petals: the usual activity in each 15-minute slot; dots: today.${obsSim() ? ' On this simulated market the profile is set per UTC hour in the instrument catalog.' : ''}`, `<p class="small muted">Petals: average absolute 1-minute move in each 15-minute slot of the day (${c.clkAll ? 'all 16 pairs' : pretty(S.set.sym)}), the median of the previous days that traded in that slot (median of ${obsPl(nd[curSl], 'day')} at ${slT(curSl)}${nd[curSl] < 3 ? ': too few days for a steady median, read it loosely' : ''}), so one agitated day barely moves it; the jump at a reopening is left out. Dots: today, from the start of ${dayWord}; one beyond the scale sits on its edge, hollow. Scale circles: ${one ? un : 'bp'} per minute, fixed by the usual profile. Rings, inside out: ${sess.map(s => s[0]).join(' · ')}${fx ? ' (today\'s hours, UTC)' : ''}; stronger = open now.${obsSim() ? ' On this simulated market the activity profile is set per UTC hour in the instrument catalog; the petals measure what the engine produced from it, noise included.' : ''}</p>`)}
+    ${obsHow(`Petals: the usual activity in each 15-minute slot; dots: today.`, `<p class="small muted">Petals: average absolute 1-minute move in each 15-minute slot of the day (${c.clkAll ? 'all 16 pairs' : pretty(S.set.sym)}), the median of the previous days that traded in that slot (median of ${obsPl(nd[curSl], 'day')} at ${slT(curSl)}${nd[curSl] < 3 ? ': too few days for a steady median, read it loosely' : ''}), so one agitated day barely moves it; the jump at a reopening is left out. Dots: today, from the start of ${dayWord}; one beyond the scale sits on its edge, hollow. Scale circles: ${one ? un : 'bp'} per minute, fixed by the usual profile. Rings, inside out: ${sess.map(s => s[0]).join(' · ')}${fx ? ' (today\'s hours, UTC)' : ''}; stronger = open now.${obsSim() ? ' On this simulated market the activity profile is set per UTC hour in the instrument catalog; the petals measure what the engine produced from it, noise included.' : ''}</p>`)}
     <p class="small muted">${sw('busy', 'busier than 1.3× average')} ${sw('quiet', 'quieter than 0.7×')} ${sw('now', 'now and today')} ${sw('ring', 'session')}</p></aside></div>`;
   const { g, w, h } = canvasFit($('#clkCv')), cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 52, r0 = R * .22;
   const ang = k => (k / SL) * 6.283 - Math.PI / 2, RG = 7, ringR = i => R + 9 + i * RG, ringOut = ringR(sess.length - 1) + RG / 2;
@@ -1617,7 +1913,7 @@ function drawTap(b, c) {
   const shownC = new Set(data.flatMap(d => [M(d.s).base, M(d.s).quote]));
   const news = (typeof CAL === 'object' && Array.isArray(CAL.events) ? CAL.events : []).filter(e => e && e.done && isFinite(e.t) && e.t >= T[0] && e.t <= T[n - 1] + 60 && shownC.has(e.ccy)).sort((x, y) => x.t - y.t).map(e => ({ e, i: Math.max(0, T.findIndex(tt => tt >= e.t)) })).map(x => ({ ...x, i: x.i < 0 ? n - 1 : x.i }));
   const impW = { hi: 'High', md: 'Medium', lo: 'Low' };
-  const newsLines = e => [e.actual != null && e.fc != null ? `Actual ${fmtNum(e.actual, e.unit)} vs ${fmtNum(e.fc, e.unit)} forecast` : 'Released (no figure)', `${impW[e.impact] || 'Low'} impact · from the app's economic calendar (simulated)`];
+  const newsLines = e => [e.actual != null && e.fc != null ? `Actual ${fmtNum(e.actual, e.unit)} vs ${fmtNum(e.fc, e.unit)} forecast` : e.real ? `Released${e.fc ? ' · forecast ' + e.fc : ''} (actual not in the feed)` : 'Released (no figure)', `${impW[e.impact] || 'Low'} impact · from the app's economic calendar (${e.real ? 'ForexFactory' : 'built in'})`];
   const newsTxt = news.length ? `Releases in the window, from the app's calendar (it keeps its last 8): ${news.map(({ e }) => obsV(`${escHtml(e.ccy)} ${escHtml(e.name)} ${dts(e.t)}`, '', `${e.ccy} ${e.name} · ${dts(e.t)} UTC|${newsLines(e).join('. ')}.`)).join(', ')}.` : `No release of the app's calendar falls in this window (it keeps its last 8 releases).`;
   const legend = perPair
     ? `<span class="tap-bands">${[0, 1, 2].map(k => `${bandSw('--up', k)}${bandSw('--dn', k)}`).join(' ')} each row on its own scale: one band = a third of the pair's typical move over the window (σ of its 1-minute returns × √bars). Rows are not comparable in size.</span>`
@@ -1778,7 +2074,7 @@ function bindObs() {
   const c = sonCfg();
   $('#sonTicks').checked = c.ticks; $('#sonHeart').checked = c.heart; $('#sonVol').value = c.vol; $('#sonSens').value = c.sens;
   $('#sonPop').addEventListener('input', () => { c.ticks = $('#sonTicks').checked; c.heart = $('#sonHeart').checked; c.vol = +$('#sonVol').value; c.sens = +$('#sonSens').value; save(); });
-  window.addEventListener('resize', () => { if (activeTab === 'obs') obsDraw(); });
+  window.addEventListener('resize', () => { if (activeTab !== 'obs') return; if (obsBusy()) { OBS.missed = true; return; } obsDraw(); }); // a redraw replaces the markup: held back while the pointer or focus is inside (drawn on leaving, obsResume)
   document.addEventListener('keydown', e => {
     if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key.toLowerCase() === 'o' && !e.shiftKey) setTab('obs');

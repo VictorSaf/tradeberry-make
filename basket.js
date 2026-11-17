@@ -390,6 +390,14 @@ function bkExec(b, side, sz, pm, flags) {
   const mkt = mktState('EURUSD');
   if (!mkt.open) { toast('Not filled', `${b.name}: ${mkt.label}. No leg was sent.`, 'dn'); setTimeout(obsDraw, 0); return null; }
   const v0 = bkIdxNow(snap), cost = bkCost(legs, sz.lots), dsl = sz.sl ? 3 * sz.sl / 1e4 : 0, opened = [];
+  // live: the execution server opens the legs (all or none), keeps the group and watches its stop, target, trail,
+  // break-even and time stop (Task 9); the group arrives with the gw state
+  if (TradeLink.live) {
+    const c = bkCfg();
+    TradeLink.send('basket', { do: 'open', bid: b.id, name: b.name, long: snap.long, short: snap.short, side, lots: sz.lots, sl: sz.sl || null, tp: sz.tp || null, trail: +c.bkTrail || 0, be: +c.bkBe || 0, risk: sz.risk, pm: pm || null, ctx }, `${side === 'buy' ? 'Buy' : 'Sell'} ${b.name} (${legs.length} legs)`, 'pos')
+      .then(r => { if (!r.ok) { toast('Not filled', `${b.name}: ${r.text || 'refused by the execution server'}.`, 'dn'); beep('err'); } else toast(`${side === 'buy' ? 'Bought' : 'Sold'} ${b.name}`, `${legs.length} legs filled${sz.sl ? ` · stop ${sz.sl} bp` : ''}${sz.tp ? ` · target ${sz.tp} bp` : ''}`, 'info'); setTimeout(obsDraw, 0); });
+    return null;
+  }
   // the legs are quiet (o.basket): this function says it once for all of them, with the first refusal as the cause
   let why = '';
   for (const l of legs) {
@@ -436,7 +444,12 @@ function bkTrade(side) {
     onGo: go
   });
 }
+/* the live account: the execution server keeps the baskets (Task 9 OMS); a command and its answer, said once */
+function bkLive(cmd, label, ok) {
+  return TradeLink.send('basket', cmd, label, 'pos').then(r => { if (!r.ok) { toast('Not done', `${label}: ${r.text || 'refused by the execution server'}.`, 'dn'); beep('err'); } else if (ok) toast(ok[0], ok[1], 'info'); setTimeout(obsDraw, 0); return r.ok; });
+}
 function bkPlace(b, side, sz, pm, flags, type, bpv) {
+  if (TradeLink.live) { const snap = bkSnapOf(b); return bkLive({ do: 'place', bid: b.id, name: b.name, long: snap.long, short: snap.short, side, lots: sz.lots, sl: sz.sl || null, tp: sz.tp || null, risk: sz.risk, pm: pm || null, ctx: (flags || []).map(f => f[0]), type, bp: bpv }, `${b.name}: ${side} ${type}`, [`${b.name}: ${side} ${type} placed`, `Fills if the index moves ${bpv} bp`]); }
   // units: o.sz.cost is the entry cost in USD (as bkSize gives it); a group's g.cost is the same cost in bp of notional
   const snap = bkSnapOf(b), v = bkIdxNow(snap), d = side === 'buy' ? 1 : -1, dir = type === 'limit' ? -d : d; // +1: trigger when index rises
   S.bkOrders.push({ bid: b.id, name: b.name, side, type, bp: bpv, dir, trig: v + dir * bpv / 1e4, t: Engine.simTime, sz: { sl: sz.sl, tp: sz.tp, lots: sz.lots, risk: sz.risk, pct: sz.pct, cost: sz.cost ?? null }, pm, flags, long: snap.long, short: snap.short });
@@ -503,6 +516,7 @@ const bkBeTip = g => `Break-even|Moves the basket stop to +${(g.cost || 0).toFix
    its price keeps the old one. Returns '' or why it was refused. */
 function bkEditApply(gid, sl, tp) {
   const g = S.bkPos.find(x => x.gid === gid); if (!g) return 'This basket is no longer open.';
+  if (TradeLink.live) { bkLive({ do: 'edit', gid, sl: sl || null, tp: tp || null }, `${g.name}: stop and target`, [`${g.name}: stop and target sent`, 'The execution server applies them to the basket.']); return ''; }
   if (g.closing) return 'Close pending on this basket: its stop and target cannot be changed until it completes.';
   const st = bkGroupState(g); if (st.mv == null) return 'This basket has no saved composition: its stop and target are suspended.';
   const okN = (x, mx) => x == null || (Number.isInteger(x) && x >= 1 && x <= mx);
@@ -558,6 +572,7 @@ function bkFinish(g, reason) {
 const BK_RETRY_MS = 3000;
 function bkCloseGroup(gid, reason = 'Basket close') {
   const g = S.bkPos.find(x => x.gid === gid);
+  if (TradeLink.live) { if (g) bkLive({ do: 'close', gid }, `${g.name}: close`); return ''; }
   let why = '';
   // the legs close quietly (ctx.basket): one summary toast below, for the close or for the close pending
   for (const p of S.positions.filter(p => p.bgid === gid)) { closeVia(p.id, reason, 1, { basket: true }); if (S.positions.includes(p) && !why) why = lastReject || 'a leg was not closed'; }
@@ -581,18 +596,23 @@ const BK_WHY = { 'Basket close': 'closed', 'Basket stop': 'basket stop', 'Basket
 // ½: closes half of every leg, or nothing when a leg rounds (lot step, minimum size) more than 20% away from half
 function bkHalf(gid) {
   const g = S.bkPos.find(x => x.gid === gid); if (!g || g.closing) return false;
+  if (TradeLink.live) { bkLive({ do: 'half', gid }, `${g.name}: close half`); return true; }
   const mkt = mktState('EURUSD'); if (!mkt.open) { toast('Not closed', `${g.name}: ${mkt.label}.`, 'dn'); return false; }
   const legs = S.positions.filter(p => p.bgid === gid), bad = [];
+  // the lots the close will really take (closeLots: down to the step, nothing under the minimum size), not a rounding
   for (const p of legs) {
-    const mn = volOf(p.sym)[0]; let l = Math.max(mn, normLots(p.sym, p.lots * .5));
-    if (l >= p.lots - 1e-9 || p.lots - l < mn - 1e-9) l = p.lots;
-    const f = l / p.lots; if (Math.abs(f - .5) > .1 + 1e-9) bad.push(`${pretty(p.sym)} ${lotsFmt(p.sym, p.lots)} → ${lotsFmt(p.sym, l)} (${Math.round(f * 100)}%)`);
+    const l = closeLots(p, .5), f = l / p.lots;
+    if (!l) bad.push(`${pretty(p.sym)} ${lotsFmt(p.sym, p.lots)} → none (minimum size ${lotsFmt(p.sym, volOf(p.sym)[0])})`);
+    else if (Math.abs(f - .5) > .1 + 1e-9) bad.push(`${pretty(p.sym)} ${lotsFmt(p.sym, p.lots)} → ${lotsFmt(p.sym, l)} (${Math.round(f * 100)}%)`);
   }
   if (bad.length) { toast('½ refused at this size', `Half of a leg rounds more than 20% away from half: ${bad.join(', ')}. Close the whole basket instead.`, 'dn'); return false; }
+  const n0 = legs.reduce((a, p) => a + notionalUsd(p.sym, p.lots), 0);
   for (const p of legs) closeVia(p.id, 'Basket close', .5, { basket: true });
   const now = S.positions.filter(p => p.bgid === gid), miss = now.filter(p => { const r = (g.legs || []).find(x => x.id === p.id); return r && p.lots >= r.lots - 1e-9; });
   g.legs = now.map(p => ({ id: p.id, lots: p.lots }));
-  g.lots /= 2; if (g.risk) g.risk /= 2; save();
+  // the basket's size follows what is really left: the notional of the legs now over the notional before the close
+  const k = n0 > 0 ? now.reduce((a, p) => a + notionalUsd(p.sym, p.lots), 0) / n0 : .5;
+  g.lots = +(g.lots * k).toFixed(4); if (g.risk) g.risk *= k; save();
   toast(`${g.name}: ${miss.length ? `half closed on ${legs.length - miss.length} of ${legs.length} legs` : 'closed half'}`, `${usdFmt(S.history.filter(h => h.bgid === gid).reduce((a, h) => a + h.pnl, 0), true)} banked so far${miss.length ? ' · the legs left whole keep their full size' : ''}`, miss.length ? 'warn' : 'info');
   return !miss.length;
 }
@@ -685,11 +705,12 @@ function bkHistHtml() {
   const H = all.filter(h => !bkHistBad(h)), nx = all.length - H.length;
   const W = H.filter(h => h.pnl > 0), cap = W.filter(h => h.mfe > 0 && Number.isFinite(h.mv)).map(h => h.mv / h.mfe), mae = bhMean(H.map(h => Math.abs(h.mae))), er = H.length && mae > 0 ? [bhMean(H.map(h => h.mfe)) / mae] : [];
   return `<div class="ins"><label>Basket record · ${H.length}${nx ? ` <span class="muted">+ ${nx} excluded</span>` : ''}</label>
-    <div class="obs-kpis bh-kpis three">${kpi('Win rate', H.length ? (W.length / H.length * 100).toFixed(0) + '%' : '—', '', `Win rate|${W.length} of ${H.length} closed baskets made money${nx ? `; ${nx} recorded before the 24.10 fix are left out` : ''}. On a few baskets this is mostly luck.`)}${kpi('Kept of best move', cap.length ? (bhMean(cap) * 100).toFixed(0) + '%' : '—', '', `Kept of best move|On the ${cap.length} winning baskets, the move at the close as a share of the best move while open.`)}${kpi('Edge ratio', er.length ? bhMean(er).toFixed(2) : '—', '', `Edge ratio|Average best ÷ average worst move while open, over ${H.length} baskets. On this zero-drift simulated market expect about 1 before costs; a few baskets swing it either way.`)}</div>
+    <div class="obs-kpis bh-kpis three">${kpi('Win rate', H.length ? (W.length / H.length * 100).toFixed(0) + '%' : '—', '', `Win rate|${W.length} of ${H.length} closed baskets made money${nx ? `; ${nx} recorded before the 24.10 fix are left out` : ''}. On a few baskets this is mostly luck.`)}${kpi('Kept of best move', cap.length ? (bhMean(cap) * 100).toFixed(0) + '%' : '—', '', `Kept of best move|On the ${cap.length} winning baskets, the move at the close as a share of the best move while open.`)}${kpi('Edge ratio', er.length ? bhMean(er).toFixed(2) : '—', '', `Edge ratio|Average best ÷ average worst move while open, over ${H.length} baskets. A few baskets swing it either way.`)}</div>
     <div class="bk-hist">${all.slice(0, 6).map(h => { const bad = bkHistBad(h); return `<div class="bk-h${bad ? ' ex' : ''}"><div><b>${escHtml(h.name)}</b> <span class="tag ${escHtml(h.side)}">${escHtml(h.side)}</span><div class="small muted mono">${escHtml(String(h.reason).replace('Basket ', ''))} · best <span class="up">${sgn(h.mfe, 0)}</span> · worst <span class="dn">${sgn(h.mae, 0)}</span> bp</div>${bad ? '<div class="small muted">excluded: recorded before the 24.10 fix</div>' : ''}</div><b class="mono ${bad ? 'muted' : cls(h.pnl)}">${usdFmt(h.pnl, true)}</b></div>`; }).join('')}</div>
     <p class="small muted">Best and worst are the basket's largest move for and against you while open, in bp (MFE / MAE). Edge ratio = average best ÷ average worst.</p></div>`;
 }
 function bkMonitor() {
+  if (TradeLink.live) return; // the live account's baskets are watched on the execution server (Task 9)
   const open = mktState('EURUSD').open;
   if (S.bkAlerts && S.bkAlerts.length) for (const a of [...S.bkAlerts]) { const b = bkComp(a); if (!b) continue; const v = bkIdxNow(b); if (v >= a.up || v <= a.dn) { S.bkAlerts = S.bkAlerts.filter(x => x !== a); save(); toast(`${a.name} ${v >= a.up ? 'up' : 'down'} ${a.bp} bp`, `Basket alert set ${bhDur(Engine.simTime - a.t)} ago`, v >= a.up ? 'up move' : 'dn move'); beep('alert'); if (activeTab === 'obs' && obsCfg().view === 'bask') setTimeout(obsDraw, 0); } }
   // pending baskets fill only while the legs quote: a trigger crossed during the close fills at the reopening gap
@@ -767,12 +788,15 @@ function bindBasket() {
     const an = t.closest('[data-bkan] [data-val]'); if (an) { c.bkAn = an.dataset.val; save(); obsDraw(); return; }
     const aw = t.closest('[data-bkanw] [data-val]'); if (aw) { c.bkAnW = +aw.dataset.val; save(); const a = $('#bkAn'); if (a) a.innerHTML = bkAnHtml(bkGet(c.bkSel), c); $$('[data-bkanw] button').forEach(x => x.classList.toggle('on', x === aw)); return; }
     const en = t.closest('[data-bkentry] [data-val]'); if (en) { c.bkEntry = en.dataset.val; save(); obsDraw(); return; }
-    const ox = t.closest('[data-bk-ordx]'); if (ox) { S.bkOrders.splice(+ox.dataset.bkOrdx, 1); save(); setTimeout(obsDraw, 0); return; }
+    const ox = t.closest('[data-bk-ordx]'); if (ox && TradeLink.live) { const o = S.bkOrders[+ox.dataset.bkOrdx]; if (o) bkLive({ do: 'cancel', id: o.id }, `${o.name}: cancel`); return; }
+    if (ox) { S.bkOrders.splice(+ox.dataset.bkOrdx, 1); save(); setTimeout(obsDraw, 0); return; }
+    if (t.closest('[data-bk-alert]') && TradeLink.live) { const b = bkGet(c.bkSel), bpv = c.bkAl, snap = bkSnapOf(b); bkLive({ do: 'alert', bid: b.id, name: b.name, long: snap.long, short: snap.short, bp: bpv }, `${b.name}: alert`, ['Basket alert set', `${b.name} ±${bpv} bp`]); return; }
     if (t.closest('[data-bk-alert]')) { const b = bkGet(c.bkSel), bpv = c.bkAl; S.bkAlerts.push(bkAlertRow(b, bpv)); save(); toast('Basket alert set', `${b.name} ±${bpv} bp`, 'info'); setTimeout(obsDraw, 0); return; }
-    const ax = t.closest('[data-bk-alx]'); if (ax) { S.bkAlerts.splice(+ax.dataset.bkAlx, 1); save(); setTimeout(obsDraw, 0); return; }
+    const ax = t.closest('[data-bk-alx]'); if (ax && TradeLink.live) { const a = S.bkAlerts[+ax.dataset.bkAlx]; if (a) bkLive({ do: 'alertDel', id: a.id }, `${a.name}: alert`); return; }
+    if (ax) { S.bkAlerts.splice(+ax.dataset.bkAlx, 1); save(); setTimeout(obsDraw, 0); return; }
     if (t.closest('[data-bk-eq]')) { const b = c.baskets.find(x => x.id === c.bkSel); if (b) { bkEqualise(b); save(); toast('Risk equalised', 'Weights now scale with 1 / volatility of each currency', 'info'); setTimeout(obsDraw, 0); } return; }
     const hf = t.closest('[data-bk-half]'); if (hf) { bkHalf(hf.dataset.bkHalf); setTimeout(obsDraw, 0); return; }
-    const be = t.closest('[data-bk-be]'); if (be) { const g = S.bkPos.find(x => x.gid === be.dataset.bkBe); if (g && bkBeOk(g)) { g.beSet = true; save(); toast(`${g.name}: stop at break-even`, `The basket stop is now at +${(g.cost || 0).toFixed(1)} bp on the index: the entry spreads are already paid, so a close there is about flat (slippage aside).`, 'info'); } setTimeout(obsDraw, 0); return; }
+    const be = t.closest('[data-bk-be]'); if (be) { const g = S.bkPos.find(x => x.gid === be.dataset.bkBe); if (g && bkBeOk(g) && TradeLink.live) { bkLive({ do: 'be', gid: g.gid }, `${g.name}: break-even`); return; } if (g && bkBeOk(g)) { g.beSet = true; save(); toast(`${g.name}: stop at break-even`, `The basket stop is now at +${(g.cost || 0).toFixed(1)} bp on the index: the entry spreads are already paid, so a close there is about flat (slippage aside).`, 'info'); } setTimeout(obsDraw, 0); return; }
     if (t.closest('[data-bk-exp]')) {
       const e = ccyExposure(), L = {}, Sx = {}; for (const [k, v] of Object.entries(e)) { if (v > 500) L[k] = +(v / 1e3).toFixed(1); else if (v < -500) Sx[k] = +(-v / 1e3).toFixed(1); }
       if (!Object.keys(L).length || !Object.keys(Sx).length) { toast('Nothing to chart', 'Exposure needs at least one long and one short currency', 'info'); return; }
@@ -839,3 +863,6 @@ function bindBasket() {
 OBS_VIEWS.push(['bask', 'Baskets', 'Build your own index']);
 OBS_SRC.bask = ['ICE U.S. Dollar Index methodology (DXY weights)', 'https://www.ice.com/insights/indexation-and-etfs/managing-us-dollar-risk-in-uncertain-times'];
 OBS_EXT.bask = drawBask;
+
+/* the proxy pill of Baskets › Analyse opens its instrument, like the same pills elsewhere (UX-67) */
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.ins button.pill[data-sym]'); if (b && typeof setSymbol === 'function') setSymbol(b.dataset.sym); });

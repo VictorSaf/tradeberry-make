@@ -158,69 +158,49 @@ function ruleFn(rules, X) {
 }
 
 /* ---------- history ----------
-   The engine keeps one week of 1-minute bars. For a test with enough trades the backtester simulates the weeks before
-   it, for the chosen instrument only: backwards from the first live bar, so the series joins it without a jump.
-   The same kind of market as the live week, measured on it: per-minute volatility from the week's own profile by
-   15-minute slot of the day (median |return| × √(π/2), reopening jumps left out), Student-t(4) shocks for fat tails,
-   an hour-scale volatility regime (log-volatility AR(1), sd 0.3, half-life about 2 hours), a jump at each reopening,
-   zero drift, bars only while the market is open (Engine.isOpen). Seeded on the instrument, the engine's seed, the
-   weeks and the week's first bar: the same settings give the same history. It is not the engine's own path, and the
-   report says which part is simulated. */
+   The backtester runs on the platform's own prices only (spec istoric-la-cerere, decision 6). The live week is the
+   engine's 1-minute bars of the instrument (the platform's last 7 days plus the ticks); 4, 8 or 12 weeks add the
+   platform's 1-minute bars before it, fetched when the run starts (livefeed.js liveRange) and kept for the session.
+   Without a feed there is no run, and a platform history that starts later than asked is said, not filled. */
 const BT_HIST = [1, 4, 8, 12];
-const BT_HC = new Map();
-function btRng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const BT_SUB = 4, BT_SDV = .3;
-let BT_MED1 = 0;
-function btMed1() {
-  if (BT_MED1) return BT_MED1;
-  const rnd = btRng(20261024), nrm = () => Math.sqrt(-2 * Math.log(rnd() || 1e-12)) * Math.cos(2 * Math.PI * rnd());
-  const t4 = () => nrm() / Math.sqrt(-Math.log((rnd() || 1e-12) * (rnd() || 1e-12)) / 2) / Math.SQRT2, x = [];
-  for (let i = 0; i < 40000; i++) { const vf = Math.exp(BT_SDV * nrm() - BT_SDV * BT_SDV); let r = 0; for (let j = 0; j < BT_SUB; j++) r += t4(); x.push(Math.abs(vf * r / Math.sqrt(BT_SUB))); }
-  x.sort((a, b) => a - b); return (BT_MED1 = x[20000]);
+const BT_REAL = new Map(); // sym|weeks -> { st: 'loading' | 'ok' | 'failed', bars, done, total, p, on }
+const btRealKey = (sym, w) => sym + '|' + w;
+const btFed = sym => typeof liveHas === 'function' && !!liveHas(sym);
+// fetch the weeks before the live week once per instrument and span; at most 6 spans kept (the current run's stays)
+function btLoad(sym, w, prog) {
+  const k = btRealKey(sym, w), e = BT_REAL.get(k);
+  if (e && e.st !== 'failed') { if (prog) e.on = prog; return e.p; }
+  const live = Engine.candles[sym] || [], now = Engine.simTime, to = live.length ? live[0].time : Math.floor(now / 60) * 60;
+  const n = { st: 'loading', bars: [], done: 0, total: Math.max(1, Math.ceil((to - (now - w * 7 * 86400)) / 604800)), on: prog };
+  n.p = Promise.resolve().then(() => liveRange(sym, 1, now - w * 7 * 86400, to, { onProgress: (d, t) => { n.done = d; n.total = t; if (n.on) n.on(d, t); } }))
+    .then(r => { n.st = 'ok'; n.bars = (r && r.bars) || []; }, err => { n.st = 'failed'; n.err = err; });
+  BT_REAL.delete(k); BT_REAL.set(k, n);
+  for (const key of BT_REAL.keys()) { if (BT_REAL.size <= 6) break; if (key !== k && !(BT.res && key === btRealKey(BT.res.sym, BT.res.cfg.hist))) BT_REAL.delete(key); }
+  return n.p;
 }
-function btSynth(sym, weeks, live) {
-  const T = live.map(b => b.time), sl = Array.from({ length: 96 }, () => []), all = [];
-  for (let i = 1; i < live.length; i++) { if (isGapAt(T, i)) continue; const r = Math.abs(Math.log(live[i].close / live[i - 1].close)); sl[Math.floor((T[i] % 86400) / 900)].push(r); all.push(r); }
-  const med = x => { if (!x.length) return 0; const y = x.slice().sort((a, b) => a - b), n = y.length; return n % 2 ? y[n >> 1] : (y[n / 2 - 1] + y[n / 2]) / 2; };
-  const rnd = btRng(parseInt(btHash(`${sym}|${weeks}|${Engine.seed}|${T[0]}`), 16));
-  const nrm = () => Math.sqrt(-2 * Math.log(rnd() || 1e-12)) * Math.cos(2 * Math.PI * rnd());
-  const t4 = () => nrm() / Math.sqrt(-Math.log((rnd() || 1e-12) * (rnd() || 1e-12)) / 2) / Math.SQRT2; // t(4) scaled to unit variance
-  // the slot's scale makes the simulated median |1-minute return| equal the live one (BT_MED1: the median of one
-  // simulated minute at scale 1, with the fat tails and the regime factor)
-  const base = med(all) / btMed1(), sig = sl.map(x => x.length >= 5 ? med(x) / btMed1() : base);
-  const mins = []; for (let t = T[0] - 60, lo = T[0] - (weeks - 1) * 7 * 86400; t >= lo; t -= 60) if (Engine.isOpen(sym, t)) mins.push(t);
-  mins.reverse();
-  const SUB = BT_SUB, A = Math.exp(-1 / 170), SDV = BT_SDV, out = []; let x = 0, lv = 0;
-  for (let i = 0; i < mins.length; i++) {
-    const t = mins[i], s0 = sig[Math.floor((t % 86400) / 900)];
-    lv = A * lv + SDV * Math.sqrt(1 - A * A) * nrm();
-    const s = s0 * Math.exp(lv - SDV * SDV) / Math.sqrt(SUB);
-    if (i && t - mins[i - 1] > GAP_S) x += 3 * s0 * nrm(); // the reopening opens away from the last close
-    let o = x, h = x, l = x;
-    for (let j = 0; j < SUB; j++) { x += s * t4(); if (x > h) h = x; if (x < l) l = x; }
-    out.push({ time: t, open: o, high: h, low: l, close: x });
-  }
-  // shift so the simulated path closes where the live week opens
-  const off = Math.log(live[0].open) - x;
-  for (const b of out) { b.open = Math.exp(b.open + off); b.high = Math.exp(b.high + off); b.low = Math.exp(b.low + off); b.close = Math.exp(b.close + off); }
-  return out;
-}
-// the 1-minute history of a run and its bars: simulated weeks + the live week; the bar still forming is left out
-// (signals act on closed bars, as live trading does)
+// the 1-minute history of a run and its bars; the bar still forming is left out (signals act on closed bars, as live
+// trading does). why: null | 'no-feed' | 'loading' | 'failed' | 'short' (the platform starts more than a day after `want`)
 function btBars(sym, tf, weeks = 1) {
-  const live = Engine.candles[sym] || [], w = BT_HIST.includes(weeks) ? weeks : 1;
-  if (!live.length) return { bars: [], src: live, liveFrom: null, simW: 0 };
-  const key = `${sym}|${w}|${live[0].time}`;
-  let syn = w > 1 && live.length >= 200 ? BT_HC.get(key) : [];
-  if (!syn) { syn = btSynth(sym, w, live); BT_HC.set(key, syn); if (BT_HC.size > 8) BT_HC.delete(BT_HC.keys().next().value); }
-  const src = syn.length ? syn.concat(live) : live, step = tf * 60, bars = [];
+  const live = Engine.candles[sym] || [], w = BT_HIST.includes(weeks) ? weeks : 1, to = Engine.simTime, want = to - w * 7 * 86400;
+  const none = why => ({ bars: [], src: [], from: null, to, want, why });
+  if (!btFed(sym)) return none('no-feed');
+  if (!live.length) return none('loading');
+  let src = live;
+  if (w > 1) {
+    const e = BT_REAL.get(btRealKey(sym, w));
+    if (!e || e.st === 'loading') return none('loading');
+    if (e.st === 'failed') return none('failed');
+    const l0 = live[0].time; src = e.bars.filter(b => b.time < l0).concat(live);
+  }
+  const step = tf * 60, bars = [];
   for (const c of src) {
     const b = Math.floor(c.time / step) * step, last = bars[bars.length - 1];
     if (!last || last.time !== b) bars.push({ time: b, open: c.open, high: c.high, low: c.low, close: c.close });
     else { if (c.high > last.high) last.high = c.high; if (c.low < last.low) last.low = c.low; last.close = c.close; }
   }
   if (bars.length && bars[bars.length - 1].time + step > Engine.simTime) bars.pop();
-  return { bars, src, liveFrom: syn.length ? live[0].time : null, simW: syn.length ? w - 1 : 0 };
+  const from = src[0].time;
+  return { bars, src, from, to, want, why: w > 1 && from > want + 86400 ? 'short' : null };
 }
 
 /* ---------- simulation ---------- */
@@ -315,7 +295,7 @@ function runBacktest(c, sym, opt = {}) {
   if (pos) close(ex(bars[to - 1].close, bars[to - 1].time, pos.side), bars[to - 1].time + tf * 60, 'End of data');
   const last = curve.length ? curve[curve.length - 1] : null; if (last) last.eq = eq;
   return { sym, tf, trades, curve, ret: barRet, stats: btStats(trades, barRet, mdd, btPerYear(bars, from, to, tf), inMkt / Math.max(1, to - from)), costMode: K.mode, from: bars[from]?.time, to: bars[to - 1]?.time, mkt: bars[to - 1] && bars[from] ? (bars[to - 1].close / bars[from].open - 1) * 100 : 0, nBars: to - from, totalBars: n, warm,
-    liveFrom: HB.liveFrom, simW: HB.simW, sized, capped, skipped, capBy, lev, levX, commLot, vMax, slFixPts: c.slMode === 'pips' ? slFix / m.pip : null, trailFixPts: trail === 'pips' ? btFixed(c, sym, 'trail') : null };
+    histFrom: HB.from, histTo: HB.to, histShort: HB.why === 'short', sized, capped, skipped, capBy, lev, levX, commLot, vMax, slFixPts: c.slMode === 'pips' ? slFix / m.pip : null, trailFixPts: trail === 'pips' ? btFixed(c, sym, 'trail') : null };
 }
 // P(X ≥ k) for X ~ Binomial(K, p): the chance of k+ profitable windows out of K on a coin-flip market
 function btBinomTail(K, k, p = .5) { if (k <= 0) return 1; if (k > K) return 0; let c = 1, s = 0; for (let i = 0; i <= K; i++) { if (i >= k) s += c * p ** i * (1 - p) ** (K - i); c = c * (K - i) / (i + 1); } return Math.min(1, s); }
@@ -457,9 +437,9 @@ function btHonest(R) {
 function btVerdict(s, H, p) {
   const tries = `${H.N} tr${H.N === 1 ? 'y' : 'ies'} in this account`;
   if (s.n < 20) return ['dn', `Too few trades to judge: ${s.n}. Below about 20 trades a result, good or bad, is mostly luck. A longer History, a lower timeframe or looser rules give more trades.`];
-  if (H.dsr != null && H.dsr >= .95) return ['neutral', `Looks better than luck after ${tries} (DSR ${p(H.dsr)}), but this market has zero drift by construction: it is a false positive and should fade on new data.`];
+  if (H.dsr != null && H.dsr >= .95) return ['neutral', `Looks better than luck after ${tries} (DSR ${p(H.dsr)}); check it on new data before trusting it.`];
   if (s.net > 0) return ['neutral', `Made ${usdFmt(s.net, true)} after costs, within what luck gives after ${tries} (DSR ${p(H.dsr)}): no evidence of an edge.`];
-  return ['dn', `Lost ${usdFmt(-s.net)} after costs: no evidence of an edge. On a zero-drift market that is the expected result, since costs are what every strategy pays.`];
+  return ['dn', `Lost ${usdFmt(-s.net)} after costs: no evidence of an edge. Costs are what every strategy pays.`];
 }
 function renderHonest() {
   const el = $('#btHonest'), R = BT.res; if (!el || !R) return;
@@ -468,9 +448,9 @@ function renderHonest() {
   // one muted line per measure (the figures that move); the full explanation is the label's tooltip
   const row = (lab, val, line, tip, c = '') => `<tr><td class="l bt-lk" tabindex="0"${tipAttr(`${lab}|${tip}`)}>${lab}</td><td class="${c}"><b>${val}</b></td><td class="l bt-line">${line}</td></tr>`;
   const pb = H.pb, [vc, vt] = btVerdict(s, H, p);
-  const top = $('#btVerdict'); if (top) { top.className = `wf-verdict ${vc}`; top.innerHTML = `<b>Verdict:</b> ${vt}<span class="bt-sim">Simulated market: directional edge is zero by construction; results here measure luck and costs.</span>`; }
+  const top = $('#btVerdict'); if (top) { top.className = `wf-verdict ${vc}`; top.innerHTML = `<b>Verdict:</b> ${vt}`; }
   const k = pb ? Math.round(pb.pbo * pb.splits) : 0;
-  el.innerHTML = `<h3 class="bt-band" tabindex="0"${tipAttr('How much of this could be luck|Every run, optimizer cell, walk-forward window and all-pairs run is recorded and kept between sessions. On this simulated market the true edge is zero, so a high PSR or DSR is a false positive and PBO near 50% is the expected result.')}>How much of this could be luck</h3><table class="tbl sm bt-luck"><tbody>
+  el.innerHTML = `<h3 class="bt-band" tabindex="0"${tipAttr('How much of this could be luck|Every run, optimizer cell, walk-forward window and all-pairs run is recorded and kept between sessions. A high PSR or DSR after many tries can still be luck; PBO near 50% means the optimizer picked noise.')}>How much of this could be luck</h3><table class="tbl sm bt-luck"><tbody>
     ${row('PSR', p(H.psr), few || `From ${s.n} trades · skew ${nfx(s.skew, 2)} · kurtosis ${nfx(s.kurt, 1)}`, few || `Probability the true per-trade Sharpe is above zero, judged from ${s.n} trades with their skew (${nfx(s.skew, 2)}) and fat tails (kurtosis ${nfx(s.kurt, 1)}).`)}
     ${row('DSR', p(H.dsr), few || (H.nEff > 1 ? `Bar: the luckiest of ${H.nEff} tries, ${nfx(H.sr0, 3)} per trade · this run ${nfx(s.srT, 3)}` : `Bar at zero after ${H.nEff ? 'one try' : 'no recorded tries'}: DSR equals PSR`),
       few || (H.nEff > 1 ? `Probability this edge is real after ${H.nEff} tries: the bar is the Sharpe the luckiest of ${H.nEff} tries would reach by chance (${nfx(H.sr0, 3)} per trade; this run ${nfx(s.srT, 3)}).` : `Probability this edge is real after ${H.nEff ? 'one try' : 'no recorded tries'}: with nothing to choose from, the bar stays at zero and DSR equals PSR. Every further setting you try raises it.`))}
@@ -479,7 +459,7 @@ function renderHonest() {
     ${row('N effective', `${H.nEff} <small>of ${H.N}</small>`, `${H.N} setting${H.N === 1 ? '' : 's'} tried in this account (this run: ${pretty(R.sym)} ${tfL})${pb ? ` · ${pb.cells} cells in ${pb.clusters} correlated group${pb.clusters === 1 ? '' : 's'}` : ''}`,
       `${H.N} distinct setting${H.N === 1 ? '' : 's'} tried in this account, on every template, instrument and timeframe (this run: ${pretty(R.sym)} ${tfL}). Choosing among them is part of the search, so all count. ${pb ? `The last optimizer grid's ${pb.cells} cells fall into ${pb.clusters} group${pb.clusters === 1 ? '' : 's'} whose returns correlate above 0.7; each group counts as one try (never fewer than half of all tries).` : 'All counted as independent until an optimizer grid shows how correlated they are.'}`)}
     </tbody></table>
-    <div class="wf-foot"><p class="small muted">Simulated market: the true edge is zero, so a high PSR or DSR is a false positive. Every try is recorded between sessions.</p><button class="ghost sm" id="btTrialsReset">Reset trials</button></div>`;
+    <div class="wf-foot"><p class="small muted">Every try is recorded between sessions.</p><button class="ghost sm" id="btTrialsReset">Reset trials</button></div>`;
 }
 
 /* ---------- UI ---------- */
@@ -493,6 +473,7 @@ function ruleRow(side, i, r) {
   </div>`;
 }
 function renderBtConfig() {
+  { const a = document.activeElement, id = a && a.id && a.closest('#btCfg') ? a.id : ''; if (id) requestAnimationFrame(() => { const n = document.getElementById(id); if (n && document.activeElement !== n) n.focus({ preventScroll: true }); }); } // the redraw keeps the keyboard focus (UX-86)
   const c = btCfg(), t = TEMPLATES[c.tpl], sym = M(c.sym) ? c.sym : 'EURUSD', m = M(sym), uw = m.unit === 'pt' ? 'points' : 'pips', cfd = m.kind === 'cfd';
   const slF = btFixed(c, sym, 'sl'), trF = btFixed(c, sym, 'trail'), u1 = unitWord(sym, true), vol = m.p.vol, dec = c.costMode === 'declared';
   const near = v => v <= 2 * m.spread ? `<p class="small dn" style="margin:6px 0 0">A fixed ${v} ${u1} distance is within 2× the ${m.spread}-${u1} spread of ${pretty(sym)}: most of the stop is cost.</p>` : '';
@@ -502,7 +483,7 @@ function renderBtConfig() {
       <label>Instrument<select id="btSym">${instrOptions(c.sym, c.sym)}</select></label>
       <label>Timeframe<select id="btTf">${[[5, '5m'], [15, '15m'], [30, '30m'], [60, '1H']].map(([v, l]) => `<option value="${v}" ${v === c.tf ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <label class="w2">Direction<select id="btDir"><option value="both" ${c.dir === 'both' ? 'selected' : ''}>Long &amp; short</option><option value="long" ${c.dir === 'long' ? 'selected' : ''}>Long only</option><option value="short" ${c.dir === 'short' ? 'selected' : ''}>Short only</option></select></label>
-      <label${tipAttr('History|The live market keeps one week of 1-minute bars. Longer runs simulate the weeks before it for this instrument with the volatility measured on the live week (by time of day, fat tails, volatility regimes, zero drift), so they join the live week without a jump. Same settings, same history.')}>History<select id="btHist">${BT_HIST.map(w => `<option value="${w}" ${w === (c.hist || 1) ? 'selected' : ''}>${w === 1 ? 'Live week' : `${w} weeks`}</option>`).join('')}</select></label>
+      <label${tipAttr('History|Backtests run on the platform\'s own 1-minute prices. The live week is the one the chart shows; 4, 8 or 12 weeks fetch the weeks before it from the platform when you press Run (about 1 to 5 seconds a week), kept for the session.')}>History<select id="btHist">${BT_HIST.map(w => `<option value="${w}" ${w === (c.hist || 1) ? 'selected' : ''}>${w === 1 ? 'Live week' : `${w} weeks`}</option>`).join('')}</select></label>
     </div></div>
     <div class="bt-sec"><h3>Strategy</h3>
       <div class="tpl-grid" role="group" aria-label="Strategy template">${Object.entries(TEMPLATES).map(([k, v]) => `<button class="tpl ${k === c.tpl ? 'on' : ''}" data-tpl="${k}" aria-pressed="${k === c.tpl}">${v.name}</button>`).join('')}</div>
@@ -563,7 +544,25 @@ function readBtConfig() {
   return c;
 }
 function btRunAll() {
-  const c = readBtConfig(), bars = btBars(c.sym, c.tf, c.hist).bars, n = bars.length;
+  const c = readBtConfig(), w = BT_HIST.includes(c.hist) ? c.hist : 1, el = $('#btOut'), nm = escHtml(pretty(c.sym));
+  const say = (h, more = '') => { if (el) el.innerHTML = `<div class="bt-empty" role="status"><h3>${h}</h3>${more}</div>`; };
+  if (!btFed(c.sym)) { say(`Backtests run on the platform's prices. ${nm} has no live feed right now.`); return Promise.resolve(false); }
+  if (w > 1) {
+    const k = btRealKey(c.sym, w), e = BT_REAL.get(k), show = (d, t) => say(`Loading ${w} weeks of ${nm} prices from the platform… ${d}/${t}`);
+    if (e && e.st === 'failed') BT_REAL.delete(k); // a Run after a failure asks again
+    if (!e || e.st !== 'ok') {
+      const first = !e || e.st === 'failed', p = btLoad(c.sym, w, show), n = BT_REAL.get(k);
+      show(n.done, n.total);
+      return first ? p.then(() => {
+        const c1 = readBtConfig(); if (c1.sym !== c.sym || (BT_HIST.includes(c1.hist) ? c1.hist : 1) !== w) return false;
+        if (n.st === 'failed') { say(`Could not load ${nm} history from the platform.`, '<p><button class="btn-pri" id="btRetry">Retry</button></p>'); return false; }
+        return btRunAll();
+      }) : p.then(() => false);
+    }
+  }
+  const H = btBars(c.sym, c.tf, c.hist);
+  if (H.why && H.why !== 'short') { say(`${nm} prices are still loading from the platform. Run again in a moment.`); return Promise.resolve(false); }
+  const bars = H.bars, n = bars.length;
   const split = c.oos > 0 ? Math.floor(n - (n - 0) * c.oos / 100) : n;
   const full = runBacktest(c, c.sym), is = c.oos > 0 ? runBacktest(c, c.sym, { to: split }) : null, oos = c.oos > 0 ? runBacktest(c, c.sym, { from: split }) : null;
   BT.res = { ...full, is, oos, split: bars[split]?.time, cfg: btCopy(c) };
@@ -571,13 +570,16 @@ function btRunAll() {
   btAddTrial(btKey(c), btCfgHash(c), full.stats); save();
   renderBtResults();
   if (BT.show) { dirty.markers = true; }
+  return Promise.resolve(true); // true only with a new BT.res: callers never carry on with an older result as if current
 }
 function renderBtResults() {
   const R = BT.res, el = $('#btOut');
-  if (!R) { el.innerHTML = `<div class="bt-empty"><h3>Test a strategy on tradeBerry's simulated price history</h3><p>Pick a template or build your own rules, then press <b>Run backtest</b>. Signals fire on bar close and fill at the next bar's open, with the account's spread, swap and commission (or costs you declare) plus slippage. Stops and targets are checked minute by minute.</p></div>`; return; }
+  if (!R) { el.innerHTML = `<div class="bt-empty"><h3>Test a strategy on tradeBerry's price history</h3><p>Pick a template or build your own rules, then press <b>Run backtest</b>. Signals fire on bar close and fill at the next bar's open, with the account's spread, swap and commission (or costs you declare) plus slippage. Stops and targets are checked minute by minute.</p></div>`; return; }
   const s = R.stats, m = M(R.sym);
   const days = ((R.to - R.from) / 86400).toFixed(1);
   let warn = '';
+  // a platform history that starts later than asked: the run covers the real part and says so
+  if (R.histShort) warn += `<div class="warn">The platform has 1-minute ${escHtml(pretty(R.sym))} prices only from ${new Date(R.histFrom * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}; this run covers ${Math.round((R.histTo - R.histFrom) / 86400)} days.</div>`;
   // sizing caps and stops near the spread are stated, so the result is not read as a pure 1%-risk run
   const u1 = unitWord(R.sym, true), why = R.capBy ? [R.capBy.lev && `the 1:${R.lev} leverage on ${pretty(R.sym)} (${escHtml(jurOf(S.set).name)}: notional ≤ equity × ${R.lev})`, R.capBy.x && `the per-order cap of ${MAX_NOTIONAL_X}× equity`, R.capBy.lots && `the sheet's maximum of ${lotsWord(R.sym, R.vMax ?? m.p.vol[1])} per order`].filter(Boolean) : [];
   if (R.capped) warn += `<div class="warn">Size capped on ${R.capped} of ${R.sized} entries by ${why.join(' and ')}: those trades risked less than ${R.cfg.risk}% of equity.</div>`;
@@ -589,14 +591,14 @@ function renderBtResults() {
     const a = R.is.stats, b = R.oos.stats;
     const decay = a.expR > 0 && b.expR < a.expR * .4, tB = btT(R.oos.trades.map(t => t.r));
     const oosTxt = s.n < 20 ? '' : b.n < 5 ? `Out-of-sample slice has only ${b.n} trade${b.n === 1 ? '' : 's'}; too few to test.` :
-      `Out-of-sample expectancy ${sgn(b.expR, 2)}R over ${b.n} trades, t = ${nfx(tB, 2)}${tB == null || Math.abs(tB) < 2 ? ' — not distinguishable from zero.' : ' — |t| ≥ 2, but on a zero-drift market about 1 test in 20 gets there by luck.'}`;
+      `Out-of-sample expectancy ${sgn(b.expR, 2)}R over ${b.n} trades, t = ${nfx(tB, 2)}${tB == null || Math.abs(tB) < 2 ? ' — not distinguishable from zero.' : ' — |t| ≥ 2, but about 1 test in 20 gets there by luck.'}`;
     const row = (lab, f) => `<tr><td>${lab}</td><td>${f(a)}</td><td>${f(b)}</td></tr>`;
     return `<div class="oos"><h3>In-sample vs out-of-sample</h3><table class="tbl sm"><thead><tr><th><span class="sr-only">Measure</span></th><th>In-sample</th><th>Out-of-sample</th></tr></thead><tbody>
       ${row('Trades', x => x.n)}${row('Return', x => `<span class="${cls(x.ret)}">${pct(x.ret)}</span>`)}${row('Win rate', x => pct(x.win, 0, false))}${row('Profit factor', x => fmtR(x.pf))}${row('Expectancy', x => `<span class="${cls(x.expR)}">${sgn(x.expR, 2)}R</span>`)}
       </tbody></table><p class="small ${decay ? 'dn' : 'muted'}">${decay ? 'The in-sample result fades out of sample — likely curve-fitted. ' : ''}${oosTxt}</p></div>`;
   })() : '';
   el.innerHTML = `
-    <div class="bt-head"><div><b>${TEMPLATES[R.cfg.tpl].name}</b> on ${pretty(R.sym)} · ${R.tf >= 60 ? R.tf / 60 + 'H' : R.tf + 'm'} · ${R.nBars} bars · ${days} days${R.simW ? ` <span class="muted small"${tipAttr(`History|${R.simW} simulated week${R.simW === 1 ? '' : 's'} before the live week, measured on it: volatility by time of day, fat tails, volatility regimes, zero drift. Trades before ${dts(R.liveFrom)} are marked sim.`)}>(${R.simW} wk simulated + live week)</span>` : ''}</div>
+    <div class="bt-head"><div><b>${TEMPLATES[R.cfg.tpl].name}</b> on ${pretty(R.sym)} · ${R.tf >= 60 ? R.tf / 60 + 'H' : R.tf + 'm'} · ${R.nBars} bars · ${days} days <span class="muted small"${tipAttr('History|The platform\'s own 1-minute prices, the whole span of the run, fetched when the run started.')}>(platform prices)</span></div>
       <div class="bt-acts"><label class="chk"><input type="checkbox" id="btShow" ${BT.show ? 'checked' : ''}> Show on chart</label><button class="ghost sm" id="btToLab">Send to Risk Lab</button><button class="ghost sm" id="btCsv">Export CSV</button></div></div>
     <p class="wf-verdict" id="btVerdict"></p>
     ${warn}${costs}
@@ -624,7 +626,6 @@ function drawBtCurve() {
   g.font = '10px JetBrains Mono'; g.fillStyle = c.tx; g.strokeStyle = c.grid; g.lineWidth = 1;
   for (let k = 0; k <= 3; k++) { const v = mn - pad + (mx - mn + 2 * pad) * k / 3, y = Y(v); g.beginPath(); g.moveTo(46, y); g.lineTo(w - 8, y); g.stroke(); g.fillText(((v / BT_START - 1) * 100).toFixed(1) + '%', 2, y + 3); }
   if (R.split) { const si = pts.findIndex(p => p.t >= R.split); if (si > 0) { const x = X(si); g.fillStyle = c.tx2 + '14'; g.fillRect(x, top, w - 8 - x, bot - top); g.setLineDash([3, 3]); g.strokeStyle = c.tx2; g.beginPath(); g.moveTo(x, top); g.lineTo(x, bot); g.stroke(); g.setLineDash([]); g.fillStyle = c.tx2; g.fillText('out-of-sample →', x + 4, top + 10); } }
-  if (R.liveFrom) { const li = pts.findIndex(p => p.t >= R.liveFrom); if (li > 0) { const x = X(li); g.setLineDash([1, 3]); g.strokeStyle = c.tx2; g.beginPath(); g.moveTo(x, top); g.lineTo(x, bot); g.stroke(); g.setLineDash([]); g.fillStyle = c.tx2; const lab = '← simulated weeks | live'; g.fillText(lab, Math.max(48, x - g.measureText('← simulated weeks ').width), bot - 4); } }
   const col = eqs[eqs.length - 1] >= BT_START ? c.up : c.dn;
   // flat 15% fill under the line, no gradient
   g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(X(i), Y(p.eq)) : g.moveTo(X(i), Y(p.eq))); g.lineTo(X(pts.length - 1), bot); g.lineTo(X(0), bot); g.fillStyle = col + '26'; g.fill();
@@ -643,7 +644,7 @@ function renderBtView() {
     const w = R.trades.filter(t => t.r > 0), mfeAvg = R.trades.length ? R.trades.reduce((a, t) => a + t.mfe, 0) / R.trades.length : 0, capt = w.length ? w.reduce((a, t) => a + t.r, 0) / Math.max(1e-9, w.reduce((a, t) => a + t.mfe, 0)) * 100 : 0;
     const exitSum = R.trades.length ? `<div class="bt-exits small"><span class="muted">Exits</span>${Object.entries(ex).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="ex-chip">${k} <b>${v}</b></span>`).join('')}<span class="muted" title="Average best open profit reached, in R">· avg max favourable move <b class="tx">${mfeAvg.toFixed(2)}R</b></span><span class="muted" title="Share of the best open profit that winning trades actually kept">· winners kept <b class="tx">${capt.toFixed(0)}%</b> of it</span></div>` : '';
     el.innerHTML = tr.length ? exitSum + `<table class="tbl sm bt-trades"><thead><tr><th>#</th><th class="l">Side</th><th>Entry time</th><th>Entry</th><th>Exit time</th><th>Exit</th><th>${M(R.sym).lotName === 'contracts' ? 'Contracts' : 'Lots'}</th><th>Bars</th><th>${M(R.sym).unit === 'pt' ? 'Points' : 'Pips'}</th><th title="Max favourable excursion, in R">MFE</th><th>R</th><th>P&amp;L</th><th class="l">Exit reason</th></tr></thead><tbody>
-      ${tr.map((t, i) => `<tr class="bt-tr" data-t="${t.et}" data-x="${t.xt}"><td>${R.trades.length - i}</td><td class="l"><span class="tag ${t.side}">${t.side}</span></td><td title="${dts(t.et)}">${dts(t.et)}${R.liveFrom && t.et < R.liveFrom ? ` <span class="tag bt-simtag"${tipAttr('Simulated history|This trade falls in the simulated weeks before the live week: it is not on the chart.')}>sim</span>` : ''}</td><td>${fp(R.sym, t.ep)}</td><td title="${dts(t.xt)}">${dts(t.xt)}</td><td>${fp(R.sym, t.xp)}</td><td>${t.lots.toFixed(2)}</td><td>${t.bars}</td><td class="${cls(t.pips)}">${sgn(t.pips)}</td><td class="muted">${t.mfe.toFixed(2)}</td><td class="${cls(t.r)}">${sgn(t.r, 2)}</td><td class="${cls(t.pnl)}">${usdFmt(t.pnl, true)}</td><td class="l muted" title="${t.reason}">${t.reason}</td></tr>`).join('')}</tbody></table>`
+      ${tr.map((t, i) => `<tr class="bt-tr" data-t="${t.et}" data-x="${t.xt}"><td>${R.trades.length - i}</td><td class="l"><span class="tag ${t.side}">${t.side}</span></td><td title="${dts(t.et)}">${dts(t.et)}</td><td>${fp(R.sym, t.ep)}</td><td title="${dts(t.xt)}">${dts(t.xt)}</td><td>${fp(R.sym, t.xp)}</td><td>${t.lots.toFixed(2)}</td><td>${t.bars}</td><td class="${cls(t.pips)}">${sgn(t.pips)}</td><td class="muted">${t.mfe.toFixed(2)}</td><td class="${cls(t.r)}">${sgn(t.r, 2)}</td><td class="${cls(t.pnl)}">${usdFmt(t.pnl, true)}</td><td class="l muted" title="${t.reason}">${t.reason}</td></tr>`).join('')}</tbody></table>`
       : '<div class="empty">No trades were triggered. Loosen the rules or change the timeframe.</div>';
   } else if (BT.view === 'opt') {
     const c = R.cfg, keys = sweepKeys(c);
@@ -732,19 +733,44 @@ function applyCell(vx, vy) {
   const sw = BT.sweep, c = btCfg();
   for (const [k, v] of [[sw.x, vx], [sw.y, vy]]) { if (SWEEP[k].p) c.p[k] = v; else c[k] = v; }
   if (c.tpl !== 'custom') c.tpl = c.tpl; // template keeps its name, params updated
-  renderBtConfig(); btRunAll(); BT.view = 'opt'; renderBtView(); BT.sweep && (BT.sweep.cur = { x: vx, y: vy }); runSweep();
+  // the grid comes back with the same pair of parameters and the same colour the user was looking at
+  const keep = { x: sw.x, y: sw.y, metric: sw.metric };
+  renderBtConfig();
+  btRunAll().then(ok => {
+    if (!ok) return;
+    BT.view = 'opt'; renderBtView();
+    const X = $('#optX'), Y = $('#optY'), Mt = $('#optM'); if (!X || !Y || !Mt) return;
+    const has = (el, v) => [...el.options].some(o => o.value === v);
+    if (has(X, keep.x)) X.value = keep.x; if (has(Y, keep.y)) Y.value = keep.y; Mt.value = keep.metric;
+    runSweep();
+  });
   toast('Settings applied', `${SWEEP[sw.x].label} ${vx} · ${SWEEP[sw.y].label} ${vy}`, 'info');
 }
-function runAllPairs() {
-  const c = readBtConfig();
-  BT.all = Engine.FX.map(p => { const r = runBacktest(c, p.sym), cp = { ...c, sym: p.sym }; btAddTrial(btKey(cp), btCfgHash(cp), r.stats); return { sym: p.sym, ...r.stats }; }).sort((a, b) => b.ret - a.ret);
+// each FX pair with a live feed, on the same span: the weeks before the live week are fetched one pair after another
+// (the run of a pair waits for its prices); pairs without a feed or whose history failed are left out and counted
+async function runAllPairs() {
+  if (BT.allBusy) return; // a second click while pairs are loading would run two loops into BT.all and count every try twice
+  BT.allBusy = true;
+  try { await allPairs(); } finally { BT.allBusy = false; }
+}
+async function allPairs() {
+  const c = readBtConfig(), w = BT_HIST.includes(c.hist) ? c.hist : 1, fed = Engine.FX.filter(p => btFed(p.sym)), out = [];
+  const say = h => { const el = $('#allBody'); if (el) el.innerHTML = `<div class="empty" role="status">${h}</div>`; };
+  for (let i = 0; i < fed.length; i++) {
+    const sym = fed[i].sym;
+    if (w > 1 && BT_REAL.get(btRealKey(sym, w))?.st !== 'ok') { say(`Loading ${w} weeks of ${escHtml(pretty(sym))} prices from the platform… pair ${i + 1}/${fed.length}`); await btLoad(sym, w); }
+    const H = btBars(sym, c.tf, w);
+    if (H.why === 'failed' || H.why === 'loading') continue;
+    const r = runBacktest(c, sym), cp = { ...c, sym }; btAddTrial(btKey(cp), btCfgHash(cp), r.stats); out.push({ sym, ...r.stats, from: H.why === 'short' ? H.from : null });
+  }
+  BT.all = out.sort((a, b) => b.ret - a.ret); BT.allOut = Engine.FX.length - out.length;
   save(); drawAll(); renderHonest();
 }
 function drawAll() {
   const el = $('#allBody'); if (!el || !BT.all) return;
   const pos = BT.all.filter(r => r.ret > 0).length, usd = BT.all.filter(r => M(r.sym) && (M(r.sym).base === 'USD' || M(r.sym).quote === 'USD')).length;
-  el.innerHTML = `<table class="tbl sm bt-all"><caption><b>${pos} of ${BT.all.length} pairs profitable</b> · <span tabindex="0"${tipAttr(`Not independent tests|The pairs share currencies (${usd} of them trade against USD), so their results move together: this is not ${BT.all.length} independent tests, but each one is a try that DSR counts.`)}>not ${BT.all.length} independent tests: the pairs share currencies (${usd} trade against USD)</span></caption><thead><tr><th>Pair</th><th>Trades</th><th>Win rate</th><th>Profit factor</th><th>Expectancy</th><th>Max DD</th><th>Sharpe</th><th>Return</th></tr></thead><tbody>
-    ${BT.all.map(r => `<tr class="all-tr" data-sym="${r.sym}"><td class="sym">${pretty(r.sym)}</td><td>${r.n}</td><td>${pct(r.win, 0, false)}</td><td>${fmtR(r.pf)}</td><td class="${cls(r.expR)}">${sgn(r.expR, 2)}R</td><td class="dn">${pct(-r.mdd, 1)}</td><td>${r.sharpe.toFixed(2)}</td><td class="${cls(r.ret)}">${pct(r.ret)}</td></tr>`).join('')}</tbody></table>`;
+  el.innerHTML = `<table class="tbl sm bt-all"><caption><b>${pos} of ${BT.all.length} pairs profitable</b>${BT.allOut ? ` · ${BT.allOut} left out (no live feed or no platform history)` : ''} · <span tabindex="0"${tipAttr(`Not independent tests|The pairs share currencies (${usd} of them trade against USD), so their results move together: this is not ${BT.all.length} independent tests, but each one is a try that DSR counts.`)}>not ${BT.all.length} independent tests: the pairs share currencies (${usd} trade against USD)</span></caption><thead><tr><th>Pair</th><th>Trades</th><th>Win rate</th><th>Profit factor</th><th>Expectancy</th><th>Max DD</th><th>Sharpe</th><th>Return</th></tr></thead><tbody>
+    ${BT.all.map(r => `<tr class="all-tr" data-sym="${r.sym}"><td class="sym">${pretty(r.sym)}${r.from ? ` <small class="muted">from ${new Date(r.from * 1000).toISOString().slice(0, 10)}</small>` : ''}</td><td>${r.n}</td><td>${pct(r.win, 0, false)}</td><td>${fmtR(r.pf)}</td><td class="${cls(r.expR)}">${sgn(r.expR, 2)}R</td><td class="dn">${pct(-r.mdd, 1)}</td><td>${r.sharpe.toFixed(2)}</td><td class="${cls(r.ret)}">${pct(r.ret)}</td></tr>`).join('')}</tbody></table>`;
 }
 function btMarkers(sym, step, first, lastT) {
   const R = BT.res; if (!BT.show || !R || R.sym !== sym) return [];
@@ -769,7 +795,7 @@ function bindBt() {
   cfgEl.addEventListener('click', e => {
     const t = e.target.closest('[data-tpl]'); if (t) { readBtConfig(); applyTemplate(t.dataset.tpl); renderBtConfig(); btRunAll(); return; }
     if (e.target.closest('#btRun')) { btRunAll(); return; }
-    if (e.target.closest('#btAll')) { btRunAll(); BT.view = 'all'; renderBtResults(); runAllPairs(); }
+    if (e.target.closest('#btAll')) { if (BT.allBusy) return; btRunAll().then(ok => { if (!ok) return; BT.view = 'all'; renderBtResults(); runAllPairs(); }); }
   });
   cfgEl.addEventListener('change', e => {
     const row = e.target.closest('.rule');
@@ -779,6 +805,7 @@ function bindBt() {
   });
   $('#btOut').addEventListener('click', e => {
     const v = e.target.closest('#btView button'); if (v) { BT.view = v.dataset.v; $$('#btView button').forEach(b => b.classList.toggle('on', b === v)); renderBtView(); return; }
+    if (e.target.closest('#btRetry')) { btRunAll(); return; }
     if (e.target.closest('#optRun')) { const b = e.target.closest('#optRun'); b.textContent = 'Running…'; setTimeout(() => { runSweep(); b.textContent = 'Run grid'; }, 20); return; }
     const cell = e.target.closest('.cell[data-x]'); if (cell) { applyCell(+cell.dataset.x, +cell.dataset.y); return; }
     if (e.target.closest('#allRun')) { runAllPairs(); return; }
@@ -916,7 +943,7 @@ function drawWf() {
   // null baseline: on a zero-drift walk each unseen window is profitable about half the time
   const pNull = btBinomTail(ok.length, prof), nullTxt = `On a random walk, ${prof} or more of ${ok.length} windows come out profitable by chance ${(pNull * 100).toFixed(pNull < .01 ? 1 : 0)}% of the time.`;
   const verdict = !ok.length ? ['dn', 'No fold produced enough training trades.'] :
-    s.ret > 0 && prof >= Math.ceil(ok.length * .6) && (F.wfe ?? 0) >= 50 && pNull <= .1 ? ['up', `Above the coin-flip baseline: ${prof} of ${ok.length} unseen windows were profitable and the strategy kept ${wfeTxt} of its training-period performance (≥ 50% is a common bar). ${nullTxt} On this zero-drift market that is still luck, not an edge.`] :
+    s.ret > 0 && prof >= Math.ceil(ok.length * .6) && (F.wfe ?? 0) >= 50 && pNull <= .1 ? ['up', `Above the coin-flip baseline: ${prof} of ${ok.length} unseen windows were profitable and the strategy kept ${wfeTxt} of its training-period performance (≥ 50% is a common bar). ${nullTxt} Check it on new data before trusting it.`] :
     s.ret > 0 ? ['neutral', `Not distinguishable from luck: profitable overall on unseen data, ${prof} of ${ok.length} windows won${F.wfe != null ? `, efficiency ${wfeTxt}` : ''}. ${nullTxt}`] :
     ['dn', `Not robust: re-optimising did not carry over — ${prof} of ${ok.length} unseen windows were profitable. ${nullTxt} The optimiser is mostly fitting noise.`];
   if (ok.length && s.n < 15) verdict[1] += ` Only ${s.n} trades on unseen data — too few to conclude much; try a lower timeframe or fewer folds.`;

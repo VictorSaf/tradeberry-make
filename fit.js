@@ -49,7 +49,7 @@
   const acts = document.querySelector('.acct-actions');
   if (acts && !document.getElementById('buildTag')) {
     const v = document.createElement('p'); v.id = 'buildTag'; v.className = 'muted small build-tag';
-    v.textContent = `trade.Berry v15.7.1 · build ${window.MFX_BUILD || 'dev'}`;
+    v.textContent = `tradeBerry v16.0 · build ${window.MFX_BUILD || 'dev'}`;
     acts.insertAdjacentElement('afterend', v);
   }
 

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade page guide · tradeBerry</title>
+<meta name="description" content="How to read and use the bottom panel of the Trade page in tradeBerry: Positions, Orders, History and Alerts, with the account figures, lots, pips and margin.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Trade <i>/</i> Positions, Orders, History, Alerts</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>The bottom panel in one minute</a>
+  <a href="#words"><span>02</span>Lots, pips, margin, leverage</a>
+  <a href="#acct"><span>03</span>The account figures</a>
+  <span class="p">II · The four tabs</span>
+  <a href="#pos"><span>04</span>Positions</a>
+  <a href="#ord"><span>05</span>Orders</a>
+  <a href="#hist"><span>06</span>History</a>
+  <a href="#al"><span>07</span>Alerts</a>
+  <span class="p">III · Using it</span>
+  <a href="#chart"><span>08</span>The same lines on the chart</a>
+  <a href="#down"><span>09</span>When the link or the prices stop</a>
+  <a href="#glossary"><span>10</span>Glossary</a>
+  <a href="#related"><span>11</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Trade</span>
+  <h1>Positions, Orders, History, Alerts</h1>
+  <p class="g-lede">The bottom panel of the Trade page is the state of your account: what is open now, what is waiting for a price, what is closed, and the prices you asked to be told about. This guide explains each column and each button, and the few words you need to read them.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Trade › bottom panel</b></div>
+    <div><label>Account</label><b>Demo: no real money</b></div>
+    <div><label>Closing</label><b>✕ closes at once, at the market</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the panel holds and the words it uses.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>The bottom panel in one minute</h3></div>
+  <p class="lead">Four tabs describe one account. An order you send from the ticket becomes a row in Positions (a market order) or in Orders (a pending order). When a position closes, its row moves to History.</p>
+  <div class="cards">
+    <div class="card"><h5>Positions</h5><p>What is open now, with its floating profit or loss. From here you close, halve, reverse or protect a position.</p></div>
+    <div class="card"><h5>Orders</h5><p>Pending orders: limit and stop orders that wait for their price. Nothing is bought or sold until the price is reached. Click an SL or TP cell to set, change or remove it while the order waits.</p></div>
+    <div class="card"><h5>History</h5><p>Closed trades, with the reason of the close, the costs and what reached the balance.</p></div>
+    <div class="card"><h5>Alerts</h5><p>Prices you asked to be told about. An alert sends no order.</p></div>
+  </div>
+  <div class="call key"><b class="t">The one rule to remember</b><p>The ✕ on a position row closes it at the market immediately, without a question. Close all asks the first time, then works with one click.</p></div>
+</section>
+
+<section class="ch" id="words">
+  <div class="ch-h"><span class="n">02</span><h3>Lots, pips, margin, leverage</h3></div>
+  <p class="lead">Four words carry most of the numbers on this page.</p>
+  <dl class="g-dl">
+    <dt>Lot</dt><dd>The size of a trade. On a currency pair 1 lot is 100,000 units of the first currency: 1 lot of EUR/USD is 100,000 euros; 0.10 lots is 10,000.</dd>
+    <dt>Pip</dt><dd>The unit a price move is counted in. On most pairs one pip is 0.0001; on pairs with the yen it is 0.01. On 1 lot of EUR/USD one pip is worth $10; on 0.10 lots, $1.</dd>
+    <dt>Leverage</dt><dd>How much larger than your deposit a position can be. At 1:100 a position of $100,000 needs $1,000 set aside.</dd>
+    <dt>Margin</dt><dd>The money set aside while a position is open: its value divided by the leverage. It is not a cost and it is not the most you can lose: the loss follows the price, not the margin.</dd>
+  </dl>
+  <div class="call warn"><b class="t">Leverage multiplies losses as well</b><p>With leverage a small move against you is a large part of the account. A position without a stop loss has no fixed limit to its loss short of the stop-out.</p></div>
+</section>
+
+<section class="ch" id="acct">
+  <div class="ch-h"><span class="n">03</span><h3>The account figures</h3></div>
+  <p class="lead">The five figures in the top bar are read together. A click on them opens Used margin, Drawdown and Leverage.</p>
+  <dl class="g-dl">
+    <dt>Balance</dt><dd>The account with closed trades only. It changes when a position closes.</dd>
+    <dt>Floating P&amp;L</dt><dd>The profit or loss of the open positions at the current prices. It is not yours until you close.</dd>
+    <dt>Equity</dt><dd>Balance plus floating P&amp;L: what the account is worth now.</dd>
+    <dt>Free margin</dt><dd>Equity minus used margin: what is left to open new positions. Negative means no new position can open.</dd>
+    <dt>Margin level</dt><dd>Equity ÷ used margin × 100. Under 100% no new position can open. At 50% the broker closes positions without asking: the stop-out. Under 100% the cell is labelled “Stop-out at 50%”.</dd>
+  </dl>
+  <div class="call tip"><b class="t">When the figures are greyed</b><p>“Floating P&amp;L · STALE” and greyed figures mean the page has lost the execution server or the prices: what you see is as last received, not the current state.</p></div>
+</section>
+
+<div class="g-part"><span class="n">II</span><div><h2>The four tabs</h2><p>Column by column, button by button.</p></div></div>
+
+<section class="ch" id="pos">
+  <div class="ch-h"><span class="n">04</span><h3>Positions</h3></div>
+  <p class="lead">One row per open position. On this account two orders on the same instrument join into one position (netting): a buy added to a buy raises its size and averages its entry; a sell against a buy reduces or closes it.</p>
+  <dl class="g-dl">
+    <dt>Entry, SL, TP</dt><dd>The average entry price, the stop loss and the take profit. Click SL or TP to set or change it.</dd>
+    <dt>P&amp;L</dt><dd>The floating result at the price you would close at: the bid for a buy, the ask for a sell.</dd>
+    <dt>Fill</dt><dd>Opens the receipt of the opening execution: price asked, price obtained, slippage, spread, commission.</dd>
+    <dt>½</dt><dd>Closes half of the position at the market, at once.</dd>
+    <dt>BE</dt><dd>Moves the stop loss to the entry price (break-even).</dd>
+    <dt>Rev</dt><dd>Closes the position and opens the same size the other way.</dd>
+    <dt>✕</dt><dd>Closes the whole position at the market, at once. A second click right after is ignored, so it cannot land on the next row.</dd>
+    <dt>Close all</dt><dd>Closes every open position at the market (Shift+X). It asks the first time; afterwards it shows “· 1-CLICK” and acts at once.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="ord">
+  <div class="ch-h"><span class="n">05</span><h3>Orders</h3></div>
+  <p class="lead">A pending order waits for its price. A limit order buys below or sells above the market; a stop order buys above or sells below it.</p>
+  <dl class="g-dl">
+    <dt>Price</dt><dd>The price the order waits for. A price at or below zero, or too close to the market, is refused on the ticket with the reason on the button.</dd>
+    <dt>SL, TP</dt><dd>Shown as prices: where they land if the order fills at its price. An order placed without a stop or a target has none.</dd>
+    <dt>Cancel</dt><dd>Removes the order from the book. Orders linked as OCO leave together when one of them fills.</dd>
+  </dl>
+  <div class="call tip"><b class="t">Margin of a pending order</b><p>The ticket estimates the margin at the current price; the margin taken when the order fills is computed at the fill price, so the two can differ slightly.</p></div>
+</section>
+
+<section class="ch" id="hist">
+  <div class="ch-h"><span class="n">06</span><h3>History</h3></div>
+  <p class="lead">One row per close. Read it from left to right: when, what, at which prices, why, and what it did to the balance.</p>
+  <dl class="g-dl">
+    <dt>Closed (UTC)</dt><dd>The time of the close, in UTC.</dd>
+    <dt>P&amp;L (gross)</dt><dd>The result of the price move alone. Spread and slippage are already inside the entry and exit prices.</dd>
+    <dt>Reason</dt><dd>Manual, Stop loss, Take profit, Trailing stop or Stop-out. “· gap” after a stop means the price jumped past the stop and the close was worse than the stop by the figure shown.</dd>
+    <dt>Receipt</dt><dd>Opens the receipt of the closing execution; from there, the report of the whole trade.</dd>
+    <dt>Comm + swap</dt><dd>Commission and overnight swap. Spread and slippage are not here: they are in the prices.</dd>
+    <dt>Net</dt><dd>What reached the balance: gross P&amp;L plus commission and swap.</dd>
+  </dl>
+  <div class="call key"><b class="t">A stop-out stays on screen</b><p>When the broker closes a position because the margin level fell under 50%, the message stays until you click it. The row in History carries the reason “Stop-out”.</p></div>
+</section>
+
+<section class="ch" id="al">
+  <div class="ch-h"><span class="n">07</span><h3>Alerts</h3></div>
+  <p class="lead">An alert tells you when a price is reached. It never sends an order.</p>
+  <dl class="g-dl">
+    <dt>Set one</dt><dd>Choose the Alert tool on the chart and click the price, or use Alerts at key levels in Market Brief.</dd>
+    <dt>Above / below</dt><dd>The side the price must cross to trigger the alert.</dd>
+    <dt>Remove</dt><dd>From its row, or by double-clicking its line on the chart and choosing Remove.</dd>
+  </dl>
+</section>
+
+<div class="g-part"><span class="n">III</span><div><h2>Using it</h2><p>The chart, the outages, the words.</p></div></div>
+
+<section class="ch" id="chart">
+  <div class="ch-h"><span class="n">08</span><h3>The same lines on the chart</h3></div>
+  <p class="lead">Every stop, target, pending order, alert and level of the instrument on screen is a line on the chart.</p>
+  <dl class="g-dl">
+    <dt>Drag</dt><dd>Drag a line to move its price. The change is sent when you release it.</dd>
+    <dt>Double-click</dt><dd>Opens the editor of that line: type the price, or remove the line.</dd>
+    <dt>DATA › Edit</dt><dd>The same editor, from the keyboard, for every line of the chart.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="down">
+  <div class="ch-h"><span class="n">09</span><h3>When the link or the prices stop</h3></div>
+  <p class="lead">Two things can stop independently: the execution server (orders) and the price feed.</p>
+  <dl class="g-dl">
+    <dt>“Execution server unreachable”</dt><dd>Orders cannot be sent. The row buttons and Close all are greyed and a click says “Not sent”. The account shown is as last received. Click the bar to retry at once; the page also retries by itself.</dd>
+    <dt>“NO FEED”</dt><dd>The prices on screen are not live. No new order is accepted until they are back.</dd>
+    <dt>“No answer: order status unknown”</dt><dd>An order was sent and no answer came. Check Positions and Orders before sending again: the order may have been executed.</dd>
+  </dl>
+  <div class="call warn"><b class="t">Stops live on the server</b><p>A stop loss or take profit already accepted is held by the execution server and works while this page is closed or disconnected.</p></div>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">10</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Bid / ask</dt><dd>The price you sell at and the price you buy at. The difference is the spread.</dd>
+    <dt>Spread</dt><dd>The cost of entering and leaving, paid once on a round trip, inside the prices.</dd>
+    <dt>Slippage</dt><dd>The difference between the price asked and the price obtained. It can be for or against you.</dd>
+    <dt>Swap</dt><dd>The amount added or taken for holding a position overnight.</dd>
+    <dt>R</dt><dd>The result of a trade measured in units of what it risked: +2R made twice the amount at risk.</dd>
+    <dt>R : R</dt><dd>Reward to risk: the distance to the target divided by the distance to the stop.</dd>
+    <dt>Stop-out</dt><dd>Positions closed by the broker when the margin level falls to 50%.</dd>
+    <dt>Netting</dt><dd>One position per instrument: orders on the same instrument add to it or reduce it.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="related">
+  <div class="ch-h"><span class="n">11</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <a class="card g-link" href="calc.html"><h5>Calculators</h5><p>Position size from risk and stop, pip value, margin; lots, pips and leverage in detail.</p></a>
+    <a class="card g-link" href="journal.html"><h5>Journal</h5><p>The statistics of the closed trades listed in History.</p></a>
+    <a class="card g-link" href="lab.html"><h5>Risk Lab</h5><p>What a risk per trade does to an account over many trades.</p></a>
+  </div>
+</section>
+
+<p class="g-foot">tradeBerry · Trade page guide. Demo account: no real money. Trading on margin carries a high risk of loss; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

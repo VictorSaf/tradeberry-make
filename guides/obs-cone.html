@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Range cone guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Range cone in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Range cone</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Range cone</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#what-you-see"><span>02</span>What you see</a>
+  <a href="#controls"><span>03</span>Controls</a>
+  <a href="#how-it-is-computed"><span>04</span>How it is computed</a>
+  <a href="#the-four-figures"><span>05</span>The four figures</a>
+  <a href="#did-the-cone-keep-its-promise"><span>06</span>Did the cone keep its promise?</a>
+  <a href="#your-levels-against-the-cone-and-the-but"><span>07</span>Your levels against the cone, and the buttons</a>
+  <a href="#more"><span>08</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Range cone</h1>
+  <p class="g-lede">It runs on the open instrument, CFDs included (in points). While the instrument is closed there is no cone: “price does not move until it reopens.”</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Range cone</b></div>
+    <div><label>Covers</label><b>The open instrument</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“How far price can go in the next hours, by time of day and the current pace, checked against its own past accuracy.”</p></div>
+  
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">02</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+<svg class="wide" viewBox="0 0 760 330" role="img" aria-label="Schematic range cone with 68% and 95% bands and the constant-volatility reference">
+<polygon points="330,165 330,165 343.3,141 356.7,131.1 370,123.4 383.3,117 396.7,111.3 410,106.2 423.3,101.5 436.7,97.1 450,92.9 463.3,89 476.7,85.3 490,81.8 503.3,79.7 516.7,77.7 530,75.8 543.3,73.8 556.7,71.9 570,70.1 583.3,68.3 596.7,66.5 610,64.8 623.3,63 636.7,61.4 650,59.7 650,269.9 636.7,268.2 623.3,266.5 610,264.8 596.7,263.1 583.3,261.3 570,259.6 556.7,257.7 543.3,255.8 530,253.9 516.7,252 503.3,250 490,247.9 476.7,244.4 463.3,240.7 450,236.8 436.7,232.7 423.3,228.4 410,223.7 396.7,218.6 383.3,212.9 370,206.5 356.7,198.9 343.3,189 330,165" class="s-inbg"/>
+<polygon points="330,165 330,165 343.3,152.8 356.7,147.7 370,143.8 383.3,140.5 396.7,137.6 410,135 423.3,132.6 436.7,130.4 450,128.3 463.3,126.3 476.7,124.4 490,122.6 503.3,121.5 516.7,120.5 530,119.5 543.3,118.5 556.7,117.6 570,116.6 583.3,115.7 596.7,114.8 610,113.9 623.3,113 636.7,112.2 650,111.3 650,218.6 636.7,217.7 623.3,216.9 610,216 596.7,215.1 583.3,214.2 570,213.3 556.7,212.3 543.3,211.4 530,210.4 516.7,209.4 503.3,208.4 490,207.4 476.7,205.6 463.3,203.7 450,201.7 436.7,199.6 423.3,197.4 410,195 396.7,192.3 383.3,189.5 370,186.2 356.7,182.3 343.3,177.2 330,165" class="s-inbg"/>
+<polyline points="330,165 343.3,143.5 356.7,134.6 370,127.8 383.3,122.1 396.7,117 410,112.4 423.3,108.2 436.7,104.3 450,100.6 463.3,97.1 476.7,93.8 490,90.6 503.3,87.5 516.7,84.6 530,81.8 543.3,79.1 556.7,76.4 570,73.8 583.3,71.3 596.7,68.9 610,66.5 623.3,64.2 636.7,61.9 650,59.7" class="s-ln3" stroke-dasharray="5 4"/>
+<polyline points="330,165 343.3,186.4 356.7,195.3 370,202.1 383.3,207.9 396.7,212.9 410,217.5 423.3,221.7 436.7,225.6 450,229.3 463.3,232.7 476.7,236 490,239.2 503.3,242.2 516.7,245.1 530,247.9 543.3,250.7 556.7,253.3 570,255.8 583.3,258.3 596.7,260.8 610,263.1 623.3,265.4 636.7,267.7 650,269.9" class="s-ln3" stroke-dasharray="5 4"/>
+<polyline points="40,274 44,271.9 48.1,257.6 52.1,251.5 56.1,245.2 60.1,241.6 64.2,239.4 68.2,235.5 72.2,235.6 76.2,239.5 80.3,244.3 84.3,250.6 88.3,248.7 92.4,245 96.4,235 100.4,231.6 104.4,229.4 108.5,225 112.5,224.4 116.5,234.6 120.6,227.9 124.6,229.9 128.6,228 132.6,228.9 136.7,211.6 140.7,204.3 144.7,201.3 148.8,207.2 152.8,201.5 156.8,206 160.8,198.7 164.9,206.8 168.9,206.7 172.9,200.7 176.9,205 181,203.7 185,202.1 189,195.9 193.1,198.1 197.1,193.4 201.1,180.6 205.1,188.6 209.2,193 213.2,189.6 217.2,192.7 221.2,199.9 225.3,190.8 229.3,184.5 233.3,177.3 237.4,170.3 241.4,165.3 245.4,169.4 249.4,182.6 253.5,178.9 257.5,184.4 261.5,183.4 265.6,180.3 269.6,187 273.6,188.2 277.6,177.2 281.7,171.9 285.7,180.7 289.7,181.1 293.8,180.3 297.8,176.1 301.8,171 305.8,170.6 309.9,171.2 313.9,165.3 317.9,173 321.9,165.5 326,162.8 330,165" class="s-px"/>
+<line x1="330" x2="330" y1="30" y2="300" class="s-ln3"/><text x="330" y="24" text-anchor="middle" class="b s s-tx">now 1.08500</text>
+<text x="656" y="63.7" class="m s s-tx2">95% 1.08948</text>
+<text x="656" y="115.3" class="m s s-tx2">68% 1.08728</text>
+<text x="656" y="222.6" class="m s s-tx2">68% 1.08272</text>
+<text x="656" y="273.9" class="m s s-tx2">95% 1.08054</text>
+<line x1="330" x2="330" y1="300" y2="306" class="s-ln3"/>
+<text x="410" y="318" text-anchor="middle" class="m s s-tx3">+1h</text>
+<text x="490" y="318" text-anchor="middle" class="m s s-tx3">+2h</text>
+<text x="570" y="318" text-anchor="middle" class="m s s-tx3">+3h</text>
+<text x="650" y="318" text-anchor="middle" class="m s s-tx3">+4h</text>
+<text x="40" y="318" class="m s s-tx3">−5h</text>
+<text x="383.3" y="60" class="s s-tx3">widens fastest while</text><text x="383.3" y="74" class="s s-tx3">London and New York overlap</text>
+</svg>
+    <div class="legend"><span class="in"><i style="height:8px;opacity:.45"></i>68% (inner)</span><span class="in"><i style="height:8px;opacity:.2"></i>95% (outer)</span><span><i class="d"></i>constant-vol 95%</span><span>fastest widening around +1h (14:35 UTC)</span></div>
+  </div><figcaption><b>Fig. 1</b>Illustration on EUR/USD, 4-hour horizon: the cone widens faster through the busy hours ahead than the constant-volatility reference.</figcaption></figure>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">03</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>horizon</td><td class="n">1H · <b>4H</b> · 8H · 1D</td><td>The cone for the next hour, 4 hours, 8 hours or 24 hours.</td></tr>
+      <tr><td>mode</td><td class="n"><b>Session model</b> · Conformal</td><td>Widens with the usual activity of each hour and the pace of the last 2 hours · the same cone widened or narrowed by how often it missed last week, checked on the newer half of the week only.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-it-is-computed">
+  <div class="ch-h"><span class="n">04</span><h3>How it is computed</h3></div>
+
+  <div class="fml">
+    <div>profile  mean squared 1-min return in each of 96 slots, a week of bars, each hour winsorised at median ± 5 MAD</div>
+    <div>pace     fRaw = variance of the last 120 minutes ÷ what the profile expects for them</div>
+    <div>         f = 0.6 × fRaw + 0.4, kept within 0.25–4×</div>
+    <div>variance Σ over open minutes of (1 + (f − 1) × e^(−m/360)) × slot variance   <span class="c">pace fades over ~6 h of trading</span></div>
+    <div>bands    price × e^(±K σ)   K = 1 and 1.96 (session) · k68 and k95 (conformal)</div>
+  </div>
+  <div class="call ex"><b class="t">Worked example</b><p>EUR/USD at <code>1.08500</code>, 4-hour σ = 0.21%. 68% range: 1.08500 × e<sup>±0.0021</sup> = <b>1.08272 – 1.08728</b>, a typical move of ±22.8 pips. 95% range: e<sup>±1.96 × 0.0021</sup> = <b>1.08054 – 1.08948</b>. The last two hours moved 1.8× what this time of day usually moves: f = 0.6 × 1.8 + 0.4 = <b>1.48×</b>, shown in amber (above 1.3× busy).</p></div>
+
+  
+</section>
+
+<section class="ch" id="the-four-figures">
+  <div class="ch-h"><span class="n">05</span><h3>The four figures</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Meaning</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>68% range</td><td>About two times in three, price ends the horizon inside it.</td><td>A stop inside it is likely to be touched; a target inside it is realistic.</td></tr>
+      <tr><td>95% range</td><td>About 19 times in 20, price ends inside it.</td><td>A target beyond it is unlikely within this time.</td></tr>
+      <tr><td>68% move</td><td>Half the width of the inner cone: the move to expect either way.</td><td>Size stops at least this far to survive normal noise over the horizon.</td></tr>
+      <tr><td>Regime</td><td>The pace factor f. Above 1.3× busy (amber), below 0.8× quiet.</td><td>Above 1× the market is livelier than usual; ranges are wider.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="did-the-cone-keep-its-promise">
+  <div class="ch-h"><span class="n">06</span><h3>Did the cone keep its promise?</h3></div>
+
+  <p>Every hour of last week, a cone was drawn from what was known then and checked at its horizon. The table compares three models on how often price ended inside each band: <b>Session-aware (this cone)</b>, <b>Conformal bands fit on first half, scored on second</b>, and <b>Constant volatility</b> (same data, widening at the same speed every hour). The forecasts overlap, so only about n<sub>eff</sub> = n × 60 ÷ horizon in minutes are independent.</p>
+  <table class="g-t">
+    <thead><tr><th>Condition</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>n<sub>eff</sub> under 20</td><td>Too few independent windows to grade</td></tr>
+      <tr><td>Inside 95% below 95 − t95, or inside 68% below 68 − t68</td><td>Too narrow last week: treat its edges as soft</td></tr>
+      <tr><td>Above 95 + t95, or above 68 + t68</td><td>Too wide last week: its edges are conservative</td></tr>
+      <tr><td>Both of the above</td><td>Off target last week</td></tr>
+      <tr><td>Otherwise</td><td class="up">Well calibrated last week (shown in green)</td></tr>
+    </tbody>
+  </table>
+  <div class="fml">
+    <div>t95 = max(2, 200 × √(0.95 × 0.05 ÷ n_eff))   t68 = max(4, 200 × √(0.68 × 0.32 ÷ n_eff))   <span class="c">two standard errors, in points</span></div>
+    <div class="c">Example: 116 hourly forecasts, 4-hour horizon → n_eff 29 → on target within ±8.1 points of 95 and ±17.3 of 68. 93% and 71% inside: well calibrated. In Conformal mode only the newer half is scored (58 forecasts → n_eff 14): too few to grade at 4H.</div>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="your-levels-against-the-cone-and-the-but">
+  <div class="ch-h"><span class="n">07</span><h3>Your levels against the cone, and the buttons</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Distance (σ)</td><td>Your ticket stop and target, and those of open positions on the pair, in standard deviations from now.</td></tr>
+      <tr><td>Beyond at end</td><td>Chance price is beyond this level at the end of the horizon.</td></tr>
+      <tr><td>Touched</td><td>Chance price touches it at any point before the horizon: 4,000 random paths that follow the cone’s own variance, with a Brownian-bridge correction between 15-minute steps. The draws are fixed for each 15-minute bar.</td></tr>
+    </tbody>
+  </table>
+  <p>With both a stop and a target in the ticket: “Within 4H: ticket TP first X%, SL first Y%, neither yet Z%.” Above 50% neither, the trade would most likely still be open at the horizon.</p>
+  <table class="g-t">
+    <thead><tr><th>Button</th><th>What it puts in the ticket (sends nothing)</th></tr></thead>
+    <tbody>
+      <tr><td>Set ticket stop: X (outside 68%)</td><td>For a buy: ask − the lower 68% edge; for a sell: the upper edge + spread − bid. Rounded outward to 0.1. A move that far happens about one time in three over the horizon.</td></tr>
+      <tr><td>Set ticket target: X (95% edge) · R:R 1:x</td><td>For a buy: the upper 95% edge − ask; for a sell: bid − the lower edge − spread. Never closer than the stop.</td></tr>
+      <tr><td>Buy limit (68% low) · Sell limit (68% high) · the same at 95%</td><td>Side, limit type and price. Price ends beyond a 68% edge about one time in 6 per side, a 95% edge about one in 40; it touches them more often.</td></tr>
+    </tbody>
+  </table>
+  <div class="cards">
+    <div class="card"><h5>Use your holding time</h5><p>Set the horizon to how long you would hold the trade: the cone answers for that time only.</p></div>
+    <div class="card"><h5>Trust a calibrated cone more</h5><p>Read the promise check first. Too narrow last week: edges are soft. Too wide: conservative.</p></div>
+    <div class="card"><h5>Size from the cone</h5><p>A stop inside the 68% band will often be touched by noise; a target beyond 95% will rarely be reached in this time.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>The cone gives sizes, not direction. Its odds are a past frequency, not a guarantee; the seasonal profile uses the whole week, so the promise check is slightly optimistic. Fat tails and releases can carry price beyond any band.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">08</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Range cone guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

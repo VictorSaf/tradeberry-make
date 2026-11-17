@@ -10,7 +10,10 @@
    save of the writer (BroadcastChannel; without it the storage event of a small 'rev' key; without both a snapshot,
    and they say so), and the first of them to get the lock (or a free heartbeat) becomes the writer on its own.
    A writer that comes back in the same tab (reload, Enter in the address bar, a deep link) takes the role back; the
-   tab that stood in for it announces the role only once it is stable, and retracts the announcement if it loses it. */
+   tab that stood in for it announces the role only once it is stable, and retracts the announcement if it loses it.
+   On a signed-in page the account is not this browser's: it lives on the execution server (tradelink.js). What is
+   stored here is then only the last account seen, for a fast start, and the page says "Last seen …" until the
+   server's snapshot replaces it; every tab trades (the one-writer rule protects only the sandbox account). */
 (function () {
   const DB = 'meridian-fx', OS = 'kv', SCHEMA = 2, LOCK = 'meridian-writer';
   const K = { shell: 'meridian-fx-shell', state: 'meridian-fx-state', prev: 'meridian-fx-prev', rejected: 'meridian-fx-rejected', legacy: 'meridian-fx-v1', hb: 'meridian-fx-writer', take: 'meridian-fx-takeover', tab: 'meridian-fx-tab', was: 'meridian-fx-was-writer', rev: 'meridian-fx-rev', exp: 'meridian-fx-exported' };
@@ -24,7 +27,7 @@
   const RO_TITLE = 'Read-only: this account is open in another tab — Take over here to change it';
   // controls that replace or wipe the stored account: disabled while this tab is read-only
   // (the Challenge controls are redrawn by challenge.js, which renders them disabled in a read-only tab too)
-  const RO_CONTROLS = ['resetAcct', 'importBtn', 'importFile', 'demoBtn', 'demoClear', 'chStartB', 'chNewB', 'chStopB', 'chPreset', 'ceSave'];
+  const RO_CONTROLS = ['resetAcct', 'importBtn', 'importFile', 'chStartB', 'chNewB', 'chStopB', 'chPreset', 'ceSave'];
   // step-by-step migrations: MIGRATE[n] turns a schema-n envelope into schema n+1
   const MIGRATE = { 1: e => ({ schemaVersion: 2, rev: e.rev | 0, savedAt: e.savedAt || 0, state: e.state }) };
 
@@ -284,7 +287,10 @@
         if (acct) {
           // the account comes from storage; this tab keeps its own view settings and ticket (its screen shows them)
           const set = S && S.set, tk = S && S.tk;
+          // a signed-in page: storage holds only the last account seen; this tab's own one comes from the server
+          const own = TradeLink.live && TradeLink.seen && S ? Object.fromEntries(ACCT_KEYS.filter(k => S[k] !== undefined).map(k => [k, S[k]])) : null;
           loadState();
+          if (own) { Object.assign(S, own); if (set) for (const k of SET_EXEC) S.set[k] = set[k]; }
           if (set) S.set = { ...set, jur: S.set.jur, lev: S.set.lev };
           if (tk) S.tk = tk;
           try { if (typeof syncLevSel === 'function') syncLevSel(); } catch (e) { console.error(e); }
@@ -396,7 +402,8 @@
     if (!force && (roBase == null || acctOf(v) === roBase)) return;
     if (roTold && !(force && Date.now() - roToldAt > 10000)) return;
     roTold = true; roToldAt = Date.now();
-    tell('Not saved — this tab is read-only', 'The account is open in another tab, so changes made here are not kept. Use “Take over here” to change it in this tab.', 'dn');
+    if (typeof TradeLink === 'object' && TradeLink && TradeLink.live) tell('Preferences not saved in this tab', 'The account is open in another tab, so layout and settings changed here are not kept. Orders sent here still go to your account. Use “Take over here” to save from this tab.', 'info');
+    else tell('Not saved — this tab is read-only', 'The account is open in another tab, so changes made here are not kept. Use “Take over here” to change it in this tab.', 'dn');
   }
 
   /* ---------- the store ---------- */
@@ -455,7 +462,8 @@
   for (const name of ['openPosition', 'placeOrder', 'closePosition']) {
     const f = window[name]; if (typeof f !== 'function') continue;
     window[name] = function () {
-      if (readOnly || promoting) { roNote(); return null; }
+      // a signed-in page trades on the server's account from any tab (tradelink.js): only the sandbox has one writer
+      if ((readOnly || promoting) && !TradeLink.live) { roNote(); return null; }
       const r = f.apply(this, arguments);
       // write a fill or a close at once (persistNow runs negative balance protection and saves the market with it)
       if (!queuedNow) { queuedNow = true; queueMicrotask(() => { queuedNow = false; try { if (canWrite() && typeof persistNow === 'function') persistNow(); } catch (e) { console.error(e); } }); }
@@ -464,7 +472,7 @@
   }
   const guardRO = name => { const f = window[name]; if (typeof f !== 'function' || f.roGuard) return; const g = window[name] = function () { if (readOnly || promoting) return; return f.apply(this, arguments); }; g.roGuard = true; };
   guardRO('checkTriggers');
-  // demo history replaces or wipes the account: a read-only tab refuses out loud. demo.js defines these later (and
+  // demo history replaces or wipes the account: a read-only tab refuses out loud. The demo fixture (tests/fixtures/demo.js) defines these later (and
   // challenge.js may wrap them): whatever is assigned is wrapped, so the refusal always comes first
   const roDemo = f => {
     const g = function () {
@@ -499,8 +507,96 @@
   pill.id = 'persistPill'; pill.className = 'pill';
   const anchor = document.getElementById('demoPill') || document.getElementById('feedPill');
   if (anchor) anchor.after(pill);
+  // a signed-in page (tradelink.js): the account is on the execution server; this browser keeps the preferences and
+  // the last account seen (a display copy for a fast start), so nothing here guards the account
+  const onServer = () => typeof TradeLink === 'object' && !!TradeLink && !!TradeLink.live;
+  const SERVER_PILL = 'Preferences in this browser · account on the server';
+  /* the account type, said the same way everywhere and from here only: window.acctKind() gives the words, and every
+     change of type is announced once, as the document event 'tb:acct-kind' (detail: the acctKind() object, its key in
+     detail.key). The status-bar flag here, the feed pill and Help › #simLabel (livefeed.js), the first row of the
+     account menu (ui.js) and the onboarding tour (ui.js) all read these texts; none of them polls the type itself.
+     - signed in, TradeLink.type 'demo': a demo account on the execution server (real executions on live prices, no money);
+     - signed in, TradeLink.type 'live': a live account there (real money); it is not called demo, so the flag is hidden;
+     - signed in, type not known yet (null until the server's first snapshot): neither word, the flag stays hidden;
+     - not signed in, the demo history loaded (S.demo, tests/fixtures/demo.js): 'DEMO · example trades';
+     - not signed in, the account's own trades: no flag.
+     flag: the status-bar text ('' = hidden); line: the account menu's row; title: the explanation (status-bar flag and
+     menu row); pill: the end of the feed pill's title; label: the end of Help › #simLabel (both on live prices); tour: the
+     sentence of the onboarding tour's Markets step (ui.js). */
+  const KIND = {
+    demo: { flag: 'DEMO', line: 'Demo account · on the execution server · real executions, no money', title: 'Demo account on the execution server: real executions on live prices, no money.',
+      pill: 'Demo account on the execution server: real executions on these prices, no money.',
+      label: 'Demo account on the execution server: orders are executed there on these prices, so no real money is at risk.',
+      tour: 'It is a demo account on the execution server: real executions on live prices, nothing is real money.' },
+    live: { flag: '', line: 'Live account · on the execution server · real executions, real money', title: 'Live account on the execution server: real executions on live prices, with real money.',
+      pill: 'Live account on the execution server: real executions on these prices, with real money.',
+      label: 'Live account on the execution server: orders are executed there on these prices, with real money.',
+      tour: 'It is a live account on the execution server: real executions with real money.' },
+    pending: { flag: '', line: 'Account on the execution server · demo or live: waiting for the server', title: 'Account on the execution server: its type (demo or live) shows once the server answers.',
+      pill: 'Account on the execution server: real executions on these prices; its type (demo or live) shows once the server answers.',
+      label: 'Account on the execution server: orders are executed there on these prices. Whether it is a demo or a live account shows once the server answers.',
+      tour: 'The account is on the execution server; whether it is a demo or a live account shows once the server answers.' },
+    example: { flag: 'DEMO · example trades', line: 'Account in this browser · example trades, no money', title: 'Account in this browser · example trades, no money: the trade history is example trades on the 16 FX pairs, generated to show the tools (no CFDs).',
+      pill: 'Account in this browser · example trades, no money: the trade history is example trades generated to show the tools; orders and fills stay in this browser, no execution server.',
+      label: 'Account in this browser · example trades, no money: the trade history is example trades generated to show the tools; orders and fills stay in this browser, no execution server.',
+      tour: 'The account is in this browser, with example trades and no execution server: nothing is real money.' },
+    local: { flag: '', line: 'Account in this browser · no execution server, no money', title: 'Account in this browser · no execution server, no money: orders and fills stay in this browser.',
+      pill: 'Account in this browser · no execution server, no money: orders and fills stay in this browser.',
+      label: 'Account in this browser · no execution server, no money: orders and fills stay in this browser.',
+      tour: 'The account is in this browser, with no execution server: nothing is real money.' }
+  };
+  const kindKey = () => onServer() ? (TradeLink.type === 'demo' || TradeLink.type === 'live' ? TradeLink.type : 'pending')
+    : typeof S === 'object' && S && S.demo ? 'example' : 'local';
+  window.acctKind = () => { const k = kindKey(); return { key: k, ...KIND[k] }; };
+  /* the account flag of the status bar (#demoPill). Visibility goes through the hidden attribute (the statusbar's
+     [hidden] rule): styles.css gates .demo-flag on html[data-demo] only on the phone, so the server flag drops that class.
+     Text, title, class and hidden are written together on every call, hidden or not: the element never keeps the words
+     of another type (index.html's 'DEMO · example trades' included). */
+  function acctFlag(k) {
+    const f = document.getElementById('demoPill'); if (!f) return;
+    const text = k.flag, cls = k.key === 'example' ? 'pill demo-flag' : 'pill', hide = !k.flag;
+    if (f.textContent !== text) f.textContent = text;
+    if (f.title !== k.title) f.title = k.title;
+    if (f.className !== cls) f.className = cls;
+    if (f.hidden !== hide) f.hidden = hide;
+    document.body.classList.toggle('acct-flag', !hide); // the header's Equity label carries the flag (decision 43)
+  }
+  /* the one watch on the type: TradeLink has no event for it (its type comes with the server's first snapshot, its live
+     flag can turn off after /api/me) and S.demo changes without one. Every 100 ms until the type is final (signed in and
+     demo or live), so the first answer shows at once even when TradeLink.live turns true late; then every second (a
+     sign-out, a later change, the demo history loaded or dropped). A change re-draws the flag and is announced once. */
+  let kindShown = null;
+  function kindCheck() {
+    const k = acctKind();
+    acctFlag(k);
+    if (k.key === kindShown) return k;
+    kindShown = k.key;
+    try { document.dispatchEvent(new CustomEvent('tb:acct-kind', { detail: k })); } catch (e) { console.error(e); }
+    // Help › the money line says the account's truth (round 3 follow-up: it said 'no real money' for every account)
+    const hm = document.getElementById('helpMoney');
+    if (hm) hm.textContent = k.key === 'live' ? 'This is a live account: real money is at risk.' : k.key === 'pending' ? 'Whether real money is at risk shows once the server tells this account’s type.' : 'This is a demo environment — no real money is at risk.';
+    return k;
+  }
+  // fast (100 ms) only while the kind can still change soon: the first 10 s of the page, or a signed-in page whose type is
+  // not known yet; then once a second (round 3 follow-up: a local page used to poll at 10 Hz for its whole life)
+  const kindT0 = Date.now();
+  (function kindWatch() {
+    let k = null;
+    try { k = kindCheck(); } catch (e) { /* page torn down */ }
+    const settled = !!k && (onServer() ? (k.key === 'demo' || k.key === 'live') : Date.now() - kindT0 > 10000);
+    setTimeout(kindWatch, settled ? 1000 : 100);
+  })();
   function note() {
     const m = store.mode();
+    if (onServer()) return [
+      'Your account (balance, positions, orders, history) is on the execution server: every device signed in shows the same account.',
+      backend === 'memory' ? 'This browser does not allow storage here, so your preferences last only in this tab.'
+        : 'This browser keeps only your preferences (settings, layout) and a display copy of the last account seen, for a fast start.',
+      'Preferences: ' + LABEL[m] + '.',
+      unsaved ? 'The latest preference changes are not saved here (storage full or unavailable).' : '',
+      refused ? 'The copy saved in this browser is from a newer version of tradeBerry. It was kept untouched and not loaded, so this tab does not save your preferences.' : '',
+      readOnly ? 'This tab does not save your preferences: tradeBerry is open in another tab of this browser, which saves them (“Take over here” moves that to this tab). Orders still go to the execution server from here.' : '',
+      'Export downloads a copy of the account as this page shows it.'].filter(Boolean).join(' ');
     const where = refused ? 'The account saved in this browser is from a newer version of tradeBerry. It was kept untouched and not loaded, so this tab does not save.'
       : backend === 'indexedDB' ? 'Your account, settings, journal and the market are kept in this browser’s storage (IndexedDB) on this device only.'
       : backend === 'localStorage' ? 'Your account, settings, journal and the market are kept in this browser’s localStorage on this device only (IndexedDB is unavailable).'
@@ -518,8 +614,13 @@
     if (!isReady) return;
     const m = store.mode();
     banner.hidden = !readOnly; banner.style.display = readOnly ? 'flex' : 'none';
-    pill.textContent = readOnly ? (live() ? 'Read-only · live copy' : 'Read-only · snapshot') : SHORT[m] + (unsaved ? ' · unsaved' : '');
-    const bt = banner.querySelector('span'); if (bt) bt.textContent = live() ? 'Open in another tab — this tab is read-only: a live copy, its market view-only' : 'Open in another tab — this tab is read-only: a snapshot from when it opened, not updated';
+    // on the phone the banner sits under the top bar, so the account button (and the account type in its menu) stays
+    // reachable while this tab is read-only (round 3 follow-up)
+    if (readOnly) { const tb = document.querySelector('header.topbar'), mn = document.body.classList.contains('mnav-on'); banner.style.top = mn && tb ? Math.round(tb.getBoundingClientRect().bottom) + 'px' : '0'; }
+    pill.textContent = readOnly ? (live() ? 'Read-only · live copy' : 'Read-only · snapshot') : (onServer() ? SERVER_PILL : SHORT[m]) + (unsaved ? ' · unsaved' : '');
+    kindCheck();
+    // on the server account a second tab still trades: only its preferences are not saved (UX-10)
+    const bt = banner.querySelector('span'); if (bt) bt.textContent = onServer() ? 'Open in another tab — this tab does not save your preferences. Orders sent here still go to your account' : live() ? 'Open in another tab — this tab is read-only: a live copy, its market view-only' : 'Open in another tab — this tab is read-only: a snapshot from when it opened, not updated';
     pill.title = note();
     const n = document.getElementById('persistNote'); if (n) n.innerHTML = esc(note());
     const sp = document.getElementById('speedSel'); if (sp) sp.disabled = readOnly || !!Engine.realTime; // real prices: real time only
@@ -563,7 +664,7 @@
       }
       const day = 864e5, now = Date.now(), trades = typeof S === 'object' && S && S.history ? S.history.length : 0;
       const lastExport = Math.max(shell.lastExport || 0, +lsJSON(K.exp) || 0);
-      if (canWrite() && trades >= 10 && now - lastExport > 7 * day && now - (shell.reminded || 0) > 3 * day) {
+      if (canWrite() && !onServer() && trades >= 10 && now - lastExport > 7 * day && now - (shell.reminded || 0) > 3 * day) {
         shell.reminded = now; writeShell(now);
         tell('Keep a copy of your account', 'Browser storage can be cleared. Export (Help) saves a file you control.', 'info');
       }

@@ -1,6 +1,6 @@
 {
-  "name": "trade.Berry — Trading Terminal",
-  "short_name": "trade.Berry",
+  "name": "tradeBerry — Trading Terminal",
+  "short_name": "tradeBerry",
   "description": "FX trading terminal on a simulated market seeded with ECB reference rates: charting, risk-first ticket, depth of market, backtester, Observatory and behaviour coach.",
   "id": "./",
   "start_url": "./",

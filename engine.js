@@ -9,52 +9,22 @@
      seed, the catalog, the anchor minute and the FX band (the standardised EURUSD/USDJPY increments of each minute).
      It costs nothing while nobody looks at it (cold) and is caught up on access; only the hot set (watchlist rows,
      charts, anything quoted every sub-step) is sampled into candles on every sub-step.
-   - PIVOT ON BID: the simulated price is the bid; ask = bid + the sheet's spread (points × point). */
+   - PIVOT ON BID: the simulated price is the bid; ask = bid + the sheet's spread (points × point).
+   The rules shared with the server (instrument model, sessions, DST, the feed's quotes, spreads, usd) are core/market.js. */
 const Engine = (() => {
   const CAT = CATALOG;
   /* ---------- instruments ---------- */
   const CCY = ['EUR', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'NZD']; // the G8 (stream 1, as before)
   const ALL = ['USD', ...CCY];
   const CCY_ALL = [...CCY, ...Object.keys(CAT.ccy).filter(c => !CCY.includes(c))]; // 15; the new ones draw from stream 3
-  const ALL_SET = new Set(['USD', ...CCY_ALL]);
   const G8 = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'EURCHF', 'EURAUD', 'GBPCHF', 'CADJPY', 'AUDNZD'];
-  const FX_SESS = Object.freeze([['Sydney', 21, 24], ['Sydney', 0, 6], ['Tokyo', 0, 9], ['London', 7, 16], ['New York', 12, 21]].map(([name, from, to]) => Object.freeze({ name, from, to })));
-  // server time: EET/EEST (UTC+2, +3 from the last Sunday of March 01:00 UTC to the last Sunday of October 01:00 UTC)
-  const dstY = {};
-  function serverOffset(t) {
-    const y = new Date(t * 1000).getUTCFullYear();
-    let r = dstY[y];
-    if (!r) { const ls = m => { const d = Date.UTC(y, m + 1, 0) / 1000, w = new Date(d * 1000).getUTCDay(); return d - w * 86400 + 3600; }; r = dstY[y] = [ls(2), ls(9)]; }
-    return t >= r[0] && t < r[1] ? 3 : 2;
-  }
-  // compatibility fields for the modules that still read the v14 instrument model (label, short, tick, spread in the
-  // displayed unit, minLot/lotStep, newsCcy, fin, div, sessions as UTC hours); the sheet fields ride along unchanged
-  function utcSessions(r) {
-    if (r.kind === 'fx') return FX_SESS;
-    if (r.is247) return Object.freeze([Object.freeze({ name: '24h', from: 0, to: 24 })]);
-    const off = serverOffset(Date.now() / 1000), out = [], name = r.exch && r.exch !== 'OTC' ? r.exch : 'Session';
-    const day = r.sess.filter(w => w[0] === 3).length ? 3 : r.sess.length ? r.sess[0][0] : 3;
-    for (const [d, f, t] of r.sess) {
-      if (d !== day) continue;
-      let a = f / 60 - off, b = t / 60 - off;
-      if (a < 0) { a += 24; b += 24; }
-      if (b <= 24) out.push({ name, from: a, to: b }); else { out.push({ name, from: a, to: 24 }); if (b - 24 > 0) out.push({ name, from: 0, to: b - 24 }); }
-    }
-    return Object.freeze(out.filter(x => x.to > x.from).map(Object.freeze));
-  }
-  function metaOf(r) {
-    const fx = r.kind === 'fx', label = fx ? r.base + '/' + r.quote : r.desc;
-    const fin = fx ? { ref: 'pair', markup: .5, tripleDow: 3 } : r.group === 'crypto' ? { ref: 'none', markup: 18, tripleDow: 5 } : { ref: 'quote', markup: 2.5, tripleDow: 5 };
-    return Object.freeze({
-      ...r, label, short: fx ? label : r.sym, tick: r.point, spread: +(r.p.spread[0] * r.point / r.pip).toFixed(6),
-      minLot: r.p.vol[0], lotStep: r.p.vol[2], maxLot: r.p.vol[1], newsCcy: Object.freeze(fx ? [r.base, r.quote] : [r.quote]),
-      fin: Object.freeze(fin), div: r.group === 'index' ? 'excluded' : null, sessions: utcSessions(r)
-    });
-  }
+  // the market core (core/market.js): the sheet's instrument model, sessions, DST, the feed's quotes and their rules
+  const MK = MarketCore.create({ catalog: CAT });
+  const { serverOffset, nyOffset, openAt, SX, setNewsMult, newsMult } = MK;
   const RAW = CAT.instr.filter(r => r.seed);
   const byRaw = Object.fromEntries(RAW.map(r => [r.sym, r]));
   const ORDER = [...G8, ...RAW.filter(r => r.kind === 'fx' && !G8.includes(r.sym)).map(r => r.sym), ...RAW.filter(r => r.kind !== 'fx').map(r => r.sym)];
-  const INSTR = Object.freeze(ORDER.map(s => metaOf(byRaw[s])));
+  const INSTR = Object.freeze(ORDER.map(s => MK.META[s]));
   const META = Object.freeze(Object.fromEntries(INSTR.map(m => [m.sym, m])));
   const PAIRS = Object.freeze(G8.map(s => META[s]));
   const FX = Object.freeze(INSTR.filter(m => m.kind === 'fx'));
@@ -75,52 +45,9 @@ const Engine = (() => {
   const VERSION = 2;
   const RP_Q = 1, RP_CHUNK = 15, RP_CP = 900, RP_MAX_SPAN = 259200, RP_SPEEDS = [1, 10, 60, 300, 1800];
 
-  /* ---------- sessions (sheet windows in server time; UTC out) ---------- */
-  const SESS = new Map(); // sess key -> { byDow, is247, cache }
-  function sessOf(m) {
-    const key = m.is247 ? '247' : JSON.stringify(m.sess);
-    let s = SESS.get(key);
-    if (!s) { const byDow = [[], [], [], [], [], [], []]; for (const [d, f, t] of m.sess) byDow[d].push([f, t]); byDow.forEach(a => a.sort((x, y) => x[0] - y[0])); SESS.set(key, s = { byDow, is247: !!m.is247, a: 1, b: 0, open: false }); }
-    return s;
-  }
-  const SX = Object.fromEntries(INSTR.map(m => [m.sym, sessOf(m)]));
+  /* ---------- sessions (sheet windows in server time; UTC out): core/market.js ---------- */
   const FXS = SX.EURUSD; // all 38 pairs share the FX week
-  const local2utc = loc => { const o1 = serverOffset(loc - 7200), u = loc - o1 * 3600, o2 = serverOffset(u); return o2 === o1 ? u : loc - o2 * 3600; };
-  // merged open intervals [start, end) in UTC around t (±8 days)
-  function intervals(s, t) {
-    const out = [], D0 = Math.floor((t + serverOffset(t) * 3600) / 86400);
-    for (let D = D0 - 8; D <= D0 + 8; D++) {
-      const dow = ((D + 4) % 7 + 7) % 7;
-      for (const [f, e] of s.byDow[dow]) {
-        const a = local2utc(D * 86400 + f * 60), b = local2utc(D * 86400 + e * 60);
-        if (out.length && out[out.length - 1][1] === a) out[out.length - 1][1] = b; else out.push([a, b]);
-      }
-    }
-    return out;
-  }
-  function openAt(s, t) {
-    if (s.is247) return true;
-    if (t >= s.a && t < s.b) return s.open;
-    const iv = intervals(s, t);
-    let a = -Infinity, b = Infinity, open = false;
-    for (const [x, y] of iv) {
-      if (t >= x && t < y) { a = x; b = y; open = true; break; }
-      if (y <= t) a = y; else if (x > t) { b = x; break; }
-    }
-    s.a = a; s.b = b; s.open = open;
-    return open;
-  }
-  function session(sym, t = simTime) {
-    const m = META[sym]; if (!m) return null;
-    const s = SX[sym];
-    if (s.is247) return { open: true, opensAt: null, closesAt: null };
-    const iv = intervals(s, t);
-    const i = iv.findIndex(([, y]) => y > t);
-    if (i < 0) return { open: false, opensAt: null, closesAt: null };
-    const [x, y] = iv[i];
-    if (t >= x) return { open: true, opensAt: iv[i + 1] ? iv[i + 1][0] : null, closesAt: y };
-    return { open: false, opensAt: x, closesAt: y };
-  }
+  const session = (sym, t = simTime) => MK.session(sym, t);
 
   /* ---------- state ---------- */
   let L = {};            // latent log USD value of each currency (CCY_ALL)
@@ -534,13 +461,12 @@ const Engine = (() => {
        ("no feed") instead of trading on a frozen price;
      - want(sym): the candles of sym were read (load its history on demand).
      A tick's ask, when given, is the quote's ask (the platform's own spread); without it ask = bid + the sheet. */
-  let feed = null, realTime = false;
-  const fq = {}; // sym -> { bid, ask?, t (s) }
+  let feed = null, realTime = false; // the feed's last quote per instrument lives in the core (MK.last)
   let qQueued = false, barQueued = false;
   function setFeed(ad) {
     if (ad && (typeof ad.has !== 'function' || typeof ad.onTicks !== 'function')) throw new Error('Engine.setFeed: an adapter needs has(sym) and onTicks(cb)');
     feed = ad || null; realTime = !!(feed && feed.realTime && mode === 'live');
-    for (const k in fq) delete fq[k];
+    MK.clearQuotes();
     if (!feed) return;
     if (speed > 1) speed = 1;
     if (realTime) {
@@ -549,7 +475,7 @@ const Engine = (() => {
     }
     feed.onTicks((sym, bid, tMs, ask) => {
       if (feed !== ad || !META[sym] || !feed.has(sym) || !(bid > 0) || !Number.isFinite(tMs)) return;
-      fq[sym] = ask >= bid ? { bid, ask, t: tMs / 1000 } : { bid, t: tMs / 1000 };
+      MK.setQuotes([[sym, bid, ask, tMs]]);
       const a = bars[sym] || (META[sym].kind !== 'fx' ? ensureBars(sym) : null);
       if (a) {
         const mn = Math.floor((realTime ? tMs / 1000 : simTime) / 60) * 60, last = a[a.length - 1];
@@ -580,20 +506,12 @@ const Engine = (() => {
     barSoon();
     return true;
   }
-  // value of 1 unit of a currency in USD from the fed pairs (EURUSD, USDJPY, USDCZK, …; HUF via EURHUF·EURUSD)
-  function fedUsd(c) {
-    const q = s => (fed(s) && fq[s] && fq[s].bid > 0 ? fq[s].bid : null);
-    let v = q(c + 'USD'); if (v) return v;
-    v = q('USD' + c); if (v) return 1 / v;
-    const eu = q('EURUSD'), e = q('EUR' + c); if (eu && e) return eu / e;
-    return null;
-  }
-
   /* ---------- prices ---------- */
   // the simulated price of an instrument: its bid (PIVOT ON BID)
   function bidOf(sym) {
     const m = META[sym];
-    if (fed(sym) && fq[sym]) return fq[sym].bid;
+    const f = fed(sym) && MK.last(sym);
+    if (f) return f.bid;
     if (m.kind === 'fx') return fxPx(m, mode === 'live' || !cur ? fxLevels() : L);
     return Math.exp(nxLog(sym));
   }
@@ -942,50 +860,27 @@ const Engine = (() => {
     updateCandles();
   }
 
-  /* New York time (the FX day ends at 17:00 New York): nyOffset returns −4 (EDT) or −5 (EST) hours. */
-  const dstCache = {};
-  function dstRange(y) {
-    if (dstCache[y]) return dstCache[y];
-    const sun = (m, n) => { const d = new Date(Date.UTC(y, m, 1)).getUTCDay(); return Date.UTC(y, m, 1 + (7 - d) % 7 + 7 * (n - 1)) / 1000; };
-    return dstCache[y] = [sun(2, 2) + 7 * 3600, sun(10, 1) + 6 * 3600];
-  }
-  function nyOffset(t) { const r = dstRange(new Date(t * 1000).getUTCFullYear()); return t >= r[0] && t < r[1] ? -4 : -5; }
-  // news: the calendar puts an instrument on its News spread while a release on one of its currencies is active
-  const newsMult = {};
-  function setNewsMult(ccy, mult, until) { if (ALL_SET.has(ccy) && Number.isFinite(mult) && mult >= 1 && Number.isFinite(until)) newsMult[ccy] = { mult, until }; }
-  const newsOn = c => { const n = newsMult[c]; return !!n && n.mult > 1 && simTime < n.until; };
-  // Night = 23:00–01:00 server time on a weekday (Monday to Friday, by the server's calendar day)
-  function isNight(t) {
-    const loc = t + serverOffset(t) * 3600, dow = ((Math.floor(loc / 86400) + 4) % 7 + 7) % 7, mn = Math.floor((((loc % 86400) + 86400) % 86400) / 60);
-    return dow >= 1 && dow <= 5 && (mn >= 1380 || mn < 60);
-  }
   /* quote(sym) → { bid, ask, mid, spread (displayed unit: pips for FX, points otherwise), sp: 'default'|'night'|'news',
-     open, why, t }. The spread comes from the sheet in points; crypto adds a variation U(lo, hi) points drawn per second.
+     open, why, t, off } (built by the core's compose). The spread comes from the sheet in points; crypto adds a variation U(lo, hi) points drawn per second.
      PIVOT ON BID: mid keeps its v14 meaning, the simulated price the candles record, which is now the bid (alias);
      the midpoint of the quote is (bid + ask) / 2. */
   function quote(sym) {
     const m = META[sym];
     if (!m) return undefined;
     touch(sym);
-    const bid = bidOf(sym), nc = m.newsCcy;
-    let sp = 'default', k = 0;
-    for (let i = 0; i < nc.length; i++) if (newsOn(nc[i])) { sp = 'news'; k = 2; break; }
-    if (!k && isNight(simTime)) { sp = 'night'; k = 1; }
-    let pts = m.p.spread[k];
-    if (m.p.jit) { const [lo, hi] = m.p.jit[k]; pts = Math.max(0, pts + lo + (hi - lo) * u01(ID[sym], Math.floor(simTime), 1002)); }
+    const bid = bidOf(sym);
     let open = mode === 'live' ? openAt(SX[sym], simTime) : PAIR_SET.has(sym) && (cur ? !barGap(sym, Math.floor(simTime / 60) * 60) : fxOpen(simTime));
-    let why = open ? '' : 'closed';
-    let f = null;
+    let why = open ? '' : 'closed', f = null, off = false;
     if (fed(sym)) {
-      f = fq[sym];
-      if (feedDown()) { open = false; why = 'no feed'; }
+      f = MK.last(sym);
       // the sheet's off-quotes time where it sets one (the platform's own rule); otherwise 2 minutes on real prices
       // (no trading on a price the platform stopped updating), 10 s on a test feed
-      else if (open) { const lim = m.offQ || (realTime ? 120 : 10); if (!f || Date.now() / 1000 - f.t > lim) { open = false; why = 'off quotes'; } }
+      off = MK.stale(sym, m.offQ || (realTime ? 120 : 10));
+      if (feedDown()) { open = false; why = 'no feed'; }
+      else if (open && off) { open = false; why = 'off quotes'; }
     }
-    if (f && f.ask >= f.bid) pts = Math.round((f.ask - f.bid) / m.point * 1e6) / 1e6;
-    const ask = f && f.ask >= f.bid ? f.ask : bid + pts * m.point;
-    return { bid, ask, mid: bid, spread: pts * m.point / m.pip, sp, open, why, t: simTime };
+    // real prices: the core's draw (the server's), so both sides see the same spread on a quote without an ask
+    return MK.compose(sym, bid, f, simTime, open, why, off, !m.p.jit ? 0 : realTime ? MarketCore.jitU(sym, Math.floor(simTime)) : u01(ID[sym], Math.floor(simTime), 1002));
   }
   const isOpen = (sym, t = simTime) => (META[sym] ? openAt(SX[sym], t) : false);
 
@@ -993,16 +888,37 @@ const Engine = (() => {
   const USD_LEG = { EUR: ['EURUSD', 1], GBP: ['GBPUSD', 1], AUD: ['AUDUSD', 1], NZD: ['NZDUSD', 1], JPY: ['USDJPY', -1], CHF: ['USDCHF', -1], CAD: ['USDCAD', -1] };
   function usd(c) {
     if (c === 'USD') return 1;
-    if (feed) { const v = fedUsd(c); if (v) return v; }
+    if (feed) { const v = MK.usd(c); if (v) return v; }
     if (cur && USD_LEG[c]) { const [s, k] = USD_LEG[c]; return k > 0 ? cur[s] : 1 / cur[s]; }
     const F = mode === 'live' ? fxLevels() : L;
     return c in F ? Math.exp(F[c]) : NaN;
   }
 
+  /* feedHourly: the platform's 1-hour bars of a fed instrument (livefeed.js, ~90 days). aggregate() on 1H and above
+     reads them for the buckets before the 1-minute history starts, so the 1H/4H EMAs and scores have their bars. */
+  const hourly = {};
+  function feedHourly(sym, h) {
+    if (!fed(sym) || !Array.isArray(h) || !h.length) return false;
+    if (!h.every(c => c && Number.isFinite(c.time) && c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0)) return false;
+    hourly[sym] = h.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close }));
+    return true;
+  }
   function aggregate(sym, tf, maxBars = 1500) {
     const src = candles[sym], step = tf * 60, out = [];
     if (!src) return out;
     let startIdx = Math.max(0, src.length - maxBars * tf - tf);
+    const hb = tf >= 60 && tf % 60 === 0 && hourly[sym] && fed(sym) ? hourly[sym] : null;
+    if (hb && src.length) {
+      // whole buckets before the first one the 1-minute bars cover in full come from the hourly bars
+      const cut = Math.ceil(src[startIdx].time / step) * step;
+      for (const c of hb) {
+        if (c.time >= cut) break;
+        const b = Math.floor(c.time / step) * step, last = out[out.length - 1];
+        if (!last || last.time !== b) out.push({ time: b, open: c.open, high: c.high, low: c.low, close: c.close });
+        else { if (c.high > last.high) last.high = c.high; if (c.low < last.low) last.low = c.low; last.close = c.close; }
+      }
+      while (startIdx < src.length && src[startIdx].time < cut) startIdx++;
+    }
     for (let i = startIdx; i < src.length; i++) {
       const c = src[i], b = Math.floor(c.time / step) * step, last = out[out.length - 1];
       if (!last || last.time !== b) out.push({ time: b, open: c.open, high: c.high, low: c.low, close: c.close });
@@ -1102,7 +1018,7 @@ const Engine = (() => {
   return {
     CCY, ALL, CCY_ALL, PAIRS, FX, CFDS: NX, INSTR, META, LEGACY_META, SNAP_LABEL, CFD_REF_LABEL: SNAP_LABEL,
     init, jumpX, probeX, tick, quote, usd, mid, bid: mid, aggregate, strength, returns, corr, jump, setSeed,
-    snapshot, setNewsMult, nyOffset, serverOffset, isOpen, session, hot, setFeed, feedHistory, get feedOn() { return !!feed; }, get realTime() { return realTime; }, get feedDown() { return feedDown(); },
+    snapshot, setNewsMult, nyOffset, serverOffset, isOpen, session, hot, setFeed, feedHistory, feedHourly, get feedOn() { return !!feed; }, get realTime() { return realTime; }, get feedDown() { return feedDown(); },
     candles, on: (e, f) => listeners[e].push(f),
     get simTime() { return simTime; }, get speed() { return speed; }, set speed(v) { speed = feed ? (v > 0 ? 1 : 0) : v; },
     get source() { return source; }, get rateDate() { return rateDate; }, get regime() { return regime; }, get seed() { return seed; },

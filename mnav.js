@@ -23,7 +23,7 @@
     ['calc', 'Calculators', 'Position size, pip value, compounding'],
     ['cmd', 'Command bar', 'Type an order or a command'],
     ['help', 'Help & settings', 'Account, display, one-click, shortcuts, tour'],
-    ['install', 'Install app', 'Add trade.Berry to your home screen']
+    ['install', 'Install app', 'Add tradeBerry to your home screen']
   ];
   const PORT = ['positions', 'orders', 'history'];
   let view = VIEWS.some(v => v[0] === S.set.mv) ? S.set.mv : 'chart';
@@ -41,10 +41,13 @@
   tools.innerHTML = `<div class="mtools-grid">${TOOLS.map(([k, l, d]) => `<button data-mt="${k}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>`;
   const back = document.createElement('div');
   back.className = 'mtool-bar';
-  back.innerHTML = `<button class="mtool-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>All tools</button><b id="mtoolName"></b>`;
+  back.innerHTML = `<button class="mtool-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>All tools</button><b id="mtoolName"></b><button type="button" class="ghost sm mtool-guide" hidden>Guide</button>`;
   dock.insertBefore(tools, tw); dock.insertBefore(back, tw);
 
-  const label = k => (TOOLS.find(t => t[0] === k) || [k, k])[1];
+  // a tool opened from elsewhere (the Brief button: Market Brief is not in the grid) takes the name of its tab
+  const label = k => (TOOLS.find(t => t[0] === k) || [k, document.querySelector(`#tabs [data-tab="${k}"]`)?.textContent.trim() || k])[1];
+  // Guide: the same guide as the tool strip's button (ui.js syncGuideBtn shows or hides both)
+  back.querySelector('.mtool-guide').addEventListener('click', () => document.getElementById('guideBtn')?.click());
   function measure() {
     const tb = document.querySelector('.topbar');
     document.documentElement.style.setProperty('--tbh', (tb ? tb.offsetHeight : 120) + 'px');

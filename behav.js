@@ -23,7 +23,8 @@ const bhEsc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt
 // long explanations fold under a one-line summary that always shows; which ones are open survives a re-render
 const BH_OPEN = new Set();
 const bhMore = (k, sum, body) => `<details class="bh-more" data-more="${k}"${BH_OPEN.has(k) ? ' open' : ''}><summary>${sum}</summary>${body}</details>`;
-// until: sim second the "Skip pre-mortems for 1 hour" ends (0 = not skipping); skips: how many times it was used
+// until: sim second the "Skip pre-mortems for 1 hour" ends (0 = not skipping); skips: how many times it was used;
+// off: the account-menu switch — no pre-mortem at all, tilt guard, rules and challenge flags included (for testing)
 function pmCfg() { if (!S.set.pm) S.set.pm = { on: true, minRisk: 1, noSL: true, until: 0, skips: 0 }; return S.set.pm; }
 const pmSkipping = () => (+pmCfg().until || 0) > Engine.simTime;
 function tiltCfg() { if (!S.set.tilt) S.set.tilt = { on: true, streak: 3, dayLoss: 3, cool: 15 }; return S.set.tilt; }
@@ -47,7 +48,8 @@ const bhClock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStar
 function pmRisk(o) {
   const m = M(o.sym), q = Engine.quote(o.sym), d = o.side === 'buy' ? 1 : -1;
   const entry = o.price ?? (d > 0 ? q.ask : q.bid);
-  const sl = o.sl ?? (o.slPips ? entry - d * o.slPips * m.pip : null);
+  const own = S.positions.find(p => p.sym === o.sym && p.side === o.side && p.sl != null); // an add joins the position, whose stop covers it (netting)
+  const sl = o.sl ?? (o.slPips ? entry - d * o.slPips * m.pip : own && o.price == null ? own.sl : null);
   const tp = o.tp ?? (o.tpPips ? entry + d * o.tpPips * m.pip : null);
   const risk = sl != null ? Math.abs(entry - sl) / m.pip * pipValue(o.sym, 1) * o.lots : null;
   const reward = tp != null ? Math.abs(tp - entry) / m.pip * pipValue(o.sym, 1) * o.lots : null;
@@ -124,12 +126,15 @@ function tiltCheckTrip() {
 }
 function rulesCfg() { if (!S.set.rules) S.set.rules = {}; return S.set.rules; }
 function pmNeedFor(pct, hasStop, codes = []) {
+  if (pmCfg().off || !pmAdmin()) return false;
   const ru = rulesCfg(); if (codes.some(c => ru[c])) return true;
   if (tiltStatus().armed) return true;
   const c = pmCfg(); if (!c.on || pmSkipping()) return false;
   return hasStop ? pct >= c.minRisk : c.noSL;
 }
-function pmNeeded(o) { if (o.auto || o.pmDone || !o || !M(o.sym)) return false; const r = pmRisk(o); if (typeof chFlag === 'function' && chFlag(o, r)) return true; let codes = []; if (Object.keys(rulesCfg()).length) { try { codes = pmFlags(o, r).map(f => f[0]); } catch (e) { } } return pmNeedFor(r.pct, r.sl != null, codes); }
+// pre-mortems go with Coach, where they are set: only for users the administrator gave Coach (shell.js wsCan)
+function pmAdmin() { return typeof wsCan !== 'function' || wsCan('coach'); }
+function pmNeeded(o) { if (o.auto || o.pmDone || !o || !M(o.sym) || pmCfg().off || !pmAdmin() || netOnly(o)) return false; const r = pmRisk(o); if (typeof chFlag === 'function' && chFlag(o, r)) return true; let codes = []; if (Object.keys(rulesCfg()).length) { try { codes = pmFlags(o, r).map(f => f[0]); } catch (e) { } } return pmNeedFor(r.pct, r.sl != null, codes); }
 
 /* ---------- wrap trading functions (app.js globals) ---------- */
 const _bhOpen = openPosition, _bhPlace = placeOrder, _bhClose = closePosition;
@@ -159,23 +164,35 @@ if (typeof closeWhere === 'function') { // batch closes (Close all, winners, los
   };
 }
 // an order whose stop-out would breach a running challenge attempt is refused on every path (challenge.js), before the pre-mortem
-const bhChalBlock = o => { if (!o || !M(o.sym)) return undefined; const why = typeof chOrderBlock === 'function' ? chOrderBlock(o) : null; return why ? reject('Order blocked', why) : undefined; };
+const bhChalBlock = o => { if (!o || !M(o.sym) || netOnly(o)) return undefined; const why = typeof chOrderBlock === 'function' ? chOrderBlock(o) : null; return why ? reject('Order blocked', why) : undefined; };
 openPosition = function (o) {
   if (bhChalBlock(o) === null) return null;
   if (pmNeeded(o)) { pmOpen(o, 'pos'); return null; }
   let ctx = o.ctx;
   if (!ctx && !o.basket && M(o.sym)) { try { ctx = pmFlags(o, pmRisk(o)).map(f => f[0]); } catch (e) { ctx = []; } }
+  const stamp = p => {
+    if (!p || !netNew()) return p;
+    p.sl0 = p.sl; p.tp0 = p.tp; p.ctx = ctx || []; p.news = []; if (o.pm) { p.pm = o.pm; if (o.pm.timeStop) p.timeStop = o.pm.timeStop; } if (o.basket) { p.basket = o.basket; p.bgid = o.bgid; }
+    return p;
+  };
+  // live: the journal fields go with the order; the server stamps them on the new position (gw_meta)
+  if (TradeLink.live) { if (!o.ctx) o = { ...o, ctx: ctx || [] }; return _bhOpen(o); }
   const p = _bhOpen(o);
-  if (p) { p.sl0 = p.sl; p.tp0 = p.tp; p.ctx = ctx || []; p.news = []; if (o.pm) { p.pm = o.pm; if (o.pm.timeStop) p.timeStop = o.pm.timeStop; } if (o.basket) { p.basket = o.basket; p.bgid = o.bgid; } }
-  return p;
+  return p instanceof Promise ? p.then(stamp) : stamp(p);
 };
 placeOrder = function (o) { if (bhChalBlock(o) === null) return; if (pmNeeded(o)) { pmOpen(o, 'ord'); return; } return _bhPlace(o); };
 closePosition = function (id, reason = 'Manual', frac = 1) {
   const p = S.positions.find(x => x.id === id); if (!p) return;
+  // a part refused at the minimum size (closeLots 0: "½" of 0.01 lots) closes nothing: no sale is counted and no
+  // journal fields go to the server; the refusal itself is shown by the close below
+  if (frac < 1 && !closeLots(p, frac)) return _bhClose(id, reason, frac);
   const vol = bhVoluntary(reason) && !p.basket;
   // statistics never stand between the user and the close
   if (vol && !BH_BATCH) safe('disposition', () => dispoSale([p], S.positions.filter(x => !x.basket && x !== p))); // inside a batch it was already counted
   const meta = { pm: p.pm, sl0: p.sl0, tp0: p.tp0, slLast: p.sl, tpLast: p.tp, vol, basket: p.basket, bgid: p.bgid, ctx: p.ctx, news: p.news, timeStop: p.timeStop };
+  // live: the server's history row carries the position's journal fields (gw_meta); the rest arrives with it
+  // the close's own journal fields (the stop and target it left, voluntary or not, the risk) go to the server first
+  if (TradeLink.live) { TradeLink.send('meta', { posId: id, meta: { slLast: p.sl ?? null, tpLast: p.tp ?? null, vol, riskUsd: p.risk > 0 ? p.risk * Math.min(1, frac) : null } }); const r = _bhClose(id, reason, frac); Promise.resolve(r).then(() => { safe('tilt guard', tiltCheckTrip); if (activeTab === 'behav') safe('behaviour', renderBehav); }); return r; }
   const h0 = S.history[0], r = _bhClose(id, reason, frac);
   if (S.history[0] && S.history[0] !== h0 && S.history[0].id === id) Object.assign(S.history[0], meta);
   safe('tilt guard', tiltCheckTrip);
@@ -211,7 +228,7 @@ function pmGate(spec) {
       <div class="pm-conf"><span>How likely is it to work?</span>${CAL_V.map(v => `<label><input type="radio" name="pmConf" value="${v}"><span>${v}%</span></label>`).join('')}</div>
       <div class="pm-row2"><input type="text" id="pmKill" placeholder="Optional — I will get out early if…" maxlength="160" autocomplete="off">
       <label class="pm-ts">Time stop <select id="pmTs"><option value="0">none</option><option value="3600">1h</option><option value="14400">4h</option><option value="86400">24h</option></select></label></div></div>
-    <div class="pm-actions"><span class="sp"></span><button class="ghost" data-pm="cancel">Rethink — don't place</button>${t.cooling || blockers.length ? `<button class="ghost pm-ovr" data-pm="override">${blockers.length ? 'Break my rule' : t.paused ? 'Override pause' : 'Override cool-down'}</button>` : ''}<button class="pm-go ${spec.side}" id="pmGo" data-pm="go" disabled>${spec.label}</button>${t.armed || spec.flags.some(f => ru[f[0]] || f[0] === 'chal') ? '' : '<button class="link" data-pm="skip" style="flex-basis:100%;justify-content:flex-end;text-align:right;font-size:var(--fs-xs);color:var(--tx3)">Skip pre-mortems for 1 hour</button>'}</div>
+    <div class="pm-actions"><span class="sp"></span><button class="ghost" data-pm="cancel">Rethink — don't place</button>${t.cooling || blockers.length ? `<button class="ghost pm-ovr" data-pm="override">${blockers.length ? 'Break my rule' : t.paused ? 'Override pause' : 'Override cool-down'}</button>` : ''}<button class="pm-go ${spec.side}" id="pmGo" data-pm="go" disabled>${spec.label}</button>${t.armed || spec.flags.some(f => ru[f[0]] || f[0] === 'chal') ? '' : '<button class="link" data-pm="skip" style="flex-basis:100%;justify-content:flex-end;text-align:right;font-size:var(--fs-xs);color:var(--tx3)">Skip pre-mortems for 1 hour and place this order</button>'}</div>
     <p class="small muted pm-foot">Imagining that a decision has already failed ("prospective hindsight") helps people name more of the real reasons in advance. Shown when risk ≥ ${c.minRisk}% of equity${c.noSL ? ' or there is no stop' : ''}, and for every trade while the tilt guard is on. Skipping pauses them for one hour; turning them off is in Behaviour. Time stop closes the trade if it is not in profit by then. Skipped trades are tracked.</p></div>`;
   el.hidden = false; PM.override = false; setTimeout(() => el.querySelector('.pm-chip input')?.focus(), 30);
   clearInterval(PM.timer); PM.timer = setInterval(() => { const tt = tiltStatus(), cl = $('#pmCool'); if (cl) cl.textContent = bhClock(tt.left); if (!tt.cooling && !PM.block.length && $('.pm-ovr')) { $('.pm-ovr').remove(); pmValidate(); } if (el.hidden) clearInterval(PM.timer); }, 500);
@@ -267,7 +284,7 @@ const BH_POST = new Map();
 // 2(1 − Φ(d / σ√T)), rwHit in shared.js), with σ from complete 1-hour bars; '' when there is not enough history
 function bhRwTxt(sym, from, to) {
   const sg = typeof sig1h === 'function' ? sig1h(sym) : null, p = from > 0 ? rwHit(Math.abs(to - from) / from, sg, 24) : null;
-  return p == null ? 'On a zero-drift market that can happen by chance alone' : `A zero-drift random walk touches that level within 24h about ${Math.round(p * 100)}% of the time`;
+  return p == null ? 'That can happen by chance alone' : `A random walk touches that level within 24h about ${Math.round(p * 100)}% of the time`;
 }
 function postMortem(h) {
   const key = `${h.id}|${h.sym}|${h.open}|${h.parts || 1}|${h.close}`, done = BH_POST.get(key); if (done) return done;
@@ -372,7 +389,7 @@ function renderBehav() {
     // only a clear verdict counts: ratio 1 → 100, 1.5 → 50, 2 or more → 0; the reverse bias scores 100
     ['Disposition', dv.key === 'dispo' ? (ds.ratio == null ? 0 : clamp(100 - (ds.ratio - 1) * 100, 0, 100)) : dv.key === 'reverse' ? 100 : null, 'Let losers go as readily as winners — close the trade you would not open today.'],
     ['Clean entries', recent.length >= 5 ? recent.filter(h => !h.ctx.some(c => !BH_DIR_FLAGS.includes(c))).length / recent.length * 100 : null, 'Most of your recent entries carried a risk flag (stop, size, cost, news, timing or stacking) — fix those before the next trade.'],
-    ['Stops kept', H.filter(h => h.sl0 != null).length >= 5 ? 100 - widened.length / H.filter(h => h.sl0 != null).length * 100 : null, 'Stop widening is the most expensive habit — move stops only toward profit.'],
+    ['Stops not widened', H.filter(h => h.sl0 != null).length >= 5 ? 100 - widened.length / H.filter(h => h.sl0 != null).length * 100 : null, 'Stop widening is the most expensive habit — move stops only toward profit.'],
     // Brier skill score against your own base rate: 50 = no better than always stating your win rate, 100 = perfect, 0 = BSS −1
     ['Forecast skill (BSS)', bss != null && calT.length >= BH_CAL_N ? clamp(50 + 50 * bss, 0, 100) : null, 'Your stated odds do worse than simply stating your own win rate every time — rate trades closer to what actually happens.'],
     ['Discipline', pmN + (S.tiltSt.trips || 0) >= 3 ? clamp(100 - ((S.tiltSt.overrides || 0) + (S.tiltSt.ruleBreaks || 0)) / Math.max(1, pmN) * 150, 0, 100) : null, 'You override your own guard rails often — each override is a trade you said you would not take.']
@@ -395,7 +412,7 @@ function renderBehav() {
   const scoreHtml = `<section class="bh-card bh-score"><div class="bh-score-g ${score == null ? '' : score >= 70 ? 'st-ok' : score >= 50 ? '' : 'st-bad'}"><label class="bh-lab">Behaviour score</label>
       <div class="bh-hero">${score == null ? '<span class="bh-nd">not enough data</span>' : `<b class="bh-num mono">${score.toFixed(0)}</b><small class="mono">/ 100</small>`}<span class="bh-grade" title="Grade: A ≥ 85 · B ≥ 70 · C ≥ 55 · D ≥ 40 · E below"><span class="bh-lab">Grade</span><b>${grade}</b></span></div>${shSvg ? `<div class="bh-score-h" title="Score per sim hour">${shSvg}</div>` : ''}</div>
     <div class="bh-score-c" style="align-items:end">${comp.map(([n, v]) => `<div class="${v == null ? 'z' : ''}"><label style="white-space:normal;overflow:visible;line-height:1.25">${n}</label><div class="bh-meter"><i style="width:${v == null ? 0 : v.toFixed(0)}%" class="${v == null ? '' : v >= 70 ? 'st-ok' : v >= 50 ? 'mid' : 'st-bad'}"></i></div><span class="mono">${v == null ? '—' : v.toFixed(0)}</span></div>`).join('')}</div>
-    <div class="bh-score-t"><div class="bh-score-a">${H.length ? '<button class="link bh-rep" id="bhReport">Download report</button>' : '<button class="btn-pri bh-start" id="bhStartTrade">Open Trade</button>'}</div><p class="small">${score == null ? 'Each part needs a few trades before it counts: voluntary closes, entries, stops, rated pre-mortems and guard-rail decisions.' : worstC[1] < 70 ? `<b>Focus next — ${worstC[0].toLowerCase()}:</b> ${worstC[2]}` : 'All measured habits are in good shape. Keep the rules that got you here.'}${sugg.length ? ` <button type="button" class="link bh-go" data-bhgo="flags">${sugg.length} rule suggestion${sugg.length > 1 ? 's' : ''} in the Red-flag scoreboard</button>` : ''}</p></div></section>`;
+    <div class="bh-score-t"><div class="bh-score-a">${score == null ? '<button type="button" class="btn-pri bh-open" id="bhOpenTrade">Open Trade</button>' : '<button class="link bh-rep" id="bhReport">Download report</button>'}</div><p class="small">${score == null ? 'Each part needs a few trades before it counts: voluntary closes, entries, stops, rated pre-mortems and guard-rail decisions.' : worstC[1] < 70 ? `<b>Focus next — ${worstC[0].toLowerCase()}:</b> ${worstC[2]}` : 'All measured habits are in good shape. Keep the rules that got you here.'}${sugg.length ? ` <button type="button" class="link bh-go" data-bhgo="flags">${sugg.length} rule suggestion${sugg.length > 1 ? 's' : ''} in the Red-flag scoreboard</button>` : ''}</p></div></section>`;
   const skipName = s => bhEsc(s.type === 'basket' ? s.name : pretty(s.sym));
   el.innerHTML = `${scoreHtml}<div class="bh-col">
     <section class="bh-card"><h3>Disposition effect <a class="obs-src" href="https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00072" target="_blank" rel="noopener" title="Research: Odean (1998), Are investors reluctant to realize their losses? Journal of Finance">Odean (1998), Are investors reluctant to realize their losses?</a></h3>
@@ -428,13 +445,13 @@ function renderBehav() {
     <section class="bh-card"><h3>Your trading hours <span class="muted small">net P&amp;L by UTC hour of entry</span></h3>
       <div class="bh-hrs">${hrs.map(x => `<div title="${String(x.k).padStart(2, '0')}:00 UTC · ${x.n} trade${x.n === 1 ? '' : 's'} · ${usdFmt(x.net, true)}" style="--h:${(Math.abs(x.net) / hMax * 100).toFixed(0)}%" class="${x.n ? (x.net >= 0 ? 'up' : 'dn') : 'z'}"><i></i></div>`).join('')}</div>
       <div class="bh-hrs-ax"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
-      <p class="small">${hRank.length >= 2 ? `Worst hour <b class="dn">${String(hRank[0].k).padStart(2, '0')}:00</b> (${usdFmt(hRank[0].net, true)}, n=${hRank[0].n}${bhChance(hRank[0].n)}) · best <b class="up">${String(hRank[hRank.length - 1].k).padStart(2, '0')}:00</b> (${usdFmt(hRank[hRank.length - 1].net, true)}, n=${hRank[hRank.length - 1].n}${bhChance(hRank[hRank.length - 1].n)}). On a zero-drift market a gap between hours is mostly noise until each hour has ${BH_N}+ trades.` : '<span class="muted">Needs at least two hours with two or more trades each.</span>'}</p>
+      <p class="small">${hRank.length >= 2 ? `Worst hour <b class="dn">${String(hRank[0].k).padStart(2, '0')}:00</b> (${usdFmt(hRank[0].net, true)}, n=${hRank[0].n}${bhChance(hRank[0].n)}) · best <b class="up">${String(hRank[hRank.length - 1].k).padStart(2, '0')}:00</b> (${usdFmt(hRank[hRank.length - 1].net, true)}, n=${hRank[hRank.length - 1].n}${bhChance(hRank[hRank.length - 1].n)}). A gap between hours is mostly noise until each hour has ${BH_N}+ trades.` : '<span class="muted">Needs at least two hours with two or more trades each.</span>'}</p>
     </section>
     <section class="bh-card"><h3>Process vs outcome <a class="obs-src" href="https://www.sas.upenn.edu/~baron/papers/outcomebias.pdf" target="_blank" rel="noopener" title="Research: Baron &amp; Hershey (1988), Outcome bias in decision evaluation. Journal of Personality and Social Psychology">Baron &amp; Hershey (1988), Outcome bias in decision evaluation</a></h3>
       <table class="tbl bh-pot"><thead><tr><th scope="col">Process</th><th scope="col">Won</th><th scope="col">Lost</th></tr></thead><tbody>
         ${[['Good process', [[0, 'dw', 'Deserved win'], [1, 'bb', 'Bad break']]], ['Poor process', [[2, 'dl', 'Dumb luck'], [3, 'pj', 'Poetic justice']]]].map(([row, cells]) => `<tr><th scope="row">${row}</th>${cells.map(([k, c, lab]) => `<td class="po ${c}"><b class="mono">${q[k].n}</b><span>${lab}</span><small class="mono ${cls(q[k].net)}">${usdFmt(q[k].net, true)}</small></td>`).join('')}</tr>`).join('')}</tbody></table>
       <p class="small">${PO.length < 6 ? 'A few more trades and this shows how much of your P&amp;L came with sound risk control and how much without it.' : `${luck != null ? `<b class="${luck > 40 ? 'st-bad' : ''}">${luck.toFixed(0)}%</b> of your wins (n=${winsN}) came from poor-process trades — results you should not repeat on purpose. ` : ''}${q[1].n ? `${q[1].n} good-process trade${q[1].n > 1 ? 's' : ''} lost anyway — a loss with a sound plan is not a mistake.` : ''}`}</p>
-      ${bhMore('po', `Good process = a stop, risk ≤ 2% of equity, spread under 15% of the stop; trend is not judged on this zero-drift market · last ${PO.length} trades`, `<p class="small muted">Good process = a stop at entry, risk ≤ 2% of equity, and spread under 15% of the stop distance. Trend and chase warnings are not part of it: on this simulated, zero-drift market they do not change the odds, so only risk control is judged. Last ${PO.length} trades.</p>`)}
+      ${bhMore('po', `Good process = a stop, risk ≤ 2% of equity, spread under 15% of the stop · last ${PO.length} trades`, `<p class="small muted">Good process = a stop at entry, risk ≤ 2% of equity, and spread under 15% of the stop distance. Trend and chase warnings are not part of it: only risk control is judged. Last ${PO.length} trades.</p>`)}
     </section>
     <section class="bh-card"><h3>Mood at entry <span class="muted small">from the pre-mortem</span></h3>
       ${moods.length ? `<div class="bh-board-w"><table class="tbl sm bh-board"><thead><tr><th>Feeling</th><th>Trades</th><th>Win rate</th><th>Net</th></tr></thead><tbody>${moods.sort((a, b) => a.net - b.net).map(x => `<tr class="${x.n < BH_MIN ? 'z' : ''}"><td>${bhEsc(x.m)}</td><td class="mono">${x.n} <small class="muted bh-note">${x.n < BH_N ? 'may be chance' : ''}</small></td><td class="mono ${x.n >= BH_MIN && x.w < 40 ? 'st-bad' : ''}">${bhWrCell(x.wins, x.n)}</td><td class="mono ${x.n >= BH_MIN ? cls(x.net) : ''}">${usdFmt(x.net, true)}</td></tr>`).join('')}</tbody></table></div>
@@ -442,6 +459,7 @@ function renderBehav() {
     </section></div>
     <div class="bh-col">
     <section class="bh-card"><h3>Pre-mortem <a class="obs-src" href="https://hbr.org/2007/09/performing-a-project-premortem" target="_blank" rel="noopener" title="Research: Klein (2007), Performing a project premortem. Harvard Business Review">Klein (2007), Performing a project premortem</a></h3>
+      ${c.off ? '<p class="small st-bad">All pre-mortems are off from the account menu: no trade asks first, not even under the tilt guard or your rules.</p>' : ''}
       <div class="bh-set"><label class="tgl"><input type="checkbox" id="pmOn" ${c.on ? 'checked' : ''}> Ask before risky trades</label>
         <label>when risk ≥ <input type="range" id="pmMin" min="0" max="3" step=".25" value="${c.minRisk}"> <b class="mono" id="pmMinV">${c.minRisk}%</b></label>
         <label class="tgl"><input type="checkbox" id="pmNoSL" ${c.noSL ? 'checked' : ''}> always without a stop</label>
@@ -463,7 +481,7 @@ function renderBehav() {
         <tr class="bh-base"><td>No warnings</td><td class="mono">${base.length}</td><td class="mono">${bhWrCell(bhWins(base), base.length)}</td><td class="mono">${base.filter(h => h.r != null).length ? sgn(bhMean(base.filter(h => h.r != null).map(h => h.r)), 2) + 'R' : '—'}</td><td class="mono ${cls(base.reduce((s, h) => s + h.net, 0))}">${usdFmt(base.reduce((s, h) => s + h.net, 0), true)}</td><td></td></tr></tbody></table></div>
         ${Object.keys(ru).length ? `<p class="small"><b>${Object.keys(ru).length}</b> rule${Object.keys(ru).length > 1 ? 's' : ''} active · broken ${S.tiltSt.ruleBreaks || 0} time${S.tiltSt.ruleBreaks === 1 ? '' : 's'}${broke.length ? ` · trades that broke a rule: <b class="${cls(brokeNet)}">${usdFmt(brokeNet, true)}</b> over ${broke.length}` : ''}.</p>` : ''}
         ${post.length ? `<p class="small"><span class="muted">After the fact, across recent losers:</span> ${[['stophunt', 'stopped out, then the target was reached'], ['newsin', 'news hit while open'], ['widened', 'stop widened'], ['panic', 'closed in panic']].filter(([k]) => postCount(k)).map(([k, t]) => `<b>${postCount(k)}</b> ${t}`).join(' · ') || 'no recurring pattern yet'}.</p>` : ''}
-        ${bhMore('flags', `Fewer than ${BH_N} trades may be chance · trend and chase carry no edge on this zero-drift market · 95% intervals (Wilson)`, `<p class="small muted">${withCtx.length < 15 ? `Only ${withCtx.length} trades so far. ` : 'Rows at the top cost you the most. '}Rows with fewer than ${BH_N} trades may be chance; rules are suggested only from ${BH_MIN}+ trades, and never for trend or chase warnings — on this zero-drift market they carry no edge either way. Win rates show their 95% interval (Wilson). Turn a warning into a rule: <b>pre-mortem</b> always asks first, <b>block</b> stops the trade unless you deliberately break the rule.</p>`)}`}
+        ${bhMore('flags', `Fewer than ${BH_N} trades may be chance · 95% intervals (Wilson)`, `<p class="small muted">${withCtx.length < 15 ? `Only ${withCtx.length} trades so far. ` : 'Rows at the top cost you the most. '}Rows with fewer than ${BH_N} trades may be chance; rules are suggested only from ${BH_MIN}+ trades, and never for trend or chase warnings. Win rates show their 95% interval (Wilson). Turn a warning into a rule: <b>pre-mortem</b> always asks first, <b>block</b> stops the trade unless you deliberately break the rule.</p>`)}`}
     </section></div>`;
 }
 // bins: { v: stated %, n, w: won %, k?: wins, ci?: Wilson interval } — with an interval, a dot is miscalibrated only when the
@@ -496,14 +514,14 @@ let BH_LAST = null;
 function bhReport() {
   const L = BH_LAST; if (!L) return;
   const f = v => v == null ? '—' : typeof v === 'number' ? v.toFixed(0) : v, d = new Date(Engine.simTime * 1000).toISOString().slice(0, 16).replace('T', ' ');
-  const md = [`# tradeBerry — behaviour report`, `Sim time ${d} UTC · ${L.H} closed trades`, ...(S.demo ? ['', '**Demo account: synthetic trades** — generated to show the tools, not your own trading.'] : []), '',
+  const md = [`# tradeBerry — behaviour report`, `${d} UTC · ${L.H} closed trades`, ...(S.demo ? ['', '**Demo account: example trades** — generated to show the tools, not your own trading.'] : []), '',
     `## Score: ${L.grade} (${f(L.score)} / 100)`, ...L.comp.map(([n, v]) => `- ${n}: ${f(v)}`), '',
     `## Disposition effect`, L.ds.ready ? `PGR ${(L.ds.pgr * 100).toFixed(0)}% · PLR ${(L.ds.plr * 100).toFixed(0)}% · PGR / PLR ${L.ds.ratio != null ? L.ds.ratio.toFixed(2) : '—'}${L.ds.tstat != null ? ` (t = ${nfx(L.ds.tstat, 1)}, ${L.ds.n} voluntary closes)` : ''}` : 'Not enough voluntary closes yet.', dispoVerdict(L.ds).text, '',
     `## Process vs outcome`, 'Good process = stop at entry, risk ≤ 2% of equity, spread < 15% of the stop distance.', `- Deserved wins: ${L.q[0].n} (${usdFmt(L.q[0].net, true)})`, `- Bad breaks: ${L.q[1].n} (${usdFmt(L.q[1].net, true)})`, `- Dumb luck: ${L.q[2].n} (${usdFmt(L.q[2].net, true)})`, `- Poetic justice: ${L.q[3].n} (${usdFmt(L.q[3].net, true)})`, '',
     `## Red flags at entry`, '| Warning | Trades | Win rate | Net | Rule |', '|---|---|---|---|---|', ...L.board.filter(x => x.n).map(x => `| ${FLAG_NAMES[x.k]} | ${x.n} | ${wrTxt(x.wins, x.n)} | ${usdFmt(x.net, true)} | ${L.ru[x.k] || 'warn'} |`), '',
     `## Calibration`, L.calT ? `${L.calT} rated trades · Brier ${L.brier.toFixed(3)} = reliability ${L.bp.rel.toFixed(3)} − resolution ${L.bp.res.toFixed(3)} + uncertainty ${L.bp.unc.toFixed(3)} · BSS ${L.bss != null ? nfx(L.bss, 2) : '—'} · ${L.calT < BH_CAL_N ? `need ${BH_CAL_N - L.calT} more rated trades before judging over- or underconfidence` : L.meanConf / 100 > L.calCi.hi ? `overconfident by ${Math.abs(L.over).toFixed(0)} points` : L.meanConf / 100 < L.calCi.lo ? `underconfident by ${Math.abs(L.over).toFixed(0)} points` : 'no clear miscalibration (within the 95% interval)'}` : 'No rated trades yet.', '',
     `## Mood at entry`, ...(L.moods.length ? L.moods.map(x => `- ${x.m}: ${wrTxt(x.wins, x.n)} wins${bhChance(x.n)}, ${usdFmt(x.net, true)}${x.n < BH_MIN ? ' (too few for a verdict)' : ''}`) : ['No tagged trades yet.']), '',
-    `Skipped in pre-mortems: ${L.skips}`, '', 'Simulated market — practice data, not investment advice.'].join('\n');
+    `Skipped in pre-mortems: ${L.skips}`, '', 'Not investment advice.'].join('\n');
   try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown' })); a.download = `tradeberry-behaviour-${d.slice(0, 10)}.md`; document.body.appendChild(a); a.click(); a.remove(); } catch (e) { }
   navigator.clipboard?.writeText(md).catch(() => { });
   toast('Behaviour report ready', 'Downloaded as Markdown and copied to the clipboard', 'info');
@@ -514,7 +532,8 @@ function bhTick() {
   if (typeof CAL !== 'undefined') for (const e of CAL.events) if (e.done && !e._bh) { e._bh = 1; for (const p of S.positions) { const m = M(p.sym); if (m && e.impact === 'hi' && m.newsCcy.includes(e.ccy)) (p.news = p.news || []).push(`${e.ccy} ${e.name}`); } }
   // time stops
   // (a closed market cannot fill: the time stop waits for the open instead of being refused every second)
-  for (const p of [...S.positions]) if (p.timeStop && !p.basket && Engine.simTime - p.open >= p.timeStop && M(p.sym) && marketOpen(p.sym)) { if (posPnl(p).pnl <= 0) closePosition(p.id, 'Time stop'); else { p.timeStop = 0; toast(`${pretty(p.sym)} #${p.id} passed its time stop`, 'In profit at the deadline, so it stays open', 'info'); } }
+  // (the live account's time stops run on the execution server, Task 9)
+  if (!TradeLink.live) for (const p of [...S.positions]) if (p.timeStop && !p.basket && Engine.simTime - p.open >= p.timeStop && M(p.sym) && marketOpen(p.sym)) { if (posPnl(p).pnl <= 0) closePosition(p.id, 'Time stop'); else { p.timeStop = 0; toast(`${pretty(p.sym)} #${p.id} passed its time stop`, 'In profit at the deadline, so it stays open', 'info'); } }
   // live tilt countdown in the tab
   if (activeTab === 'behav' && S.tiltSt.until > Engine.simTime - 2) { const b = $('#behav .bh-tilt b'); const t = tiltStatus(); if (b && t.cooling) b.textContent = `Cooling down · ${bhClock(t.left)}`; }
 }
@@ -533,7 +552,7 @@ function bindBehav() {
     const h = e.target.closest('[data-hit]'); if (h) { const t = bhFind(+h.dataset.hit); if (t) { for (const x of t.rows) x.pmHit = h.dataset.v === '1'; save(); renderBehav(); } return; }
     const pz = e.target.closest('[data-pause]'); if (pz) { bhPause(+pz.dataset.pause); return; }
     if (e.target.id === 'bhReport') { bhReport(); return; }
-    if (e.target.id === 'bhStartTrade') { if (typeof setView === 'function') setView('trade'); setTimeout(() => $('#tkBuyBtn')?.focus(), 80); return; }
+    if (e.target.id === 'bhOpenTrade') { setView('trade'); setTimeout(() => { const s = ['.rail [data-side].on', '#qBuy', '#tkBuyBtn'].map(x => document.querySelector(x)).find(el => el && el.offsetParent); if (s) s.focus(); }, 80); return; }
     const sg = e.target.closest('[data-sug]'); if (sg) { rulesCfg()[sg.dataset.sug] = 'gate'; save(); renderBehav(); toast('Rule added', `${FLAG_NAMES[sg.dataset.sug]} → pre-mortem every time`, 'info'); return; }
     const sh = e.target.closest('[data-show]'); if (sh) { bhShowTrade(bhFind(+sh.dataset.show)); return; }
     if (e.target.id === 'pmResume') { pmCfg().until = 0; save(); renderBehav(); return; }

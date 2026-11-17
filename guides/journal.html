@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use the Journal in tradeBerry: statistics, equity curve, trade notes and the Coach.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* the in-page calculators of this guide: number fields, the trade list box, the result strip */
+.calc .cin input[type=number]{font:13px var(--mono);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:5px 7px;width:130px;max-width:100%}
+.calc .cin textarea{display:block;width:100%;min-height:96px;margin:6px 0 2px;font:13px/1.5 var(--mono);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:6px 8px;resize:vertical}
+.calc .cin .lb{display:block;padding-top:10px;font-size:14px}
+.calc .cin small{display:block;font-size:12px;color:var(--tx3)}
+.calc>div{min-width:0}.calc .parts b{overflow-wrap:anywhere}
+.calc .tot small{font-size:13px;color:var(--tx3)}
+.calc .ln{margin-top:10px;font-size:13px;line-height:1.45;color:var(--tx2)}
+.calc .ln.err{color:var(--dn)}.calc .ln.err::before{content:'✕ ';font-weight:700}
+.jk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line2);background:var(--bg);margin-top:12px}
+.jk>div{padding:8px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.jk>div:nth-child(2n){border-right:0}
+.jk>div.hero{grid-column:1/-1;border-right:0}
+.jk label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+.jk b{display:block;font:600 16px/1.3 var(--mono);overflow-wrap:anywhere}
+.jk b small{display:block;font:400 11.5px var(--mono);color:var(--tx3)}
+.jk .hero b{font-size:20px}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Coach <i>/</i> Journal</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the Journal is</a>
+  <a href="#minute"><span>02</span>The Journal in one minute</a>
+  <a href="#map"><span>03</span>Where it is, map of the tab</a>
+  <span class="p">II · The statistics</span>
+  <a href="#trade"><span>04</span>One trade, one position</a>
+  <a href="#net"><span>05</span>Net P&amp;L, trades, best / worst</a>
+  <a href="#wr"><span>06</span>Win rate and its interval</a>
+  <a href="#pf"><span>07</span>Profit factor</a>
+  <a href="#exp"><span>08</span>Average win, loss, expectancy</a>
+  <a href="#r"><span>09</span>Average R</a>
+  <a href="#curve"><span>10</span>Equity curve, max drawdown</a>
+  <span class="p">III · Notes and the Coach</span>
+  <a href="#notes"><span>11</span>Trade notes</a>
+  <a href="#coach"><span>12</span>The Coach card</a>
+  <a href="#details"><span>13</span>Coach · details</a>
+  <span class="p">IV · Using it</span>
+  <a href="#review"><span>14</span>A weekly review</a>
+  <a href="#example"><span>15</span>Worked example, try it</a>
+  <a href="#limits"><span>16</span>Limits and pitfalls</a>
+  <span class="p">V · Reference</span>
+  <a href="#ref"><span>17</span>All formulas and thresholds</a>
+  <a href="#glossary"><span>18</span>Glossary</a>
+  <a href="#related"><span>19</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Coach</span>
+  <h1>Journal</h1>
+  <p class="g-lede">Your record of closed trades, scored honestly: net of commission, one line per position, with a win rate that shows how unsure it still is. Ten statistics, the balance curve, a note on every trade, and a Coach that reads your behaviour from the same trades.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Trade › Journal · Coach › Journal</b></div>
+    <div><label>Counts</label><b>Closed trades, net of commission</b></div>
+    <div><label>Coach verdicts</label><b>10+ trades a group, 30+ to mean much</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the Journal measures, what to read first, where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the Journal is, and what it is not</h3></div>
+  <p class="lead">The Journal turns the trades you closed into numbers you can act on. Every figure is computed from your own executions on this account: nothing is estimated, nothing is added.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18L10 10l4 4 6-8"/></svg></div><h5>A record, not a forecast</h5><p>It describes what your trades did. A good record says your method worked on these trades; it does not promise the next ones.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14"/><path d="M4 10h16M9 5v14"/></svg></div><h5>Net, per position</h5><p>Commission is taken off every trade, and the partial closes of one position are counted as one trade, so the numbers match your balance.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg></div><h5>Honest about sample size</h5><p>The win rate carries a 95% interval, and the Coach stays silent on a group until it has 10 trades, flagging it as possibly chance below 30.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why it matters</b><p>Most traders remember their trades by feel. The Journal replaces feel with three questions you can answer every week: do my trades make money after costs (expectancy), do my wins pay for my losses (profit factor, average R), and how deep did my account fall on the way (max drawdown)?</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The Journal in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Net P&amp;L</h5><p>The top tile: the sum of your closed trades, after commission. ▲ or ▼ is the headline.</p></div>
+    <div><h5>Expectancy</h5><p>What one trade made on average. Above zero: your trades pay, on this sample.</p></div>
+    <div><h5>Win rate interval</h5><p>Read the range under the rate. Wide range = too few trades to judge yet.</p></div>
+    <div><h5>Equity curve</h5><p>The balance after each trade. Look at the dips: their depth is the max drawdown.</p></div>
+    <div><h5>Notes and Coach</h5><p>Write the note, read the Coach lines. Details opens the tables.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Where it is, and a map of the tab</h3></div>
+  <p>The Journal is one tab with two homes:</p>
+  <table class="g-t">
+    <thead><tr><th>Page</th><th>How to get there</th><th>Tabs beside it</th></tr></thead>
+    <tbody>
+      <tr><td>Trade</td><td>The bottom panel’s tab strip, <b>Journal</b>.</td><td>Positions, Orders, History, Alerts, Journal</td></tr>
+      <tr><td>Coach</td><td>The <b>Coach</b> button in the top bar (<kbd>Alt</kbd>+<kbd>5</kbd>), then <b>Journal</b>. The administrator turns the Coach page on per user.</td><td>Behaviour, Challenge, Journal</td></tr>
+    </tbody>
+  </table>
+  <p>Both show the same tab, from the same trades: a note typed on one is there on the other. <b>Expand panel</b> gives the bottom panel more room on the Trade page.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 320" role="img" aria-label="Layout of the Journal tab: statistics on the left, equity curve in the middle, Coach and Trade notes on the right">
+      <rect x="1" y="1" width="220" height="316" class="s-box"/>
+      <text x="12" y="20" class="s b s-tx">Statistics</text><text x="12" y="34" class="s s-tx3">closed trades, net of commission</text>
+      <rect x="10" y="42" width="202" height="34" class="s-box2"/><text x="18" y="55" class="s b s-tx3">NET P&amp;L</text><text x="18" y="70" class="m s b s-up">+$230.00</text>
+      <g class="s">
+        <rect x="10" y="80" width="100" height="34" class="s-bg"/><text x="16" y="93" class="s s-tx3">TRADES</text><text x="16" y="108" class="m s b s-tx">10</text>
+        <rect x="112" y="80" width="100" height="34" class="s-bg"/><text x="118" y="93" class="s s-tx3">WIN RATE</text><text x="118" y="108" class="m s b s-tx">50% <tspan class="s-tx3">(24–76%)</tspan></text>
+        <rect x="10" y="118" width="100" height="34" class="s-bg"/><text x="16" y="131" class="s s-tx3">PROFIT FACTOR</text><text x="16" y="146" class="m s b s-tx">1.62</text>
+        <rect x="112" y="118" width="100" height="34" class="s-bg"/><text x="118" y="131" class="s s-tx3">AVG WIN</text><text x="118" y="146" class="m s b s-up">+$120.00</text>
+        <rect x="10" y="156" width="100" height="34" class="s-bg"/><text x="16" y="169" class="s s-tx3">AVG LOSS</text><text x="16" y="184" class="m s b s-dn">−$74.00</text>
+        <rect x="112" y="156" width="100" height="34" class="s-bg"/><text x="118" y="169" class="s s-tx3">EXPECTANCY</text><text x="118" y="184" class="m s b s-up">+$23.00</text>
+        <rect x="10" y="194" width="100" height="34" class="s-bg"/><text x="16" y="207" class="s s-tx3">AVG R</text><text x="16" y="222" class="m s b s-tx">+0.28R</text>
+        <rect x="112" y="194" width="100" height="34" class="s-bg"/><text x="118" y="207" class="s s-tx3">MAX DRAWDOWN</text><text x="118" y="222" class="m s b s-dn">−1.47%</text>
+        <rect x="10" y="232" width="202" height="34" class="s-bg"/><text x="16" y="245" class="s s-tx3">BEST / WORST</text><text x="16" y="260" class="m s b"><tspan class="s-up">+$210</tspan><tspan class="s-tx3"> / </tspan><tspan class="s-dn">−$100</tspan></text>
+      </g>
+      <text x="12" y="300" class="s s-tx3">10 tiles; Net P&amp;L is the large one</text>
+
+      <rect x="227" y="1" width="290" height="316" class="s-box"/>
+      <text x="238" y="20" class="s b s-tx">Equity curve</text><text x="238" y="34" class="s s-tx3">closed trades</text>
+      <path d="M270 70 H508 M270 130 H508 M270 190 H508" class="s-ln"/>
+      <text x="264" y="74" text-anchor="end" class="m s s-tx3">$10.2k</text><text x="264" y="134" text-anchor="end" class="m s s-tx3">$10.1k</text><text x="264" y="194" text-anchor="end" class="m s s-tx3">$10.0k</text>
+      <path d="M270 196 H508" class="s-ln3" stroke-dasharray="4 3"/>
+      <polyline points="270,196 294,130 318,174 342,150 366,206 390,92 414,124 438,173 462,92 486,113 508,78" class="s-e20"/>
+      <circle cx="508" cy="78" r="4" style="fill:var(--ind1)"/>
+      <text x="270" y="230" class="m s s-tx3">11-02 09:14</text><text x="508" y="230" text-anchor="end" class="m s s-tx3">11-06 15:40</text>
+      <text x="238" y="262" class="s s-tx2">the balance after each closed trade;</text>
+      <text x="238" y="278" class="s s-tx2">dashed line = the starting balance;</text>
+      <text x="238" y="294" class="s s-tx2">hover: balance and change at any trade</text>
+
+      <rect x="523" y="1" width="236" height="316" class="s-box"/>
+      <text x="534" y="20" class="s b s-tx">Coach</text><rect x="694" y="8" width="56" height="18" class="s-box2"/><text x="722" y="21" text-anchor="middle" class="s b s-acc">Details</text>
+      <rect x="532" y="32" width="218" height="20" class="s-bg"/><rect x="532" y="32" width="2" height="20" class="s-up"/><text x="540" y="46" class="s s-tx2">You let winners run (3.2h)</text>
+      <rect x="532" y="56" width="218" height="20" class="s-bg"/><rect x="532" y="56" width="2" height="20" class="s-dn"/><text x="540" y="70" class="s s-tx2">2 of 10 trades had no stop loss</text>
+      <rect x="532" y="80" width="218" height="20" class="s-bg"/><rect x="532" y="80" width="2" height="20" class="s-tx3"/><text x="540" y="94" class="s s-tx2">Best pair so far: EUR/USD, +$75…</text>
+      <text x="534" y="124" class="s b s-tx">Trade notes</text>
+      <rect x="532" y="132" width="218" height="18" class="s-box2"/><text x="536" y="144" class="s b s-tx3">SYMBOL  SIDE  P&amp;L  NOTE</text>
+      <g class="s">
+        <rect x="532" y="150" width="218" height="26" class="s-bg"/><text x="535" y="167" class="s b s-tx">EUR/USD</text><text x="585" y="167" class="m s s-tx2">buy</text><text x="654" y="167" text-anchor="end" class="m s b s-up">+$75.00</text><rect x="658" y="155" width="42" height="16" class="s-box2"/><text x="661" y="167" class="s s-tx">Trend</text><text x="704" y="167" class="s s-tx3">Held…</text>
+        <rect x="532" y="178" width="218" height="26" class="s-bg"/><text x="535" y="195" class="s b s-tx">GBP/USD</text><text x="585" y="195" class="m s s-tx2">sell</text><text x="654" y="195" text-anchor="end" class="m s b s-dn">−$40.00</text>
+      </g>
+      <text x="534" y="232" class="s s-tx2">newest first, up to 40 trades;</text>
+      <text x="534" y="248" class="s s-tx2">notes save when you leave the field</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The Journal tab: Statistics, Equity curve, then the Coach card above Trade notes. On narrow screens the columns stack.</figcaption></figure>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>The statistics</h2><p>Every tile, the formula behind it, and how to read it.</p></div></div>
+
+<section class="ch" id="trade">
+  <div class="ch-h"><span class="n">04</span><h3>One trade, one position</h3></div>
+  <p>The account history keeps one row per close. If you close a position in two parts, it has two rows. The Journal merges the rows of one position (same id, instrument, side and open time) into <b>one trade</b> before it counts anything.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Two history rows of one position merged into one Journal trade, with commission taken off">
+      <rect x="10" y="20" width="230" height="64" class="s-box"/><text x="22" y="40" class="s b s-tx3">HISTORY ROW · PART 1</text><text x="22" y="58" class="m s s-tx">EUR/USD buy 0.50 · P&amp;L +$90.00</text><text x="22" y="74" class="m s s-tx3">commission share $3.50</text>
+      <rect x="10" y="110" width="230" height="64" class="s-box"/><text x="22" y="130" class="s b s-tx3">HISTORY ROW · PART 2</text><text x="22" y="148" class="m s s-tx">EUR/USD buy 0.50 · P&amp;L +$40.00</text><text x="22" y="164" class="m s s-tx3">commission share $3.50</text>
+      <path d="M244 52 C300 52 300 98 352 98" class="s-arrow" marker-end="url(#ah)"/><path d="M244 142 C300 142 300 106 352 106" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="298" y="194" text-anchor="middle" class="s s-tx3">same id · symbol · side · open time</text>
+      <rect x="358" y="60" width="240" height="84" class="s-box2"/><text x="370" y="80" class="s b s-tx3">ONE JOURNAL TRADE</text><text x="370" y="98" class="m s s-tx">lots 1.00 · 2 parts</text><text x="370" y="114" class="m s s-tx">P&amp;L +$130.00 − comm $7.00</text><text x="370" y="132" class="m s b s-up">net +$123.00 ▲</text>
+      <path d="M602 102 H640" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="648" y="92" class="s s-tx2">counted once in</text><text x="648" y="108" class="s s-tx2">every statistic</text><text x="648" y="124" class="s s-tx2">and the Coach</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>Partial closes become one trade; its net is the sum of each part’s P&amp;L minus its share of the commission.</figcaption></figure>
+  <div class="fml">
+    <div>net of a row = P&amp;L − commission share</div>
+    <div>net of a trade = Σ net of its rows</div>
+    <div>trade lots = Σ lots · exit, pips and R = lot-weighted across the parts</div>
+    <div class="c">R is kept only when every part has one (every part had a stop at the open); otherwise the trade has no R.</div>
+  </div>
+  <table class="g-t">
+    <thead><tr><th>Case</th><th>What the Journal does</th></tr></thead>
+    <tbody>
+      <tr><td>Position closed in parts</td><td>One trade; Trade notes shows “2 parts” (or more) next to the symbol.</td></tr>
+      <tr><td>Partly closed, rest still open</td><td>Counted already, with the closed parts only; marked “2 parts, still open”. Its P&amp;L grows when the rest closes.</td></tr>
+      <tr><td>Negative balance protection credit</td><td>Not a trade: it is left out of every statistic and the Coach, but it moves the equity curve (chapter 10).</td></tr>
+      <tr><td>Commission</td><td>Paid in full at the open; each close carries its share, so the trade’s net includes all of it.</td></tr>
+      <tr><td>Break-even trade (net exactly $0)</td><td>Counts as a loss in the win rate, average loss and the Coach.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="net">
+  <div class="ch-h"><span class="n">05</span><h3>Net P&amp;L, trades, best / worst</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Tile</th><th>Formula, as coded</th><th>How to read it</th></tr></thead>
+    <tbody>
+      <tr><td>Net P&amp;L</td><td>gross wins − gross losses = Σ net of all trades. Shown with a sign, e.g. <span class="up">+$230.00</span> or <span class="dn">−$84.50</span>.</td><td>The headline. It leaves out protection credits, so it can differ from the balance change by those credits.</td></tr>
+      <tr><td>Trades</td><td>The number of trades (positions), not of history rows.</td><td>Your sample size. Every other figure is only as reliable as this number is large.</td></tr>
+      <tr><td>Best / worst</td><td>The highest and the lowest trade net, cents dropped when they are .00: <span class="up">+$210</span> / <span class="dn">−$100</span>.</td><td>Is one trade carrying the whole result? If Net P&amp;L minus Best is below zero, it is.</td></tr>
+    </tbody>
+  </table>
+  <p>Before the first close every tile shows “—”. The history keeps the newest 500 closes; older ones drop out of the Journal too.</p>
+  <div class="call tip"><b class="t">Test: remove the best trade</b><p>With Net <span class="up">+$230</span> and Best <span class="up">+$210</span>, the other nine trades made only +$20. The record depends on one trade: worth knowing before you size up.</p></div>
+</section>
+
+<section class="ch" id="wr">
+  <div class="ch-h"><span class="n">06</span><h3>Win rate and its interval</h3></div>
+  <p>The win rate is the share of trades that ended above zero after commission. The tile shows it large, and under it the <b>95% Wilson interval</b> and the number of trades, e.g. <code>62%</code> over <code>(43–78%) · n=26</code>.</p>
+  <div class="fml">
+    <div>p = wins ÷ n &nbsp;&nbsp; z = 1.96</div>
+    <div>d = 1 + z² ÷ n</div>
+    <div>centre c = (p + z² ÷ 2n) ÷ d</div>
+    <div>half-width e = z · √( p(1 − p) ÷ n + z² ÷ 4n² ) ÷ d</div>
+    <div>interval = [c − e, c + e], kept within 0–100%; with no wins the low end is 0%, with no losses the high end is 100%</div>
+    <div class="c">All three numbers are rounded to whole percent.</div>
+  </div>
+  <p><b>Worked example.</b> 16 wins in 26 trades: p = 0.615, d = 1 + 3.8416 ÷ 26 = 1.148, c = (0.615 + 0.074) ÷ 1.148 = 0.601, e = 1.96 × √(0.00910 + 0.00142) ÷ 1.148 = 0.175. Interval 0.426 to 0.776: the tile reads <code>62% (43–78%) · n=26</code>.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="The 95 percent interval around a 60 percent win rate, for 10, 20, 30, 50, 100 and 1000 trades">
+      <g><text x="120" y="20" text-anchor="middle" class="m s s-tx3">0%</text><text x="270" y="20" text-anchor="middle" class="m s s-tx3">25%</text><text x="420" y="20" text-anchor="middle" class="m s s-tx3">50%</text><text x="570" y="20" text-anchor="middle" class="m s s-tx3">75%</text><text x="720" y="20" text-anchor="middle" class="m s s-tx3">100%</text></g>
+      <path d="M120 28 V222 M270 28 V222 M570 28 V222 M720 28 V222" class="s-ln"/>
+      <path d="M420 28 V222" class="s-ln3" stroke-dasharray="4 3"/>
+      <path d="M480 28 V222" class="s-lwn"/>
+      <text x="484" y="240" class="s b s-wn">observed 60%</text><text x="416" y="240" text-anchor="end" class="s s-tx3">a coin: 50%</text>
+      <g class="m s">
+        <text x="12" y="48" class="s b s-tx">n = 10</text><rect x="308" y="38" width="311" height="14" class="s-inbg"/><rect x="308" y="38" width="311" height="14" class="s-lin"/><text x="626" y="49" class="m s s-tx2">31–83%</text>
+        <text x="12" y="80" class="s b s-tx">n = 20</text><rect x="352" y="70" width="236" height="14" class="s-inbg"/><rect x="352" y="70" width="236" height="14" class="s-lin"/><text x="596" y="81" class="m s s-tx2">39–78%</text>
+        <text x="12" y="112" class="s b s-tx">n = 30</text><rect x="374" y="102" width="199" height="14" class="s-inbg"/><rect x="374" y="102" width="199" height="14" class="s-lin"/><text x="580" y="113" class="m s s-tx2">42–75%</text>
+        <text x="12" y="144" class="s b s-tx">n = 50</text><rect x="397" y="134" width="157" height="14" class="s-inbg"/><rect x="397" y="134" width="157" height="14" class="s-lin"/><text x="562" y="145" class="m s s-tx2">46–72%</text>
+        <text x="12" y="176" class="s b s-tx">n = 100</text><rect x="421" y="166" width="114" height="14" class="s-inbg"/><rect x="421" y="166" width="114" height="14" class="s-lin"/><text x="543" y="177" class="m s s-tx2">50–69%</text>
+        <text x="12" y="208" class="s b s-tx">n = 1,000</text><rect x="461" y="198" width="37" height="14" class="s-inbg"/><rect x="461" y="198" width="37" height="14" class="s-lin"/><text x="506" y="209" class="m s s-tx2">57–63%</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>The same 60% win rate on more and more trades. Only from about 100 trades does the interval stop including a coin flip’s 50%.</figcaption></figure>
+  <div class="call warn"><b class="t">The rate alone says little</b><p>A high win rate with small wins and large losses still loses money; a 35% win rate with wins three times the losses makes money. Read the win rate together with the average win and loss (chapter 08).</p></div>
+  <h4>Try it: the interval for your numbers</h4>
+  <div class="calc" id="wcalc">
+    <div class="cin">
+      <label class="sw">Winning trades <input id="wK" type="number" min="0" step="1" value="16"></label>
+      <label class="sw">Trades in total <input id="wN" type="number" min="1" step="1" value="26"></label>
+      <small style="padding-top:10px">Same formula as the Win rate tile and the Coach (z = 1.96).</small>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="wRate">62%</b><span class="tag nt" id="wTag">may be chance</span></div>
+      <svg viewBox="0 0 400 50" aria-hidden="true" style="width:100%;height:auto;display:block">
+        <rect x="0" y="12" width="400" height="12" class="s-box"/>
+        <path d="M200 6 V30" class="s-ln3" stroke-dasharray="3 3"/>
+        <rect id="wBar" x="170" y="12" width="140" height="12" class="s-inbg"/>
+        <rect id="wDot" x="246" y="8" width="3" height="20" class="s-wn"/>
+        <text x="0" y="44" class="m s s-tx3">0%</text><text x="200" y="44" text-anchor="middle" class="m s s-tx3">50%</text><text x="400" y="44" text-anchor="end" class="m s s-tx3">100%</text>
+      </svg>
+      <div class="parts"><span>The tile reads</span><b id="wTxt">62% (43–78%) · n=26</b><span>Low end of the 95% interval</span><b id="wLo">43%</b><span>High end</span><b id="wHi">78%</b><span>Coach, for a group this size</span><b id="wCoach">verdict, “may be chance”</b></div>
+      <p class="ln" id="wSay">The interval includes 50%: the record does not yet tell a real edge from luck.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="pf">
+  <div class="ch-h"><span class="n">07</span><h3>Profit factor</h3></div>
+  <div class="fml">
+    <div>gross wins = Σ net of the trades with net &gt; 0</div>
+    <div>gross losses = − Σ net of the trades with net ≤ 0</div>
+    <div>profit factor = gross wins ÷ gross losses &nbsp;(2 decimals; “∞” with wins and no losses; “—” before any trade)</div>
+  </div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 150" role="img" aria-label="Gross wins of 600 dollars against gross losses of 370 dollars, a profit factor of 1.62">
+      <text x="12" y="38" class="s b s-tx">Gross wins</text><rect x="120" y="24" width="480" height="22" class="s-upbg"/><rect x="120" y="24" width="480" height="22" class="s-lup"/><text x="610" y="40" class="m s b s-up">▲ $600 · 5 trades</text>
+      <text x="12" y="80" class="s b s-tx">Gross losses</text><rect x="120" y="66" width="296" height="22" class="s-dnbg"/><rect x="120" y="66" width="296" height="22" class="s-ldn"/><text x="426" y="82" class="m s b s-dn">▼ $370 · 5 trades</text>
+      <text x="120" y="122" class="s s-tx2">600 ÷ 370 = <tspan class="m b s-tx">1.62</tspan>: every $1 lost came back as $1.62 won. Net = 600 − 370 = +$230.</text>
+    </svg>
+  </div><figcaption><b>Fig. 4</b>Profit factor compares the two bars. Above 1.00 the trades made money net of commission; below 1.00 they lost.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Profit factor</th><th>Means</th></tr></thead>
+    <tbody>
+      <tr><td class="n">below 1.00</td><td>Losses outweigh wins: <span class="dn">▼ net loss</span>.</td></tr>
+      <tr><td class="n">1.00</td><td>Break-even after commission.</td></tr>
+      <tr><td class="n">above 1.00</td><td>Wins outweigh losses: <span class="up">▲ net gain</span>. How far above matters less than whether it holds on more trades.</td></tr>
+      <tr><td class="n">∞</td><td>No losing trade yet. Usually a sign of a short record, not of a perfect method.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="exp">
+  <div class="ch-h"><span class="n">08</span><h3>Average win, average loss, expectancy</h3></div>
+  <div class="fml">
+    <div>Avg win = gross wins ÷ number of wins &nbsp;(shown <span class="up">+$</span>)</div>
+    <div>Avg loss = − gross losses ÷ number of losses &nbsp;(shown <span class="dn">−$</span>)</div>
+    <div>Expectancy = (gross wins − gross losses) ÷ trades = Net P&amp;L ÷ trades</div>
+    <div class="c">Equivalently: win rate × avg win + (1 − win rate) × avg loss.</div>
+  </div>
+  <p><b>Worked example.</b> Wins of 120, 45, 210, 150, 75 and losses of −80, −100, −60, −90, −40 dollars. Avg win = 600 ÷ 5 = <span class="up">+$120.00</span>; avg loss = −370 ÷ 5 = <span class="dn">−$74.00</span>; expectancy = 230 ÷ 10 = <span class="up">+$23.00</span> a trade. Check: 0.5 × 120 + 0.5 × (−74) = 23.</p>
+  <h4>The break-even win rate</h4>
+  <p>The Coach uses the same averages: when your average loss is more than 1.5× your average win, it says so, with the win rate you would need just to break even.</p>
+  <div class="fml">
+    <div>break-even win rate = avg loss ÷ (avg loss + avg win)&nbsp;&nbsp;(both as positive amounts)</div>
+    <div class="c">Example: avg loss $150, avg win $80 → 150 ÷ 230 = 65%. The Coach line: “Average loss ($150.00) is 1.9× your average win. You'd need a 65% win rate just to break even.”</div>
+  </div>
+  <table class="g-t">
+    <thead><tr><th>Avg loss ÷ avg win</th><th>Break-even win rate</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0.33 (wins 3× losses)</td><td class="n">25%</td></tr>
+      <tr><td class="n">0.5</td><td class="n">33%</td></tr>
+      <tr><td class="n">1.0</td><td class="n">50%</td></tr>
+      <tr><td class="n">1.5 (the Coach’s line starts above this)</td><td class="n">60%</td></tr>
+      <tr><td class="n">2.0</td><td class="n">67%</td></tr>
+      <tr><td class="n">3.0</td><td class="n">75%</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="r">
+  <div class="ch-h"><span class="n">09</span><h3>Average R</h3></div>
+  <p><b>R</b> is a trade’s result measured in units of what it risked at its stop. A trade that risked $100 and made $150 is +1.5R; one stopped out at its original stop is about −1R.</p>
+  <div class="fml">
+    <div>risk at the open = |entry − stop| × lots × contract size, in USD &nbsp;(only when the order had a stop)</div>
+    <div>R of a close = P&amp;L of that close ÷ its share of the risk</div>
+    <div>R of a trade = lot-weighted across its parts (= total P&amp;L ÷ total risk)</div>
+    <div>Avg R = mean of R over the trades that have one &nbsp;(2 decimals, signed, e.g. +0.28R)</div>
+    <div class="c">Trades opened without a stop have no R and are left out of Avg R; the tile shows “—” if none has one.</div>
+  </div>
+  <div class="call warn"><b class="t">R is before commission</b><p>R is computed from the close’s P&amp;L, which is before commission; the dollar tiles are after it. So Avg R × risk is a little higher than the expectancy: in the example of chapter 16 (risk $100, commission $5 a trade), Avg R is +0.28R ≈ $28 a trade, against an expectancy of $23. The $5 gap is the commission.</p></div>
+  <table class="g-t">
+    <thead><tr><th>Avg R</th><th>Reads as</th></tr></thead>
+    <tbody>
+      <tr><td class="n">above 0</td><td>On average a trade returned more than nothing per unit risked: <span class="up">▲</span> positive, before costs.</td></tr>
+      <tr><td class="n">around 0</td><td>Wins and losses in R cancel: no edge before costs, a loss after them.</td></tr>
+      <tr><td class="n">below 0</td><td><span class="dn">▼</span> trades lose more of their risk than they win.</td></tr>
+      <tr><td class="n">losses well beyond −1R</td><td>Look in the History tab: stops moved away, or gaps and slippage through them.</td></tr>
+    </tbody>
+  </table>
+  <p>R also feeds the Risk Lab’s <b>Use my journal</b> button (Strategy Lab › Risk Lab). It needs at least 5 trades with a stop; it fills the win rate and the reward : risk from those trades, and the risk per trade from the median of what your trades really risked at their open, as a % of the balance before each.</p>
+</section>
+
+<section class="ch" id="curve">
+  <div class="ch-h"><span class="n">10</span><h3>The equity curve and max drawdown</h3></div>
+  <p>The curve is your <b>balance after each closed trade</b>, oldest on the left. It starts from what the balance was before the oldest trade the history still holds, and adds each trade’s net at its last close.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="An equity curve of ten trades from 10,000 dollars, with its deepest fall from a peak of 10,195 to 10,045 marked as the max drawdown of 1.47 percent">
+      <path d="M70 59.1 H740 M70 124.9 H740 M70 190.8 H740" class="s-ln"/>
+      <text x="62" y="63" text-anchor="end" class="m s s-tx3">$10.2k</text><text x="62" y="129" text-anchor="end" class="m s s-tx3">$10.1k</text><text x="62" y="195" text-anchor="end" class="m s s-tx3">$10.0k</text>
+      <path d="M70 190.8 H740" class="s-ln3" stroke-dasharray="4 3"/><text x="736" y="206" text-anchor="end" class="m s s-tx3">start $10,000</text>
+      <rect x="405" y="62.4" width="134" height="98.7" class="s-dnbg"/>
+      <path d="M405 62.4 H560" class="s-ldn" stroke-dasharray="3 3"/><path d="M539 62.4 V161.1" class="s-ldn"/>
+      <text x="547" y="120" class="s b s-dn">▼ max drawdown</text><text x="547" y="134" class="m s s-dn">10,195 → 10,045</text><text x="547" y="148" class="m s s-dn">−150 ÷ 10,195 = −1.47%</text>
+      <polyline points="70,190.8 137,111.8 204,164.4 271,134.8 338,200.6 405,62.4 472,101.9 539,161.1 606,62.4 673,88.7 740,39.4" class="s-e20"/>
+      <g style="fill:var(--ind1)"><circle cx="137" cy="111.8" r="2.5"/><circle cx="204" cy="164.4" r="2.5"/><circle cx="271" cy="134.8" r="2.5"/><circle cx="338" cy="200.6" r="2.5"/><circle cx="405" cy="62.4" r="3"/><circle cx="472" cy="101.9" r="2.5"/><circle cx="539" cy="161.1" r="3"/><circle cx="606" cy="62.4" r="2.5"/><circle cx="673" cy="88.7" r="2.5"/><circle cx="740" cy="39.4" r="4"/></g>
+      <text x="405" y="52" text-anchor="middle" class="s s-tx2">peak</text><text x="539" y="176" text-anchor="middle" class="s s-tx2">trough</text>
+      <rect x="610" y="8" width="120" height="36" class="s-bg"/><rect x="610" y="8" width="120" height="36" class="s-ln"/><text x="616" y="22" class="m s b s-tx">$10.2k</text><text x="616" y="38" class="m s s-up">+$230 ▲</text>
+      <text x="70" y="226" class="m s s-tx3">trade 0 (start)</text><text x="405" y="226" text-anchor="middle" class="m s s-tx3">trade 5</text><text x="740" y="226" text-anchor="end" class="m s s-tx3">trade 10</text>
+      <text x="70" y="256" class="s s-tx3">Axis labels as the terminal draws them: about four round steps in dollars; first, middle and last trade times underneath.</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The example record of chapter 15 as an equity curve. The label box marks the last point (or the point under the mouse) with the balance and the signed change since the start.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Element</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td>Line</td><td>One point per closed trade, plus one per protection credit; 2 px, no fill.</td></tr>
+      <tr><td>Dashed line</td><td>The starting balance, labelled “start $…”. Above it the record is up, below it down.</td></tr>
+      <tr><td>Highlighted point and box</td><td>The last point, or the point nearest the mouse with a vertical guide. The box gives the balance and the change since the start, with a sign and “· trade <i>n</i>” while you hover.</td></tr>
+      <tr><td>Axes</td><td>Dollars on the left; on the bottom the times of the first, middle and last trade (month-day hours:minutes, UTC).</td></tr>
+      <tr><td>Empty</td><td>“Your equity curve appears after your first closed trade.”</td></tr>
+    </tbody>
+  </table>
+  <div class="fml">
+    <div>start = balance now + commission already paid on open positions − Σ net of every history row</div>
+    <div>curve = start, then + net of each trade in the order of its last close</div>
+    <div>max drawdown = max over the curve of (running peak − balance) ÷ running peak &nbsp;(shown as −x.xx%)</div>
+  </div>
+  <div class="call ex"><b class="t">Negative balance protection</b><p>If a fast market took the account below zero and the protection credit topped it back up, the closes just before that credit are drawn at $0: you never owed that money. So the curve and the drawdown never go past −100%.</p></div>
+  <div class="call tip"><b class="t">Read the shape, not only the end</b><p>A curve that ends up but saw a 15% fall on the way was harder to trade than one that rose evenly to the same place. Max drawdown is the number that tells you whether you could have stayed with the method at your size.</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>Notes and the Coach</h2><p>What you add to each trade, and what the Coach reads from it.</p></div></div>
+
+<section class="ch" id="notes">
+  <div class="ch-h"><span class="n">11</span><h3>Trade notes</h3></div>
+  <p>Under the Coach card, <b>Trade notes</b> lists your newest 40 trades as a table, newest first:</p>
+  <div class="mock">
+    <div class="mh"><span>Symbol · Side · P&amp;L · Note</span><span>newest first</span></div>
+    <table class="g-t" style="margin:0">
+      <thead><tr><th>Symbol</th><th>Side</th><th>P&amp;L</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>EUR/USD</td><td><span class="tag">buy</span></td><td class="n up">+$75.00</td><td>Held to target, no early exit.</td></tr>
+        <tr><td>GBP/USD <span class="mut">2 parts</span></td><td><span class="tag">sell</span></td><td class="n dn">−$40.00</td><td class="mut">What did you see? What would you change?</td></tr>
+        <tr><td>USD/JPY <span class="mut">2 parts, still open</span></td><td><span class="tag">buy</span></td><td class="n up">+$150.00</td><td>Took half at 1R.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <table class="g-t">
+    <thead><tr><th>Column</th><th>What it holds</th></tr></thead>
+    <tbody>
+      <tr><td>Symbol</td><td>The instrument; “<i>n</i> parts” when closed in parts, “, still open” while a remainder is open.</td></tr>
+      <tr><td>Side</td><td>buy or sell, as opened.</td></tr>
+      <tr><td>P&amp;L</td><td>The trade’s net, signed; hover for “net of $… commission”.</td></tr>
+      <tr><td>Note</td><td>Free text. The placeholder asks the two questions worth answering: “What did you see? What would you change?”</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><b>Saving.</b> A note saves when you leave the field. It is stored on the trade itself and, on a live account, sent to the server with the position.</li>
+    <li><b>Same notes everywhere.</b> The Coach details dialog lists every trade with its note; what you type there is the same note.</li>
+    <li><b>No interruptions.</b> While a note field has the focus the list does not redraw, so new closes never wipe what you are typing.</li>
+    <li><b>Older trades.</b> Only 40 rows are listed here; Coach › Details lists all of them.</li>
+  </ul>
+  <p class="mut">Mood and confidence are asked in the pre-mortem before an order (Behaviour tab), not in the Journal; the Behaviour tab analyses them.</p>
+</section>
+
+<section class="ch" id="coach">
+  <div class="ch-h"><span class="n">12</span><h3>The Coach card</h3></div>
+  <p>The Coach reads the same trades (one per position, net of commission) and writes up to seven short lines. Each line is the first clause of a longer insight; <b>Details</b> opens them in full. The left edge marks the tone: green for a good habit, red for a costly one, grey for information.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 290" role="img" aria-label="Flowchart of how the Coach decides whether to write an insight about a group of trades">
+      <rect x="10" y="20" width="170" height="50" class="s-box"/><text x="95" y="41" text-anchor="middle" class="s b s-tx">Your closed trades</text><text x="95" y="57" text-anchor="middle" class="s s-tx3">fewer than 3?</text>
+      <path d="M95 70 V100" class="s-arrow" marker-end="url(#ah)"/><text x="102" y="90" class="s s-tx3">yes</text>
+      <rect x="10" y="104" width="170" height="44" class="s-box2"/><text x="95" y="122" text-anchor="middle" class="s s-tx2">“Close 2 more trades and</text><text x="95" y="137" text-anchor="middle" class="s s-tx2">the coach will start…”</text>
+      <path d="M180 45 H240" class="s-arrow" marker-end="url(#ah)"/><text x="188" y="38" class="s s-tx3">no</text>
+      <rect x="244" y="20" width="200" height="50" class="s-box"/><text x="344" y="41" text-anchor="middle" class="s b s-tx">Group the trades</text><text x="344" y="57" text-anchor="middle" class="s s-tx3">by pair, session, side</text>
+      <path d="M444 45 H500" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="504" y="20" width="240" height="50" class="s-box"/><text x="624" y="41" text-anchor="middle" class="s b s-tx">Group has 10+ trades?</text><text x="624" y="57" text-anchor="middle" class="s s-tx3">COACH_MIN = 10</text>
+      <path d="M560 70 V110" class="s-arrow" marker-end="url(#ah)"/><text x="530" y="94" class="s s-tx3">no</text>
+      <rect x="470" y="114" width="180" height="44" class="s-box2"/><text x="560" y="132" text-anchor="middle" class="s s-tx2">no verdict on it</text><text x="560" y="148" text-anchor="middle" class="s s-tx3">(still in the Details tables)</text>
+      <path d="M700 70 V110" class="s-arrow" marker-end="url(#ah)"/><text x="707" y="94" class="s s-tx3">yes</text>
+      <rect x="660" y="114" width="94" height="44" class="s-box"/><text x="707" y="132" text-anchor="middle" class="s b s-tx">30+ trades?</text><text x="707" y="148" text-anchor="middle" class="s s-tx3">COACH_N</text>
+      <path d="M707 158 V200" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="440" y="204" width="314" height="70" class="s-box"/>
+      <text x="452" y="224" class="s b s-tx">The insight is written</text>
+      <text x="452" y="242" class="s s-tx2">with n and the 95% interval; under 30 trades</text>
+      <text x="452" y="258" class="s s-tx2">it adds “may be chance”</text>
+      <rect x="10" y="204" width="400" height="70" class="s-box"/>
+      <text x="22" y="224" class="s b s-tx">Checks with no group size</text>
+      <text x="22" y="242" class="s s-tx2">no stop loss (any count) · average loss vs win ·</text>
+      <text x="22" y="258" class="s s-tx2">re-entries within 10 min of a loss (2 or more)</text>
+      <path d="M344 70 V200" class="s-arrow" marker-end="url(#ah)"/>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>How the Coach decides. Groups below 10 trades get no verdict; between 10 and 29 they are flagged as possibly chance.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Insight</th><th>When it appears</th><th>Tone</th></tr></thead>
+    <tbody>
+      <tr><td>Best / weakest pair so far</td><td>At least two pairs with 10+ trades; best shown if its net &gt; 0, weakest if &lt; 0. The weakest adds: check spread or size before blaming the pair.</td><td>info</td></tr>
+      <tr><td>You hold losers <i>x</i>× longer than winners</td><td>10+ winners and 10+ losers that are fully closed; average loser hold &gt; 1.3× average winner hold.</td><td><span class="dn">▼ bad</span></td></tr>
+      <tr><td>You let winners run … and cut losers fast</td><td>The same groups; winner hold &gt; 1.3× loser hold.</td><td><span class="up">▲ good</span></td></tr>
+      <tr><td>Average loss is <i>x</i>× your average win</td><td>Average loss &gt; 1.5× average win; gives the break-even win rate.</td><td><span class="dn">▼ bad</span></td></tr>
+      <tr><td>You win … of longs vs … of shorts</td><td>10+ longs and 10+ shorts, win rates 20 points or more apart; both with intervals.</td><td>info</td></tr>
+      <tr><td><i>n</i> of <i>N</i> trades had no stop loss</td><td>Any trade without a stop at its open; with its net.</td><td><span class="dn">▼ bad</span> above 30% of trades, else info</td></tr>
+      <tr><td><i>n</i> trades were opened within 10 minutes of a loss</td><td>2 or more such trades; their win rate is added from 10.</td><td>info</td></tr>
+      <tr><td>Best session so far … Weakest …</td><td>At least two sessions with 10+ trades (sessions by open time, UTC).</td><td>info</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 110" role="img" aria-label="The four Coach sessions on a 24-hour UTC clock">
+      <rect x="40" y="30" width="196" height="30" class="s-box2"/><rect x="236" y="30" width="140" height="30" class="s-inbg"/><rect x="376" y="30" width="112" height="30" class="s-wnbg"/><rect x="488" y="30" width="140" height="30" class="s-upbg"/><rect x="628" y="30" width="84" height="30" class="s-box2"/>
+      <text x="138" y="49" text-anchor="middle" class="s b s-tx">Asia</text><text x="306" y="49" text-anchor="middle" class="s b s-tx">London</text><text x="432" y="49" text-anchor="middle" class="s b s-tx">London/NY overlap</text><text x="558" y="49" text-anchor="middle" class="s b s-tx">New York</text><text x="670" y="49" text-anchor="middle" class="s b s-tx">Asia</text>
+      <g class="m s"><text x="40" y="78" text-anchor="middle" class="m s s-tx3">00</text><text x="236" y="78" text-anchor="middle" class="m s s-tx3">07</text><text x="376" y="78" text-anchor="middle" class="m s s-tx3">12</text><text x="488" y="78" text-anchor="middle" class="m s s-tx3">16</text><text x="628" y="78" text-anchor="middle" class="m s s-tx3">21</text><text x="712" y="78" text-anchor="middle" class="m s s-tx3">24</text></g>
+      <text x="40" y="100" class="s s-tx3">Hour of the trade’s open, UTC. A trade opened at 13:30 UTC counts in London/NY overlap, whenever it closed.</text>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>The Coach’s sessions: London 07–12, London/NY overlap 12–16, New York 16–21, Asia the rest.</figcaption></figure>
+</section>
+
+<section class="ch" id="details">
+  <div class="ch-h"><span class="n">13</span><h3>Coach · details</h3></div>
+  <p><b>Details</b> on the Coach card opens a floating panel, <b>Coach · details</b>. <b>Close</b>, <kbd>Esc</kbd> or a click outside closes it. It holds four things:</p>
+  <table class="g-t">
+    <thead><tr><th>Part</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td>Summary strip</td><td>Trades (closed, net of commission) · Net · Win rate with “95% lo–hi · n=…” · Avg win · Avg loss · Hold W / L (flat positions only) · No stop loss (count of trades, with their net) · Re-entries (within 10 min of a loss, with their win rate).</td></tr>
+      <tr><td>Insights</td><td>Every Coach insight in full sentences.</td></tr>
+      <tr><td>Breakdown table</td><td>Bands <b>By pair</b>, <b>By session · open time, UTC</b>, <b>By side</b> (Long, Short); columns Trades, Net, Win rate, 95% interval, Avg (net per trade). Each band is sorted by net, best first. A ‡ marks groups under 30 trades: “may be chance”.</td></tr>
+      <tr><td>Trades</td><td>Every trade, newest first: Closed (UTC), Trade (side, lots, instrument, parts), Entry → exit, Pips / pt, R, Net (hover: commission and swap), Hold, Exit (the close reason), Note. A “<i>n</i> warning(s)” mark lists the trade’s flags: no stop loss, opened within 10 min of a loss, and the warnings raised before the order.</td></tr>
+    </tbody>
+  </table>
+  <div class="mock">
+    <div class="mh"><span>By pair</span><span>‡ fewer than 30 trades</span></div>
+    <table class="g-t" style="margin:0">
+      <thead><tr><th>Breakdown</th><th>Trades</th><th>Net</th><th>Win rate</th><th>95% interval</th><th>Avg</th></tr></thead>
+      <tbody>
+        <tr><td>EUR/USD</td><td class="n">14</td><td class="n up">+$410.00</td><td class="n">64%</td><td class="n">39–84% ‡</td><td class="n up">+$29.29</td></tr>
+        <tr><td>GBP/USD</td><td class="n">11</td><td class="n up">+$95.00</td><td class="n">55%</td><td class="n">28–79% ‡</td><td class="n up">+$8.64</td></tr>
+        <tr><td>USD/JPY</td><td class="n">9</td><td class="n dn">−$60.00</td><td class="n">44%</td><td class="n">19–73% ‡</td><td class="n dn">−$6.67</td></tr>
+        <tr><td>AUD/USD</td><td class="n">12</td><td class="n dn">−$318.00</td><td class="n">25%</td><td class="n">9–53% ‡</td><td class="n dn">−$26.50</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="mut">Example values. The intervals are computed with the formula of chapter 06: 9 of 14 → 39–84%.</p>
+  <div class="call tip"><b class="t">Read the interval column first</b><p>Two groups whose intervals overlap widely are not yet different, however far apart their win rates look. In the example, EUR/USD (39–84%) and Impulse (9–53%) overlap from 39% to 53%: a hint, not a proof. Net and Avg tell you what each group did to the account.</p></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Using it</h2><p>A routine, a full example to check against, and what the numbers cannot tell you.</p></div></div>
+
+<section class="ch" id="review">
+  <div class="ch-h"><span class="n">14</span><h3>A weekly review</h3></div>
+  <p>Twenty minutes once a week, at the same time, before the new week starts:</p>
+  <ol class="tl">
+    <li><span class="ph">Notes</span><div><b>Fill the gaps</b><span>Open Coach › Details. Give every losing trade of the week one line of note: what you saw, what you would change.</span></div></li>
+    <li><span class="ph">Score</span><div><b>Read the four numbers</b><span>Net P&amp;L, expectancy, profit factor, max drawdown. Write them down with the trade count, so you can compare weeks.</span></div></li>
+    <li><span class="ph">Curve</span><div><b>Find the worst stretch</b><span>Hover the deepest dip of the equity curve; read which trades caused it in the Trades table.</span></div></li>
+    <li><span class="ph">Coach</span><div><b>Take the costliest line</b><span>Of the Coach lines, pick the one costing most money (no stop loss, holding losers, re-entries). Ignore lines flagged “may be chance” as reasons to change your method.</span></div></li>
+    <li><span class="ph">Groups</span><div><b>Compare groups</b><span>In By pair, By session and By side, look at Net and Avg; check whether the intervals overlap before deciding a group is better.</span></div></li>
+    <li><span class="ph">Rule</span><div><b>One change</b><span>Write one rule for next week (for example: no new trade within 10 minutes of a loss). One rule, so next week’s numbers can show whether it helped.</span></div></li>
+  </ol>
+  <table class="g-t">
+    <thead><tr><th>What you see</th><th>What it usually means</th><th>Where to look next</th></tr></thead>
+    <tbody>
+      <tr><td>Win rate high, expectancy ▼ below zero</td><td>Small wins, large losses.</td><td>Avg win vs avg loss; the hold-time line of the Coach.</td></tr>
+      <tr><td>Win rate low, expectancy ▲ above zero</td><td>Few, large wins pay for many small losses.</td><td>Best / worst: is it one trade? Max drawdown: can you sit through the losing runs?</td></tr>
+      <tr><td>Profit factor ∞</td><td>No losing trade yet.</td><td>Trades: the sample is almost certainly small.</td></tr>
+      <tr><td>Avg R ▲ but Net P&amp;L ▼</td><td>Commission takes the edge (R is before commission), or trades without a stop lose big.</td><td>Hover P&amp;L for commission; the no-stop-loss line.</td></tr>
+      <tr><td>Losses far beyond −1R</td><td>Stops widened or removed, or filled through.</td><td>History tab: the R column and the close reason.</td></tr>
+      <tr><td>Curve ends up, max drawdown large</td><td>Size too big for the swings of the method.</td><td>Risk Lab › Use my journal at a lower risk %.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="example">
+  <div class="ch-h"><span class="n">15</span><h3>Worked example, and try it</h3></div>
+  <p>Ten trades from a $10,000 start, oldest first. Each risked $100 at its stop and paid $5 of commission; the nets below are after commission.</p>
+  <table class="g-t">
+    <thead><tr><th>#</th><th>Net</th><th>R (before commission)</th><th>Balance after</th><th>Running peak</th><th>Drawdown</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td class="n up">+$120</td><td class="n">+1.25R</td><td class="n">10,120</td><td class="n">10,120</td><td class="n">0.00%</td></tr>
+      <tr><td>2</td><td class="n dn">−$80</td><td class="n">−0.75R</td><td class="n">10,040</td><td class="n">10,120</td><td class="n dn">−0.79%</td></tr>
+      <tr><td>3</td><td class="n up">+$45</td><td class="n">+0.50R</td><td class="n">10,085</td><td class="n">10,120</td><td class="n dn">−0.35%</td></tr>
+      <tr><td>4</td><td class="n dn">−$100</td><td class="n">−0.95R</td><td class="n">9,985</td><td class="n">10,120</td><td class="n dn">−1.33%</td></tr>
+      <tr><td>5</td><td class="n up">+$210</td><td class="n">+2.15R</td><td class="n">10,195</td><td class="n">10,195</td><td class="n">0.00%</td></tr>
+      <tr><td>6</td><td class="n dn">−$60</td><td class="n">−0.55R</td><td class="n">10,135</td><td class="n">10,195</td><td class="n dn">−0.59%</td></tr>
+      <tr class="hl"><td>7</td><td class="n dn">−$90</td><td class="n">−0.85R</td><td class="n">10,045</td><td class="n">10,195</td><td class="n dn">−1.47% (max)</td></tr>
+      <tr><td>8</td><td class="n up">+$150</td><td class="n">+1.55R</td><td class="n">10,195</td><td class="n">10,195</td><td class="n">0.00%</td></tr>
+      <tr><td>9</td><td class="n dn">−$40</td><td class="n">−0.35R</td><td class="n">10,155</td><td class="n">10,195</td><td class="n dn">−0.39%</td></tr>
+      <tr><td>10</td><td class="n up">+$75</td><td class="n">+0.80R</td><td class="n">10,230</td><td class="n">10,230</td><td class="n">0.00%</td></tr>
+    </tbody>
+  </table>
+  <div class="kpis k4">
+    <div class="kpi"><label>Net P&amp;L</label><b class="up">+$230.00</b></div>
+    <div class="kpi"><label>Win rate</label><b>50%</b></div>
+    <div class="kpi"><label>Profit factor</label><b>1.62</b></div>
+    <div class="kpi"><label>Expectancy</label><b class="up">+$23.00</b></div>
+    <div class="kpi"><label>Avg win / loss</label><b><span class="up">+$120</span> / <span class="dn">−$74</span></b></div>
+    <div class="kpi"><label>Avg R</label><b>+0.28R</b></div>
+    <div class="kpi"><label>Max drawdown</label><b class="dn">−1.47%</b></div>
+    <div class="kpi"><label>Best / worst</label><b><span class="up">+$210</span> / <span class="dn">−$100</span></b></div>
+  </div>
+  <p>The win rate tile reads <code>50% (24–76%) · n=10</code>: after ten trades the true rate could be anywhere from a quarter to three quarters. The record is positive, but it proves nothing yet; and without trade 5 the other nine made only +$20.</p>
+  <h4>Try it: the Journal’s statistics for any list of trades</h4>
+  <div class="calc" id="jcalc">
+    <div class="cin">
+      <label class="lb" for="jNets">Net P&amp;L of each trade, oldest first</label>
+      <textarea id="jNets" spellcheck="false">120, -80, 45, -100, 210, -60, -90, 150, -40, 75</textarea>
+      <small>Dollars after commission, separated by commas, spaces or new lines.</small>
+      <label class="sw">Starting balance ($) <input id="jStart" type="number" min="1" step="100" value="10000"></label>
+      <label class="sw">Risk per trade ($) <input id="jRisk" type="number" min="0" step="10" value="100"></label>
+      <label class="sw">Commission per trade ($) <input id="jComm" type="number" min="0" step="1" value="5"></label>
+      <small style="padding-top:8px">Risk and commission are only for Avg R (R is before commission). Risk 0 = trades without a stop: Avg R shows “—”.</small>
+    </div>
+    <div class="cout">
+      <div class="jk" id="jOut" aria-live="polite"></div>
+      <svg id="jSvg" viewBox="0 0 400 130" aria-hidden="true" style="width:100%;height:auto;display:block;margin-top:12px"></svg>
+      <p class="ln" id="jSay"></p>
+    </div>
+  </div>
+  <p class="mut">The calculator uses the formulas of chapters 05–10 exactly. It assumes each number is one whole trade and the start balance is the balance before the first one.</p>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">16</span><h3>Limits and pitfalls</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Small samples</h5><p>Under 30 trades almost every figure can be luck. The win rate interval shows it; the other tiles have no interval but are just as unsure.</p></div>
+    <div class="card"><h5>Many groups, some look good by chance</h5><p>With many pairs, four sessions and two sides, one group will look best even if all are equal. The Coach’s thresholds reduce, not remove, that risk.</p></div>
+    <div class="card"><h5>The newest 500 closes</h5><p>The history keeps 500 rows (closes, not trades). Older trades leave the statistics and the curve’s start moves.</p></div>
+    <div class="card"><h5>Still-open remainders</h5><p>A partly closed position already counts, with its closed parts only; its figures change when it closes.</p></div>
+    <div class="card"><h5>R and dollars differ</h5><p>R is before commission, dollar tiles after it; trades without a stop have no R, so Avg R can describe a different set of trades than the rest.</p></div>
+    <div class="card"><h5>Past, not future</h5><p>The Journal describes what happened. Markets change; a method that worked last month may not next month.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Not advice</b><p>The Journal and the Coach describe your own record. They are not a recommendation to trade any instrument or session.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Every formula, threshold and term in one place.</p></div></div>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">17</span><h3>All formulas and thresholds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>A trade</td><td>History rows with the same id, symbol, side and open time; protection credits excluded</td></tr>
+      <tr><td>Net of a trade</td><td class="n">Σ (P&amp;L − commission share)</td></tr>
+      <tr><td>Win / loss</td><td class="n">net &gt; 0 / net ≤ 0</td></tr>
+      <tr><td>Win rate interval</td><td class="n">Wilson, 95% (z = 1.96), whole percent</td></tr>
+      <tr><td>Profit factor</td><td class="n">gross wins ÷ gross losses · ∞ · —</td></tr>
+      <tr><td>Expectancy</td><td class="n">Net P&amp;L ÷ trades</td></tr>
+      <tr><td>R</td><td class="n">P&amp;L ÷ risk at the open stop (before commission)</td></tr>
+      <tr><td>Max drawdown</td><td class="n">max (peak − balance) ÷ peak on the curve</td></tr>
+      <tr><td>Trade notes rows</td><td class="n">newest 40 (Details: all)</td></tr>
+      <tr><td>History kept</td><td class="n">500 closes</td></tr>
+      <tr><td>Coach: start</td><td class="n">3 trades</td></tr>
+      <tr><td>Coach: verdict on a group</td><td class="n">10+ trades (COACH_MIN)</td></tr>
+      <tr><td>Coach: “may be chance” below</td><td class="n">30 trades (COACH_N)</td></tr>
+      <tr><td>Coach: hold-time line</td><td class="n">one average &gt; 1.3× the other</td></tr>
+      <tr><td>Coach: loss-size line</td><td class="n">avg loss &gt; 1.5× avg win</td></tr>
+      <tr><td>Coach: long vs short line</td><td class="n">win rates ≥ 20 points apart</td></tr>
+      <tr><td>Coach: no stop loss tone</td><td class="n">bad above 30% of trades</td></tr>
+      <tr><td>Coach: re-entry</td><td class="n">opened &lt; 10 min after a losing close; line from 2 trades</td></tr>
+      <tr><td>Coach: lines shown</td><td class="n">up to 7</td></tr>
+      <tr><td>Sessions (open hour, UTC)</td><td class="n">London 07–12 · overlap 12–16 · New York 16–21 · Asia otherwise</td></tr>
+      <tr><td>Risk Lab › Use my journal</td><td class="n">5+ trades with a stop</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">18</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Net P&amp;L</dt><dd>Profit or loss after commission (swap included in the P&amp;L).</dd>
+    <dt>Trade</dt><dd>One position, from open to its last close, however many parts it was closed in.</dd>
+    <dt>Win rate</dt><dd>The share of trades with a net above zero.</dd>
+    <dt>Wilson interval</dt><dd>A range that holds the true win rate with 95% confidence, given the wins and trades so far; it narrows as trades accumulate.</dd>
+    <dt>Profit factor</dt><dd>Gross wins divided by gross losses.</dd>
+    <dt>Expectancy</dt><dd>The average net result of one trade.</dd>
+    <dt>R (R-multiple)</dt><dd>A trade’s result divided by the money it risked at its stop when opened.</dd>
+    <dt>Equity curve</dt><dd>The account balance after each closed trade, in order.</dd>
+    <dt>Drawdown</dt><dd>A fall of the balance from its highest point so far, as a percentage of that point.</dd>
+    <dt>Re-entry</dt><dd>A trade opened within 10 minutes of a losing close; how revenge trading starts.</dd>
+    <dt>Negative balance protection</dt><dd>A credit that brings a balance pushed below zero back to zero; not a trade.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="related">
+  <div class="ch-h"><span class="n">20</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <a class="card g-link" href="lab.html"><h5>Risk Lab</h5><p>Use my journal: run 1,000 paths from your own win rate, reward : risk and risk per trade.</p></a>
+    <a class="card g-link" href="bt.html"><h5>Backtester</h5><p>Expectancy, profit factor and drawdown of a rule replayed on history, to compare with your live record.</p></a>
+    <a class="card g-link" href="calc.html"><h5>Calculators</h5><p>Position size from risk and stop: the size behind each trade’s R.</p></a>
+  </div>
+</section>
+
+<p class="g-foot">tradeBerry · Journal guide. Illustrations use example values. Statistics describe past trades; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* Formulas copied from the terminal: wilson() and wrTxt() (shared.js), journalStats() and renderJournal() (panels.js) */
+(function () {
+  function wilson(k, n, z) {
+    z = z || 1.96;
+    if (!(n > 0) || !Number.isFinite(k) || k < 0 || k > n) return null;
+    const p = k / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, e = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+    const lo = k === 0 ? 0 : Math.max(0, c - e), hi = k === n ? 1 : Math.min(1, c + e);
+    return { lo: lo, hi: hi };
+  }
+  const pc = v => Math.round(v * 100);
+  const wrTxt = (k, n) => { const ci = wilson(k, n); return ci ? pc(k / n) + '% (' + pc(ci.lo) + '–' + pc(ci.hi) + '%) · n=' + n : '— · n=' + (n > 0 ? n : 0); };
+  const nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const usdFmt = (v, sign) => v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : sign && v > 0 ? '+' : '') + '$' + nf2.format(Math.abs(v));
+  const pct = (v, d) => !isFinite(v) ? '—' : (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d) + '%';
+  const sgn = (v, d) => (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d);
+  const cls = v => v > 0 ? 'up' : v < 0 ? 'dn' : '';
+  const $ = id => document.getElementById(id);
+
+  /* ---- the Wilson interval calculator ---- */
+  function drawW() {
+    const n = Math.max(0, Math.floor(+$('wN').value || 0)), k = Math.floor(+$('wK').value || 0), ci = wilson(k, n);
+    const tag = $('wTag'), say = $('wSay');
+    if (!ci) {
+      $('wRate').textContent = '—'; $('wTxt').textContent = wrTxt(k, n); $('wLo').textContent = '—'; $('wHi').textContent = '—'; $('wCoach').textContent = '—';
+      tag.textContent = 'check the inputs'; tag.className = 'tag nt'; say.className = 'ln err'; say.textContent = 'Wins must be a whole number from 0 to the number of trades, and trades at least 1.';
+      $('wBar').setAttribute('width', 0); $('wDot').setAttribute('x', -10); return;
+    }
+    $('wRate').textContent = pc(k / n) + '%'; $('wTxt').textContent = wrTxt(k, n); $('wLo').textContent = pc(ci.lo) + '%'; $('wHi').textContent = pc(ci.hi) + '%';
+    $('wCoach').textContent = n < 10 ? 'no verdict (needs 10+)' : n < 30 ? 'verdict, “may be chance”' : 'verdict';
+    tag.textContent = n < 10 ? 'too few' : n < 30 ? 'may be chance' : '30+ trades'; tag.className = n < 30 ? 'tag nt' : 'tag in';
+    $('wBar').setAttribute('x', (ci.lo * 400).toFixed(1)); $('wBar').setAttribute('width', ((ci.hi - ci.lo) * 400).toFixed(1)); $('wDot').setAttribute('x', (k / n * 400 - 1.5).toFixed(1));
+    say.className = 'ln';
+    say.textContent = ci.lo > .5 ? '▲ Even the low end is above 50%: more wins than losses is unlikely to be luck alone (it still says nothing about the size of wins and losses).'
+      : ci.hi < .5 ? '▼ Even the high end is below 50%: you lose more trades than you win, beyond what luck explains. That can still pay if wins are much larger than losses.'
+      : 'The interval includes 50%: the record does not yet tell a real edge from luck.';
+  }
+  ['wK', 'wN'].forEach(id => $(id).addEventListener('input', drawW)); drawW();
+
+  /* ---- the journal statistics calculator: journalStats() on a list of trade nets ---- */
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs) { const e = document.createElementNS(NS, name); for (const a in attrs) e.setAttribute(a, attrs[a]); return e; }
+  function drawJ() {
+    const raw = $('jNets').value.replace(/[−–]/g, '-').split(/[\s,;]+/).filter(Boolean), nets = raw.map(Number);
+    const start = +$('jStart').value, risk = +$('jRisk').value || 0, comm = +$('jComm').value || 0, out = $('jOut'), say = $('jSay'), svg = $('jSvg');
+    out.innerHTML = ''; while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (nets.some(v => !Number.isFinite(v)) || !(start > 0)) { say.className = 'ln err'; say.textContent = 'Enter numbers only (e.g. 120, -80) and a starting balance above zero.'; return; }
+    const n = nets.length, any = n > 0, D = '—', wins = nets.filter(v => v > 0), losses = nets.filter(v => v <= 0);
+    const gw = wins.reduce((s, v) => s + v, 0), gl = -losses.reduce((s, v) => s + v, 0), pf = gl ? gw / gl : gw ? Infinity : 0;
+    const rs = risk > 0 ? nets.map(v => (v + comm) / risk) : [], avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    let eq = start, peak = start, mdd = 0; const curve = [start]; for (const v of nets) { eq += v; curve.push(eq); }
+    for (const v of curve) { peak = Math.max(peak, v); mdd = Math.max(mdd, peak > 0 ? (peak - v) / peak : 0); }
+    const avgW = wins.length ? gw / wins.length : 0, avgL = losses.length ? -gl / losses.length : 0, exp = any ? (gw - gl) / n : 0;
+    const best = any ? Math.max(...nets) : 0, worst = any ? Math.min(...nets) : 0, w = wrTxt(wins.length, n), sp = w.indexOf(' ');
+    const tiles = [
+      ['Net P&L', any ? usdFmt(gw - gl, true) : D, cls(gw - gl), 'hero'], ['Trades', String(n), ''],
+      ['Win rate', any ? w.slice(0, sp) + '<small>' + w.slice(sp + 1) + '</small>' : D, ''],
+      ['Profit factor', !any ? D : isFinite(pf) ? pf.toFixed(2) : '∞', ''],
+      ['Avg win', wins.length ? usdFmt(avgW, true) : D, wins.length ? 'up' : ''], ['Avg loss', losses.length ? usdFmt(avgL, true) : D, losses.length && avgL ? 'dn' : ''],
+      ['Expectancy', any ? usdFmt(exp, true) : D, cls(exp)], ['Avg R', avgR != null ? sgn(avgR, 2) + 'R' : D, ''],
+      ['Max drawdown', curve.length > 1 ? pct(-mdd * 100, 2) : D, mdd ? 'dn' : ''],
+      ['Best / worst', any ? '<span class="' + cls(best) + '">' + usdFmt(best, true).replace('.00', '') + '</span> / <span class="' + cls(worst) + '">' + usdFmt(worst, true).replace('.00', '') + '</span>' : D, '']
+    ];
+    out.innerHTML = tiles.map(t => '<div' + (t[3] ? ' class="hero"' : '') + '><label>' + t[0].replace('&', '&amp;') + '</label><b class="' + t[2] + '">' + t[1] + '</b></div>').join('');
+    // the curve: dashed start line, the balance after each trade, the last point marked
+    if (curve.length > 1) {
+      const mn = Math.min(...curve), mx = Math.max(...curve), pad = (mx - mn) * .12 || 50, lo = mn - pad, top = mx + pad;
+      const X = i => 6 + i / (curve.length - 1) * 388, Y = v => 6 + (top - v) / (top - lo) * 118;
+      svg.appendChild(el('rect', { x: 0, y: 0, width: 400, height: 130, class: 's-box' }));
+      svg.appendChild(el('path', { d: 'M6 ' + Y(start).toFixed(1) + ' H394', class: 's-ln3', 'stroke-dasharray': '4 3' }));
+      svg.appendChild(el('polyline', { points: curve.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' '), class: 's-e20' }));
+      const c = el('circle', { cx: X(curve.length - 1).toFixed(1), cy: Y(eq).toFixed(1), r: 3.5 }); c.style.fill = 'var(--ind1)'; svg.appendChild(c);
+    }
+    const lines = [];
+    if (avgW && avgL && -avgL > avgW * 1.5) lines.push('Coach: average loss (' + usdFmt(-avgL) + ') is ' + (-avgL / avgW).toFixed(1) + '× your average win; you would need a ' + (-avgL / (-avgL + avgW) * 100).toFixed(0) + '% win rate just to break even.');
+    if (any) lines.push(n < 10 ? 'Fewer than 10 trades: the Coach gives no verdict on a group this size.' : n < 30 ? 'Under 30 trades: a group this size is flagged “may be chance”.' : '30+ trades: no chance flag on a group this size.');
+    if (any && best > 0 && gw - gl - best < 0 && gw - gl > 0) lines.push('Without the best trade the rest lose money: the result rests on one trade.');
+    say.className = 'ln'; say.textContent = lines.join(' ');
+  }
+  ['jNets', 'jStart', 'jRisk', 'jComm'].forEach(id => $(id).addEventListener('input', drawJ)); drawJ();
+})();
+</script>
+</body>
+</html>

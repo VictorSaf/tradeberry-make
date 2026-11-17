@@ -4,6 +4,13 @@
 let chart, candle, candleMarkers, sEma20, sEma50, sBbU, sBbM, sBbL, sRsi; // sRsi: pane 1 of the main chart, null while RSI is off
 let bars = [], disp = [], IND = {};
 let lines = [], drag = null, tool = null, hovering = false;
+const lineSent = new Map(); // 'pos-sl:<id>' | 'pos-tp:<id>' | 'ord:<id>' → the price sent by a drag, until the server answers
+// does the ticket draw its next order on the chart now (ticket.js tkPreviewActive; without it, always)
+const tkPreview = () => typeof tkPreviewActive !== 'function' || !!tkPreviewActive();
+let linesPv = true; // whether the lines on the chart were built with the ticket's preview
+// 'SL · after order −$4.02' / 'TP · after order +$8.21': the ticket's money at the level, which for an order that adds to
+// a position is the whole position after the fill; a figure that is not a number reads '—'
+const tkLineTitle = (w, k) => `${w} · after order ${w === 'SL' ? (Number.isFinite(k.riskUsd) ? usdFmt(-k.riskUsd) : '—') : (Number.isFinite(k.rewUsd) ? usdFmt(k.rewUsd, true) : '—')}`;
 // up/down contract: every chart (main, multi-chart panes, basket) takes its rising / falling colours from here,
 // i.e. from the --up / --dn CSS tokens. A colour theme only redefines those two tokens, then calls applyTheme().
 function chartUpDn() { return { up: cssv('--up'), dn: cssv('--dn') }; }
@@ -30,6 +37,11 @@ function initChart() {
   // boot applies the theme before the chart exists: the series starts with the current candle style (hollow, CVD,
   // red rises) read here, not from that earlier applyTheme()
   candle = chart.addSeries(LightweightCharts.CandlestickSeries, candleStyle(c));
+  // Fit SL to TP (the yellow button by the magnet, on / off, kept in S.set.fitLv): the price axis also takes in the stop
+  // losses and targets of this instrument's positions and pending orders (Victor, 09.11.2026: a button, not automatic).
+  // Only while the axis scales itself; the candles' own range comes first, the levels can only widen it.
+  candle.applyOptions({ autoscaleInfoProvider: base => { const r = base(); return S.set.fitLv && r && r.priceRange ? levelRange(r) : r; } });
+  fitLvInit();
   candleMarkers = LightweightCharts.createSeriesMarkers(candle, []); // one handle for the chart's lifetime
   const ln = (color, w = 1, style = 0) => chart.addSeries(LightweightCharts.LineSeries, { color, lineWidth: w, lineStyle: style, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
   sEma20 = ln(c.ind1, 2); sEma50 = ln(c.info, 2); sBbU = ln(c.tx2 + '88', 1, 2); sBbM = ln(c.tx2 + '55', 1, 0); sBbL = ln(c.tx2 + '88', 1, 2);
@@ -49,6 +61,31 @@ function initChart() {
   });
   initDrag();
   initOverlay();
+  if (typeof makePager === 'function') {
+    histPager = makePager({ host: $('#chart').parentElement, getKey: pageKey, onOlder: pageGlue });
+    chart.timeScale().subscribeVisibleLogicalRangeChange(r => { if (!pgMute) histPager.maybeLoad(r); });
+  }
+}
+/* Back-paging (histpage.js): scrolling left past the drawn candles asks the platform for older ones. Off where the chart
+   is not the platform's candles: no live feed, intrinsic time, a replay. pgN = older candles in front of the aggregate.
+   pgMute: a fit is not the user scrolling (the first quote's one-candle chart would page at boot); the chart reports the
+   range on its next frame, so the mute lasts two frames. */
+let histPager = null, pgN = 0, pgMute = 0;
+function pageKey() {
+  const sym = S.set.sym, rp = window.RP;
+  if (typeof liveHas !== 'function' || !liveHas(sym) || S.set.type === 'it' || Engine.isReplayDoc) return null;
+  return rp && (rp.role === 'child' || rp.state === 'open' || rp.state === 'loading') ? null : { sym, tf: S.set.tf };
+}
+// older candles arrived: redraw with them in front, the view kept on the same candles (its range event pages on if needed)
+function pageGlue() {
+  const ts = chart.timeScale(), r = ts.getVisibleLogicalRange(), len = bars.length;
+  fullChart(false);
+  const k = bars.length - len;
+  if (r && k) ts.setVisibleLogicalRange({ from: r.from + k, to: r.to + k });
+}
+function pageFit(from, to) {
+  pgMute++; chart.timeScale().setVisibleLogicalRange({ from, to });
+  requestAnimationFrame(() => requestAnimationFrame(() => pgMute--));
 }
 // RSI is pane 1 of the main chart: the series exists only while RSI is on (removing it removes the pane)
 function rsiPane(on) {
@@ -96,7 +133,14 @@ const pt = (arr, i) => arr[i] == null ? { time: bars[i].time } : { time: bars[i]
 let chartSym = null; // the symbol the main chart last drew
 function fullChart(fit) {
   const sym = S.set.sym, m = M(sym);
-  bars = S.set.type === 'it' && typeof itBars === 'function' ? itBars(sym) : Engine.aggregate(sym, S.set.tf, 2200);
+  let agg = S.set.type === 'it' && typeof itBars === 'function' ? itBars(sym) : Engine.aggregate(sym, S.set.tf, S.set.tf >= 60 ? 40000 : 2200); // 1H/4H reach back as far as the platform's 1-hour history
+  /* the paged older candles go in front, with no overlap and no gap (the pager closes it first). The pager also owns the
+     aggregate's first bucket: the engine's history starts mid-bucket, so that candle is partial; the platform's is whole.
+     The bucket still forming (a one-candle aggregate) stays the chart's. */
+  const old = histPager ? histPager.older(agg.length > 1 ? agg[1].time : agg.length ? agg[0].time : 0, bars) : [];
+  if (old.length) { const e = old[old.length - 1].time; let i = 0; while (i < agg.length && agg[i].time <= e) i++; if (i) agg = agg.slice(i); }
+  pgN = old.length;
+  bars = pgN ? old.concat(agg) : agg;
   IND = { e20: [], e50: [], bm: [], bu: [], bl: [], ag: [], al: [], rsi: [] };
   disp = [];
   for (let i = 0; i < bars.length; i++) { computeIndAt(i); if (S.set.type === 'ha') haAt(i); else disp[i] = { ...bars[i] }; }
@@ -110,7 +154,7 @@ function fullChart(fit) {
   sBbU.setData(bars.map((_, i) => pt(IND.bu, i))); sBbM.setData(bars.map((_, i) => pt(IND.bm, i))); sBbL.setData(bars.map((_, i) => pt(IND.bl, i)));
   if (sRsi) sRsi.setData(bars.map((_, i) => pt(IND.rsi, i)));
   applyIndVis();
-  if (fit) { const n = bars.length; chart.timeScale().setVisibleLogicalRange({ from: n - 160, to: n + 8 }); }
+  if (fit) { const n = bars.length; pageFit(n - 160, n + 8); }
   dirty.lines = dirty.markers = true;
   legend(null);
 }
@@ -149,7 +193,7 @@ function chartTick() {
     if (S.set.type === 'ha') haAt(i); else disp[i] = { ...bars[i] };
     pushLastPoints(i);
   }
-  if (bars.length > BARS_MAX + BARS_SLACK) {
+  if (bars.length - pgN > BARS_MAX + BARS_SLACK) { // the paged older candles are not counted: the rebuild keeps them
     const ts = chart.timeScale(), r = ts.getVisibleLogicalRange(), len = bars.length;
     fullChart(false);
     if (r) { const k = len - bars.length; ts.setVisibleLogicalRange({ from: r.from - k, to: r.to - k }); }
@@ -192,7 +236,9 @@ function setMarkers() {
   let k = 0;
   for (const [t, e] of [...ex].sort((x, y) => y[0] - x[0])) {
     // exit dot sits on the side opposite the entry arrow, never on the candle body
-    const lbl = k++ < MK_PNL_LABELS ? usdFmt(e.pnl, true).replace('.00', '') + (e.n > 1 ? ` ×${e.n}` : '') : '';
+    // a five-figure P&L is shortened (−$65.1k): the marker text is centred on its bar and a long one is cut by the price axis; hover shows the full figure
+    const short = Math.abs(e.pnl) >= 10000 ? (e.pnl < 0 ? '−' : '+') + '$' + (Math.abs(e.pnl) / 1000).toFixed(1) + 'k' : usdFmt(e.pnl, true).replace('.00', '');
+    const lbl = k++ < MK_PNL_LABELS ? short + (e.n > 1 ? ` ×${e.n}` : '') : '';
     mk.push({ time: t, position: e.side === 'buy' ? 'aboveBar' : 'belowBar', color: e.pnl >= 0 ? c.up : c.dn, shape: 'circle', size: .6, text: lbl });
   }
   exitsByBar = ex;
@@ -200,46 +246,98 @@ function setMarkers() {
   if (S.set.type === 'it') mk.forEach(m => { m.time = bars[barIndexAt(m.time)]?.time ?? m.time; });
   candleMarkers.setMarkers(mk.filter(m => m.time >= first && m.time <= lastT).sort((a, b) => a.time - b.time));
 }
+function fitLvInit() {
+  const b = document.getElementById('fitLvBtn'); if (!b || b.dataset.on) return; b.dataset.on = '1';
+  const show = () => { b.classList.toggle('on', !!S.set.fitLv); b.setAttribute('aria-pressed', String(!!S.set.fitLv)); };
+  show();
+  b.addEventListener('click', e => {
+    e.stopPropagation(); // the drawing tools' bar must not take it as a tool
+    S.set.fitLv = !S.set.fitLv; show(); save();
+    // on: the axis scales itself again, now with the levels; off: back to the candles' own range
+    candle.priceScale().applyOptions({ autoScale: true });
+    toast(`Fit SL to TP ${S.set.fitLv ? 'on' : 'off'}`, S.set.fitLv ? (chartLevels().length > 1 ? 'The price axis shows the stop losses and targets of this instrument' : 'No stop loss or target on this instrument yet: the axis widens when there is one') : 'The price axis follows the candles', 'info');
+  });
+}
+// SL / TP / entry of this symbol's positions and pending orders (finite prices only), merged into an autoscale range
+function chartLevels() {
+  const sym = S.set.sym, out = [], add = v => { if (typeof v === 'number' && isFinite(v) && v > 0) out.push(v); };
+  for (const p of S.positions) if (p.sym === sym) { add(p.entry); add(p.sl); add(p.tp); }
+  // a pending order keeps its exits as distances from its fill (slPips / tpPips): where they land if it fills at its price
+  const m = M(sym), pip = m && m.pip;
+  for (const o of S.orders) if (o.sym === sym) {
+    add(o.price); if (!(pip > 0) || !(o.price > 0)) continue;
+    const d = o.side === 'buy' ? 1 : -1;
+    if (+o.slPips > 0) add(o.price - d * o.slPips * pip);
+    if (+o.tpPips > 0) add(o.price + d * o.tpPips * pip);
+  }
+  return out;
+}
+function levelRange(r) {
+  const lv = chartLevels(); if (!lv.length) return r;
+  const pr = r.priceRange, lo = Math.min(pr.minValue, ...lv), hi = Math.max(pr.maxValue, ...lv);
+  return lo === pr.minValue && hi === pr.maxValue ? r : { ...r, priceRange: { minValue: lo, maxValue: hi } };
+}
 function rebuildLines() {
   for (const L of lines) candle.removePriceLine(L.line);
   lines = [];
   const sym = S.set.sym, c = chartColors();
   const add = (opt, kind, ref, canDrag = true) => lines.push({ line: candle.createPriceLine({ lineWidth: 1, axisLabelVisible: true, title: '', ...opt }), kind, ref, drag: canDrag });
   for (const p of S.positions.filter(p => p.sym === sym)) {
-    add({ price: p.entry, color: p.side === 'buy' ? c.up : c.dn, lineStyle: 0, lineWidth: 2 }, 'pos-entry', p, false);
-    if (p.sl != null) add({ price: p.sl, color: c.dn, lineStyle: 2, title: `SL #${p.id}` }, 'pos-sl', p);
-    if (p.tp != null) add({ price: p.tp, color: c.up, lineStyle: 2, title: `TP #${p.id}` }, 'pos-tp', p);
+    add({ price: p.entry, color: p.side === 'buy' ? c.up : c.dn, lineStyle: 0, lineWidth: 2, title: p.side.toUpperCase() }, 'pos-entry', p, false);
+    if (p.sl != null) add({ price: p.sl, color: c.dn, lineStyle: 2, title: 'SL' }, 'pos-sl', p);
+    if (p.tp != null) add({ price: p.tp, color: c.up, lineStyle: 2, title: 'TP' }, 'pos-tp', p);
   }
-  for (const o of S.orders.filter(o => o.sym === sym)) add({ price: o.price, color: c.info, lineStyle: 1, title: `${o.side.toUpperCase()} ${o.ot.toUpperCase()} ${lotsFmt(o.sym, o.lots)}` }, 'ord', o);
+  for (const o of S.orders.filter(o => o.sym === sym)) add({ price: o.price, color: c.info, lineStyle: 1, title: `${o.side.toUpperCase()} ${o.ot.toUpperCase()}` }, 'ord', o); // side and type, no size (09.11.2026)
   for (const a of S.alerts.filter(a => a.sym === sym && !a.done)) add({ price: a.price, color: c.warn, lineStyle: 3, title: 'ALERT' }, 'alert', a);
   (S.hlines[sym] || []).forEach((p, i) => add({ price: p, color: c.tx2 + 'aa', lineStyle: 0 }, 'hline', i));
-  const t = S.tk, k = tkCalc();
-  if (t.ot !== 'market') add({ price: k.entry, color: c.info + 'cc', lineStyle: 2, title: `${t.side.toUpperCase()} ${t.ot.toUpperCase()}` }, 'tk-entry', null);
-  if (k.sl != null) add({ price: k.sl, color: c.dn + 'aa', lineStyle: 2, title: 'SL' }, 'tk-sl', null);
-  if (k.tp != null) add({ price: k.tp, color: c.up + 'aa', lineStyle: 2, title: 'TP' }, 'tk-tp', null);
+  // the next order (the ticket): only while the ticket previews, titled as the next order so it never reads as the open
+  // position's own levels (UX 09.11.2026, F7)
+  linesPv = tkPreview();
+  if (linesPv) {
+    const t = S.tk, k = tkCalc();
+    if (t.ot !== 'market') add({ price: k.entry, color: c.info + 'cc', lineStyle: 2, title: `${t.side.toUpperCase()} ${t.ot.toUpperCase()}` }, 'tk-entry', null);
+    if (k.sl != null) add({ price: k.sl, color: c.dn + 'aa', lineStyle: 2, title: tkLineTitle('SL', k) }, 'tk-sl', null);
+    if (k.tp != null) add({ price: k.tp, color: c.up + 'aa', lineStyle: 2, title: tkLineTitle('TP', k) }, 'tk-tp', null);
+  }
   dirty.lines = false;
 }
 function linesTick(k) {
+  // the ticket stopped (or started) previewing: its lines go (or come), whichever module drew them (pro.js tk-tpx, tk-lmt)
+  if (tkPreview() !== linesPv) rebuildLines();
+  if (!linesPv && lines.some(L => L.kind.startsWith('tk-'))) lines = lines.filter(L => !L.kind.startsWith('tk-') || (candle.removePriceLine(L.line), false));
   for (const L of lines) {
     if (drag === L) continue;
     const r = L.ref;
-    if (L.kind === 'pos-entry') { const { pnl } = posPnl(r); L.line.applyOptions({ title: `#${r.id} ${r.side.toUpperCase()} ${lotsFmt(r.sym, r.lots)}  ${usdFmt(pnl, true)}` }); }
-    else if (L.kind === 'pos-sl' && r.sl != null) L.line.applyOptions({ price: r.sl });
-    else if (L.kind === 'pos-tp' && r.tp != null) L.line.applyOptions({ price: r.tp });
+    // a level sent and not yet answered: where it was dropped, marked Sent
+    const sentAt = r && typeof r === 'object' ? lineSent.get(L.kind + ':' + r.id) : undefined; // a level's ref is its index (0 for the first one, UX-33)
+    if (sentAt != null) { L.line.applyOptions({ price: sentAt, title: (L.kind === 'pos-sl' ? 'SL' : L.kind === 'pos-tp' ? 'TP' : `${r.side.toUpperCase()} ${r.ot.toUpperCase()}`) + ' · Sent' }); continue; }
+    // the chart says only the side and the price (Victor, 09.11.2026): size, P&L and the id are in Positions
+    if (L.kind === 'pos-entry') L.line.applyOptions({ title: r.side.toUpperCase() });
+    else if (L.kind === 'pos-sl' && r.sl != null) L.line.applyOptions({ price: r.sl, title: 'SL' });
+    else if (L.kind === 'pos-tp' && r.tp != null) L.line.applyOptions({ price: r.tp, title: 'TP' });
+    else if (L.kind === 'ord') L.line.applyOptions({ price: r.price });
     else if (L.kind === 'tk-entry') L.line.applyOptions({ price: k.entry });
-    else if (L.kind === 'tk-sl' && k.sl != null) L.line.applyOptions({ price: k.sl, title: `SL ${usdFmt(-k.riskUsd)}` });
-    else if (L.kind === 'tk-tp' && k.tp != null) L.line.applyOptions({ price: k.tp, title: `TP ${usdFmt(k.rewUsd, true)}` });
+    else if (L.kind === 'tk-sl' && k.sl != null) L.line.applyOptions({ price: k.sl, title: tkLineTitle('SL', k) });
+    else if (L.kind === 'tk-tp' && k.tp != null) L.line.applyOptions({ price: k.tp, title: tkLineTitle('TP', k) });
   }
+}
+/* the draggable line under y (px from the top of the chart), or null. A line of the account (a position's stop or
+   target, a pending order) wins over the ticket's next order within a pixel of the same distance: the two often sit
+   on the same price and a drag must move the position, not the ticket (UX 09.11.2026, F16) */
+function priceLineHit(y, touch) {
+  let best = null, bs = Infinity; const lim = touch ? 22 : 7; // fingers need a wider grab zone than a mouse
+  const h0 = pricePaneH(); if (y > h0) return null; // the RSI pane below holds no draggable lines
+  for (const L of lines) {
+    if (!L.drag) continue; const c = candle.priceToCoordinate(L.line.options().price); if (c == null || c > h0) continue;
+    const d = Math.abs(c - y); if (d >= lim) continue;
+    const sc = d + (L.kind.startsWith('tk-') ? 1 : 0); if (sc < bs) { bs = sc; best = L; }
+  }
+  return best;
 }
 function initDrag() {
   const el = $('#chart');
   const yOf = e => (e.touches ? e.touches[0].clientY : e.clientY) - el.getBoundingClientRect().top;
-  const hit = (y, touch) => {
-    let best = null, bd = touch ? 22 : 7; // fingers need a wider grab zone than a mouse
-    const h0 = pricePaneH(); if (y > h0) return null; // the RSI pane below holds no draggable lines
-    for (const L of lines) { if (!L.drag) continue; const c = candle.priceToCoordinate(L.line.options().price); if (c == null || c > h0) continue; const d = Math.abs(c - y); if (d < bd) { bd = d; best = L; } }
-    return best;
-  };
+  const hit = priceLineHit;
   const start = e => {
     if (tool) return; const L = hit(yOf(e), !!e.touches); if (!L) return;
     e.stopPropagation(); if (e.cancelable) e.preventDefault(); drag = L; if (e.touches && window.haptic) haptic(8);
@@ -250,8 +348,29 @@ function initDrag() {
     const price = candle.coordinateToPrice(yOf(e)); if (price == null) return;
     applyDrag(drag, price);
   };
-  const end = () => { if (!drag) return; const k = drag.kind; drag = null; if (window.haptic) haptic(6); changed(k.startsWith('pos') ? 'pos' : k === 'ord' ? 'ord' : k === 'alert' ? 'al' : 'x'); };
+  // a stop, a target or a pending price goes once, on release, through modifyPosition / modifyOrder; until the
+  // answer the line stays where it was dropped and says Sent (a refusal puts it back)
+  const end = () => {
+    if (!drag) return; const L = drag, k = L.kind; drag = null; if (window.haptic) haptic(6);
+    if (L.dropAt != null && (k === 'pos-sl' || k === 'pos-tp' || k === 'ord')) {
+      const px = L.dropAt; L.dropAt = null;
+      const r = k === 'ord' ? modifyOrder(L.ref.id, { price: px }) : modifyPosition(L.ref.id, k === 'pos-sl' ? (L.ref.trail > 0 ? { sl: px, trail: L.ref.trail } : { sl: px }) : { tp: px });
+      // the answer is said: 'SL #61 moved to 1.11739' once the account (the server, live) applied it; a refusal is
+      // already said with its reason by modifyPosition / modifyOrder
+      const what = `${k === 'pos-sl' ? 'SL' : k === 'pos-tp' ? 'TP' : 'Order'} #${L.ref.id} moved to ${fp(L.ref.sym, px)}`;
+      const said = ok => { if (ok === true) toast(what, '', 'info'); };
+      if (r instanceof Promise) { const key = k + ':' + L.ref.id; lineSent.set(key, px); r.then(said, () => {}).finally(() => { if (lineSent.get(key) === px) lineSent.delete(key); dirty.lines = true; }); }
+      else said(r);
+    }
+    changed(k.startsWith('pos') ? 'pos' : k === 'ord' ? 'ord' : k === 'alert' ? 'al' : 'x');
+  };
   el.addEventListener('mousedown', start, true); el.addEventListener('touchstart', start, { capture: true, passive: false });
+  // a double-click on a level, stop, target, order or alert line opens its editor: the one of DATA › Edit (UX-57)
+  el.addEventListener('dblclick', e => {
+    if (tool || typeof editLevel !== 'function') return; const L = hit(yOf(e), false); if (!L) return;
+    const t = L.kind === 'hline' ? { kind: 'hline', ref: L.ref, sym: S.set.sym } : /^(pos-sl|pos-tp|ord|alert)$/.test(L.kind) ? { kind: L.kind, ref: L.ref } : null; if (!t) return;
+    e.preventDefault(); e.stopPropagation(); editLevel(t, el, L.line.options().price);
+  }, true);
   el.addEventListener('mousemove', move, true);
   window.addEventListener('mousemove', e => drag && move(e)); window.addEventListener('touchmove', e => drag && move(e), { passive: false });
   window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
@@ -265,9 +384,9 @@ function applyDrag(L, price) {
     if (L.kind === 'tk-sl') S.tk.sl = pips; else S.tk.tp = pips;
     syncTicketInputs();
   } else if (L.kind === 'tk-entry') { S.tk.price = price; syncTicketInputs(); }
-  else if (L.kind === 'pos-sl') { if (r.side === 'buy' ? price < q.bid : price > q.ask) { r.sl = price; r.trailed = false; } else return; }
-  else if (L.kind === 'pos-tp') { if (r.side === 'buy' ? price > q.bid : price < q.ask) r.tp = price; else return; }
-  else if (L.kind === 'ord') r.price = price;
+  else if (L.kind === 'pos-sl') { if (r.side === 'buy' ? price < q.bid : price > q.ask) L.dropAt = price; else return; }
+  else if (L.kind === 'pos-tp') { if (r.side === 'buy' ? price > q.bid : price < q.ask) L.dropAt = price; else return; }
+  else if (L.kind === 'ord') L.dropAt = price;
   else if (L.kind === 'alert') { r.price = price; r.cond = price >= q.mid ? 'above' : 'below'; }
   else if (L.kind === 'hline') S.hlines[sym][r] = price;
   L.line.applyOptions({ price });
@@ -294,7 +413,7 @@ function applyTheme() {
   if (sRsi) { sRsi.applyOptions({ color: c.ind1 }); const [a, b] = sRsi.priceLines(); a?.applyOptions({ color: c.dn + 'aa' }); b?.applyOptions({ color: c.up + 'aa' }); }
   [sBbU, sBbL].forEach(s => s.applyOptions({ color: c.tx2 + '88' })); sBbM.applyOptions({ color: c.tx2 + '55' });
   dirty.lines = dirty.markers = true;
-  if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') runLab();
+  if (activeTab === 'journal') renderJournal(); if (activeTab === 'lab') redrawLab();
   if (typeof renderSparks === 'function') renderSparks();
   if (typeof mcTheme === 'function') mcTheme();
 }
@@ -403,11 +522,9 @@ function wlUsualLev(list) { const n = new Map(); let best = null; for (const m o
    (the fractional pip, when the instrument quotes one) small and raised. The parts come from the price string, so the
    digits are exactly fp()'s. */
 function pxHtml(sym, v) {
-  const m = M(sym), t = fp(sym, v), frac = m.point < m.pip - 1e-12;
-  let i = t.length, pt = '';
-  if (frac) { pt = t.slice(-1); i--; }
-  let k = i, d = 0; while (k > 0 && d < 2) { k--; if (t[k] !== '.') d++; }
-  return `<span class="bf">${t.slice(0, k)}</span><span class="pp">${t.slice(k, i)}</span>${pt ? `<span class="pt">${pt}</span>` : ''}`;
+  // the platform's layout from the sheet's fmt (pxSplit, app.js), the same as New order
+  const p = pxSplit(sym, v);
+  return `<span class="bf">${p.a}</span><span class="pp">${p.b}</span>${p.c ? `<span class="bf">${p.c}</span>` : ''}${p.s ? `<span class="pt">${p.s}</span>` : ''}`;
 }
 // spread cost in bp of the price: tight (≤ 1.5 bp), wide (> 5 bp or 40% above the sheet's Default), else plain
 function spCls(sym, q) { const m = M(sym), bp = q.spread * m.pip / q.bid * 1e4; return { bp, c: bp > 5 || q.spread > m.spread * 1.4 ? 'sp wide' : bp <= 1.5 ? 'sp tight' : 'sp' }; }
@@ -504,7 +621,7 @@ function bindWatch() {
 /* Columns: Symbol, Bid, Ask and Time by default; the › in the header adds the spread and the 24 h change and range
    (S.set.wlCols 'full'). The choice is kept. */
 function wlColsApply() {
-  const full = S.set.wlCols === 'full', w = $('.watch'), b = $('#wlColsBtn'); if (!w) return;
+  const full = S.set.wlCols === 'full' && innerWidth >= 1440, w = $('.watch'), b = $('#wlColsBtn'); if (!w) return;
   w.classList.toggle('wl-full', full); w.classList.toggle('wl-basic', !full);
   if (b) { b.setAttribute('aria-expanded', full); b.textContent = full ? '−' : '+'; b.title = full ? 'Hide spread and change' : 'Show spread, 24 h change and range'; }
 }
@@ -514,8 +631,14 @@ document.addEventListener('click', e => {
   const full = S.set.wlCols !== 'full', ws = window.wsState ? wsState() : {}, cur = ws.cur || {};
   S.set.wlCols = full ? 'full' : 'basic'; wlColsApply();
   if (window.wsWl && !document.body.classList.contains('mnav-on')) {
-    if (full && cur.wl && cur.wl < 400) { WL.prevW = { w: cur.wl, name: ws.name }; wsWl(420, ''); }
-    else if (!full && WL.prevW) { const p = WL.prevW; WL.prevW = null; wsWl(p.w, p.name); }
+    // the width follows the columns: + widens a narrow list to 420 px, − always narrows it back (to the width it had before +,
+    // kept in S.set across reloads; else the standard 288 px). A list already narrower than that is left alone
+    if (full && cur.wl && cur.wl < 400) { WL.prevW = { w: cur.wl, name: ws.name }; S.set.wlPrevW = cur.wl; wsWl(420, ''); }
+    else if (!full) {
+      const p = WL.prevW, to = (p && p.w) || (S.set.wlPrevW > 0 && S.set.wlPrevW < 400 ? S.set.wlPrevW : 288);
+      WL.prevW = null; delete S.set.wlPrevW;
+      if (!cur.wl || cur.wl > to) wsWl(to, p ? p.name : '');
+    }
   }
   save();
 });
@@ -531,23 +654,25 @@ function buildWatch() {
   const has = c => by[c].length > 0, fl = wlFilter(), wl = fl === 'fav' || (fl !== 'all' && has(fl)) ? fl : 'all';
   $$('#wlCls button').forEach(b => { const g = b.dataset.wl, on = g === wl; b.hidden = g !== 'all' && g !== 'fav' && !has(g); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   const hit = m => !f || m.sym.includes(f) || m.short.toUpperCase().replace('/', '').includes(f) || [m.desc, m.sector, m.exch].some(x => x && x.toUpperCase().includes(raw));
-  const open = wlOpen(), cur = S.set.sym, out = [];
+  const open = wlOpen(), cur = S.set.sym, out = [], flat = !document.body.classList.contains('mnav-on');
   const row = (m, c, usual) => `<div class="wl-row${m.sym === cur ? ' on' : ''}" data-sym="${m.sym}" data-c="${c}" role="button" tabindex="0">
-      <span class="wl-sym"><span class="wl-nm" title="${escHtml(m.label)}">${escHtml(pretty(m.sym))}</span>${m.kind === 'cfd' ? `<span class="sr-only">, ${escHtml(m.label)},</span>` : ''}${symLev(m.sym, usual)}</span>
-      <span class="px" data-f="bid"></span><span class="px" data-f="ask"></span><span class="sp" data-f="sp" title="Spread in ${m.unit === 'pt' ? 'points' : 'pips'}">—</span><span class="chg" data-f="chg"></span><span class="tm" data-f="tm"></span><span class="wl-bdg">${staticBadges(m.sym)}</span>
+      <span class="wl-sym"><span class="wl-nm" title="${escHtml(m.label)}">${escHtml(pretty(m.sym))}</span>${m.kind === 'cfd' ? `<span class="sr-only">, ${escHtml(m.label)},</span>` : ''}${symLev(m.sym, usual)}${WL_SRK.map(wlSr).join('')}</span>
+      <span class="px" data-f="bid" aria-hidden="true"></span><span class="px" data-f="ask" aria-hidden="true"></span><span class="sp" data-f="sp" title="Spread in ${m.unit === 'pt' ? 'points' : 'pips'}" aria-hidden="true">—</span><span class="chg" data-f="chg" aria-hidden="true"></span><span class="tm" data-f="tm" aria-hidden="true"></span><span class="wl-bdg">${staticBadges(m.sym)}</span>
     </div>`;
   const head = (c, name, n, isOpen, button) => button
     ? `<button type="button" class="wl-grp" data-g="${c}" aria-expanded="${isOpen}"><svg class="wl-car" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3l3 3-3 3"/></svg><span class="wl-gn">${name}</span><span class="wl-n">${n}</span><span class="sr-only"> instrument${n === 1 ? '' : 's'}</span></button>`
-    : `<div class="wl-grp wl-grp-s" role="presentation"><span class="wl-gn">${name}</span><span class="wl-n">${n}</span></div>`;
+    : `<div class="wl-grp wl-grp-s" data-g="${c}" role="presentation"><span class="wl-gn">${name}</span><span class="wl-n">${n}</span></div>`;
   for (const [c, name] of WL_CATS) {
     if (wl !== 'all' && c !== wl) continue;
-    if (f && c === 'fav') continue; // the search lists each match once, in its own category
+    if ((f || (flat && wl === 'all')) && c === 'fav') continue; // each instrument once, in its own category (Fav is its own tab)
     let ms = by[c]; const n = ms.length;
     if (!n && c !== 'fav') continue;
     if (f) { ms = ms.filter(hit); if (!ms.length) continue; }
-    const isOpen = !!f || wl !== 'all' || open.has(c);
+    // desktop: All lists every category open under a plain band (name, count): the tabs above already pick a category,
+    // so a list of folded categories only repeated them (Victor, 31.10.2026); the phone keeps its folding list
+    const isOpen = !!f || wl !== 'all' || flat || open.has(c);
     if (f) out.push(head(c, name, ms.length, true, false));
-    else if (wl === 'all') out.push(head(c, name, n, isOpen, true));
+    else if (wl === 'all') out.push(head(c, name, n, isOpen, !flat));
     if (!isOpen) continue;
     if (c === 'fav') { out.push(ms.length ? ms.map(m => row(m, 'fav', wlUsualLev(ms))).join('') : `<div class="wl-empty">No favourites yet: the ☆ beside the symbol on the chart adds one (up to ${FAV_MAX}).</div>`); continue; }
     if (c === 'stock' && !f) {
@@ -605,6 +730,16 @@ function tickFlash(el, dir) {
   if (!el.classList.contains(c)) { el.classList.remove('tk-up', 'tk-dn'); el.classList.add(c); }
   clearTimeout(el._ft); el._ft = setTimeout(() => el.classList.remove('tk-up', 'tk-dn'), TICK_MS);
 }
+/* the accessible name of a Market watch row (UX 09.11.2026, F17) comes from its content: 'EUR/USD, bid 1.11914, ask
+   1.11926, spread 1.2, 24 h change +0.12%, at 10:30:00', then its tags. Each figure is said whole by a screen-reader-only
+   twin at the end of the symbol cell (a cell splits the price into big figure / pips / pipette and may be hidden at a
+   narrow width, so the cells are aria-hidden). Content, not an aria-label, so the name never leaves out text on screen
+   (WCAG 2.5.3); inside the symbol cell, so the row keeps its children (the columns are placed by position). */
+const WL_SR = { bid: 'bid', ask: 'ask', sp: 'spread', chg: '24 h change', tm: 'at' }, WL_SRK = Object.keys(WL_SR);
+const wlSr = f => `<span class="sr-only" data-sr="${f}"></span>`;
+const wlSay = (cl, f, v) => { const e = cl['sr-' + f], t = `, ${WL_SR[f]} ${v}`; if (e && e.textContent !== t) e.textContent = t; };
+// a row's cells by field, and their screen-reader twins as 'sr-<field>'
+const wlCells = row => row._c || (row._c = Object.fromEntries([...row.querySelectorAll('[data-f],[data-sr]')].map(e => [e.dataset.f || 'sr-' + e.dataset.sr, e])));
 function renderWatch() {
   if (wlKey() !== wlShown) buildWatch(); // the profile, the favourites or a close-only position changed what is listed
   else syncSymHead(); // an import can change the chart symbol without setSymbol
@@ -621,7 +756,7 @@ function renderWatch() {
       r = WL.ref[sym] = { k: minute, v: arr.length ? arr[Math.max(0, arr.length - 1441)].close : NaN, lo, hi };
     }
     const ch = (q.mid / r.v - 1) * 100;
-    const bid = row.children[1], ask = row.children[2];
+    const cl = wlCells(row), bid = cl.bid, ask = cl.ask;
     const bt = fp(sym, q.bid), at = fp(sym, q.ask);
     // the pip digits take the tick's direction on every change of the price shown (a move below the last digit shows nothing)
     if (row._bt !== bt && row._bid != null) tickFlash(row, Math.sign(q.bid - row._bid));
@@ -629,16 +764,17 @@ function renderWatch() {
       bid.innerHTML = pxHtml(sym, q.bid);
       // the time of the price: now when it changed live, the last bar's minute for the first price of a closed market
       const arr = Engine.candles[sym], tt = row._bt == null && !q.open && arr.length ? arr[arr.length - 1].time + 59 : Engine.simTime;
-      row.children[5].textContent = hmsU(tt); row._bt = bt; row._bid = q.bid;
+      cl.tm.textContent = hmsU(tt); row._bt = bt; row._bid = q.bid;
     } else if (row._bid == null) row._bid = q.bid;
     if (row._at !== at) { ask.innerHTML = pxHtml(sym, q.ask); row._at = at; }
-    const c = row.children[4], ct = Number.isFinite(ch) ? pct(ch) : '—', cc = 'chg ' + cls(ch); if (c.textContent !== ct) c.textContent = ct; if (c.className !== cc) c.className = cc;
+    const c = cl.chg, ct = Number.isFinite(ch) ? pct(ch) : '—', cc = 'chg ' + cls(ch); if (c.textContent !== ct) c.textContent = ct; if (c.className !== cc) c.className = cc;
     // where the price sits in its 24-hour range: a tick on the line under the change
     const rg = r.hi > r.lo ? Math.min(1, Math.max(0, (q.bid - r.lo) / (r.hi - r.lo))) : .5, rgs = rg.toFixed(3);
     if (row._rg !== rgs) { row._rg = rgs; c.style.setProperty('--rg', rgs); c.title = `24 h change ${ct}; 24 h range ${fp(sym, r.lo)} – ${fp(sym, r.hi)}, now at ${Math.round(rg * 100)}% of it`; }
-    const sp = row.children[3], st = q.spread.toFixed(q.spread >= 10 ? 0 : 1), sk = spCls(sym, q); // non-FX spreads run to hundreds of points
+    const sp = cl.sp, st = q.spread.toFixed(q.spread >= 10 ? 0 : 1), sk = spCls(sym, q); // non-FX spreads run to hundreds of points
     if (sp.textContent !== st) { sp.textContent = st; sp.title = `Spread ${st} ${M(sym).unit === 'pt' ? 'points' : 'pips'} = ${sk.bp.toFixed(1)} bp of the price (sheet Default ${M(sym).spread})`; }
     if (sp.className !== sk.c) sp.className = sk.c;
+    wlSay(cl, 'bid', bt); wlSay(cl, 'ask', at); wlSay(cl, 'sp', sp.textContent); wlSay(cl, 'chg', ct); wlSay(cl, 'tm', cl.tm.textContent);
   }
 }
 // chart header: the type of a non-FX instrument, 'Closed' while its market is, and its leverage (a pair: only where a
@@ -689,6 +825,9 @@ function marketText(sym) {
   const d = new Date(s.closesAt * 1000);
   return `Open — closes ${DOW3[d.getDay()]} ${hm(d)} (local) / ${hmU(d)} UTC`;
 }
+// what the EU retail rule would allow on the instrument, said where no jurisdiction cap applies: 'major pairs at 1:30'
+const CLS_PLURAL = { 'major pair': 'major pairs', 'minor pair': 'minor pairs', gold: 'gold', 'major index': 'major indices', 'minor index': 'minor indices', commodity: 'commodities', crypto: 'crypto', equity: 'equities' };
+function esmaCapText(sym) { const c = levCls(sym, JUR.eu), l = CLS_LABEL[c] || c; return `${CLS_PLURAL[l] || l} at 1:${ESMA_CAP[c]}`; }
 function instrCard(sym = S.set.sym) {
   const m = M(sym), p = m.p, j = jurOf(S.set), fx = m.kind === 'fx', st = tradeStatus(sym), q = Engine.quote(sym), [def, max] = p.lev, lev = effLev(sym);
   const per = m.lotName === 'shares' ? 'share' : 'lot', pips = v => numTxt(+(v * m.point / m.pip).toFixed(2));
@@ -697,36 +836,49 @@ function instrCard(sym = S.set.sym) {
     + (fx ? ` (${sp.map(pips).join(' · ')} pips)` : '') + (p.jit ? ` · variation ${nfx(p.jit[0][0], 0)}…+${numTxt(p.jit[0][1])} pts` : '')
     + `; Night 23:00–01:00 server time Mon–Fri, News while a release on ${escHtml(m.newsCcy.join('/'))} is active; now: ${escHtml(q.sp)}`;
   const levTxt = capCuts(sym) ? `1:${lev} — ${j.name} cap (${CLS_LABEL[levCls(sym, j)] || m.cls}); sheet default 1:${def}, maximum 1:${max}`
-    : `1:${lev} (${S.set.lev > 0 ? `your choice 1:${S.set.lev}, sheet maximum 1:${max}` : `sheet default; maximum 1:${max}`}); ${j.none ? 'no jurisdiction cap' : 'within the ' + j.name + ' cap'}`;
-  const sd = m.seed, when = new Date(sd.t * 1000).toISOString().slice(0, 16).replace('T', ' ');
-  const prov = `Starting level: bid ${fp(sym, sd.bid)} at ${when} UTC from the broker platform (${sd.live ? 'live' : 'last 1H close'}); simulated since, zero drift; volatility calibrated on 30 days of 1H bars${sd.derived ? `; derived as ${sd.derived.replace('/', ' / ')}` : ''}. The chart shows simulated history; the platform's history serves only for calibration.`;
+    : `1:${lev} (${S.set.lev > 0 ? `your choice 1:${S.set.lev}, sheet maximum 1:${max}` : `sheet default; maximum 1:${max}`})${j.none ? ` · no EU limit (ESMA caps ${esmaCapText(sym)})` : '; within the ' + j.name + ' cap'}`;
+  // only shown with live prices (the card says nothing about where a static copy's prices come from)
+  const prov = 'Live from the broker platform; chart history from the platform';
   const T = v => escHtml(v);
+  // the lead of a value in bold, the explanation after it (first " · ", " — ", "; " or " (") in a quieter tone
+  const H = v => { const t = String(v), i = Math.min(...[' · ', ' — ', '; ', ' ('].map(x => { const k = t.indexOf(x); return k < 0 ? Infinity : k; })); return i === Infinity ? `<b>${T(t)}</b>` : `<b>${T(t.slice(0, i))}</b><span class="ins-rest">${T(t.slice(i))}</span>`; };
   const rows = [
     ['Description', T(m.desc)],
-    ['Type', T([TYPE_NAME[m.type] || m.type, m.sector && m.sector !== TYPE_NAME[m.type] ? m.sector : ''].filter(Boolean).join(' · '))],
-    ['Exchange', T([m.exch, m.country && m.country !== 'N/A' ? m.country : ''].filter(Boolean).join(' · '))],
-    ['Currencies', T(fx ? `base ${m.base} · profit ${m.quote}` : `profit ${m.quote}`)],
-    ['Trade status', T(st === 'full' ? 'Full access (open, reduce and close)' : st === 'close' ? 'Close only — reductions and closes only; no new positions or orders' : unavailableNote(sym))],
-    ['Market', T(marketText(sym))],
-    ['Digits', T(`${m.digits} · point ${m.point.toFixed(m.digits)}${fx ? ` · pip ${m.pip.toFixed(Math.max(0, -Math.floor(Math.log10(m.pip) + 1e-9)))}` : ' (prices and distances in points)'}`)],
-    ['Contract', T(contractText(sym))],
-    ['Leverage', T(levTxt)],
-    ['Margin per lot', T(`${usdFmt(notionalUsd(sym, 1) / lev)} per ${per} at ${fp(sym, q.bid)} (notional ${usdFmt(notionalUsd(sym, 1))} ÷ ${lev})`)],
-    ['Min pending distance', T(`${numTxt(p.minPend)} points${fx ? ` (${pips(p.minPend)} pips)` : ''} from the price; maximum deviation of a market fill ${numTxt(p.maxDev)} points`)],
-    ['Volume', T(`min ${numTxt(p.vol[0])} · max ${numTxt(p.vol[1])} · step ${numTxt(p.vol[2])} ${m.lotName}`)],
+    ['Type', H([TYPE_NAME[m.type] || m.type, m.sector && m.sector !== TYPE_NAME[m.type] ? m.sector : ''].filter(Boolean).join(' · '))],
+    ['Exchange', H([m.exch, m.country && m.country !== 'N/A' ? m.country : ''].filter(Boolean).join(' · '))],
+    ['Currencies', H(fx ? `base ${m.base} · profit ${m.quote}` : `profit ${m.quote}`)],
+    ['Trade status', H(st === 'full' ? 'Full access (open, reduce and close)' : st === 'close' ? 'Close only — reductions and closes only; no new positions or orders' : unavailableNote(sym))],
+    ['Market', H(marketText(sym))],
+    ['Digits', H(`${m.digits} · point ${m.point.toFixed(m.digits)}${fx ? ` · pip ${m.pip.toFixed(Math.max(0, -Math.floor(Math.log10(m.pip) + 1e-9)))}` : ' (prices and distances in points)'}`)],
+    ['Contract', H(contractText(sym))],
+    ['Leverage', H(levTxt)],
+    ['Margin per lot', H(`${usdFmt(notionalUsd(sym, 1) / lev)} per ${per} at ${fp(sym, q.bid)} (notional ${usdFmt(notionalUsd(sym, 1))} ÷ ${lev})`)],
+    ['Min pending distance', H(`${numTxt(p.minPend)} points${fx ? ` (${pips(p.minPend)} pips)` : ''} from the price; maximum deviation of a market fill ${numTxt(p.maxDev)} points`)],
+    ['Volume', H(`min ${numTxt(p.vol[0])} · max ${numTxt(p.vol[1])} · step ${numTxt(p.vol[2])} ${m.lotName}`)],
     ['Spread', spHtml],
-    ['Swap', T(`${swapText(sym)} · per ${per} a night: long ${usdFmt(swapPerNight(sym, 'buy', 1), true)}, short ${usdFmt(swapPerNight(sym, 'sell', 1), true)}`)],
-    ['Triple swap', T(TRIPLE_TEXT(sym)[0].toUpperCase() + TRIPLE_TEXT(sym).slice(1) + '; rollover 17:00 New York (00:00 server time)')],
-    ['Commission', T(commText())],
-    ['Price source', T(prov)],
-    ['Not applied in this simulation', T('Maximum time delay 7000 ms, minimum close delay 5000 ms — not applied; the platform feed filters (hard filtration, gap, spike filter) do not apply to a simulated price.')]
+    ['Swap', H(`${swapText(sym)} · per ${per} a night: long ${usdFmt(swapPerNight(sym, 'buy', 1), true)}, short ${usdFmt(swapPerNight(sym, 'sell', 1), true)}`)],
+    ['Triple swap', H(TRIPLE_TEXT(sym)[0].toUpperCase() + TRIPLE_TEXT(sym).slice(1) + '; rollover 17:00 New York (00:00 server time)')],
+    ['Commission', H(commText())],
+    ...(Engine.feedOn ? [['Price source', T(prov)]] : [])
   ];
   const ses = sessTable(sym);
+  // the figures a trader checks first, as a strip of cells above the sheet (each is also in its row below)
+  const open = !marketWhy(sym), key = [
+    ['Spread now', `${numTxt(sp[Math.max(0, spK)])} pt${fx ? ` · ${pips(sp[Math.max(0, spK)])} p` : ''}`, ''],
+    ['Leverage', `1:${lev}`, ''],
+    ['Margin / ' + per, usdFmt(notionalUsd(sym, 1) / lev), ''],
+    ['Volume', `${numTxt(p.vol[0])} – ${numTxt(p.vol[1])}`, ''],
+    ['Status', st === 'full' ? 'Full access' : st === 'close' ? 'Close only' : 'Unavailable', st === 'full' ? 'up' : 'wn'],
+    ['Market', open ? 'Open' : 'Closed', open ? 'up' : 'muted']
+  ];
+  // the sheet in four groups; every row stays, only the order changes
+  const G = [['Instrument', [0, 1, 2, 3, 6, 7, 11]], ['Trading', [4, 5, 8, 9, 10]], ['Costs', [12, 13, 14, 15]], ...(rows.length > 16 ? [['Data', [16]]] : [])];
   return `<div class="ins-h"><b>${T(m.label)}</b><span class="muted mono">${T(m.sym)}</span><button type="button" class="ins-x" aria-label="Close specifications">×</button></div>
-    <dl class="ins-g">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>
-    <table class="ins-sess"><caption>Sessions this week</caption><thead><tr><th scope="col">Day</th><th scope="col">Server (${T(CATALOG.serverTz)})</th><th scope="col">UTC</th><th scope="col">Local</th></tr></thead>
+    <div class="ins-k">${key.map(([a, b, c]) => `<div><span>${a}</span><b class="mono ${c}">${T(b)}</b></div>`).join('')}</div>
+    ${G.map(([g, ix]) => `<div class="ins-gh">${g}</div><dl class="ins-g">${ix.map(i => rows[i]).map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`).join('')}
+    <div class="ins-gh">Sessions this week</div><table class="ins-sess"><thead><tr><th scope="col">Day</th><th scope="col">Server (${T(CATALOG.serverTz)})</th><th scope="col">UTC</th><th scope="col">Local</th></tr></thead>
     <tbody>${ses.map(r => `<tr>${r.map((c, i) => i ? `<td>${T(c)}</td>` : `<th scope="row">${T(c)}</th>`).join('')}</tr>`).join('')}</tbody></table>
-    <p class="ins-f muted">Every figure comes from the instrument sheet (Default profile); the market is simulated.</p>`;
+    <p class="ins-f muted">Every figure comes from the instrument sheet (Default profile).</p>`;
 }
 function setSymbol(sym, side) {
   if (!Engine.META[sym]) return;
@@ -736,5 +888,6 @@ function setSymbol(sym, side) {
   $$('.wl-row').forEach(r => r.classList.toggle('on', r.dataset.sym === sym));
   $('#symName').textContent = pretty(sym); $('#tkSym').textContent = sym; syncSymHead(sym); syncFavBtn(sym);
   if (S.tk.ot !== 'market') S.tk.price = defaultPendingPrice();
+  if (typeof alFollow === 'function') alFollow(sym);
   syncTicketInputs(); fullChart(true); save();
 }

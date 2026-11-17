@@ -2,16 +2,55 @@
 /* tradeBerry — dock, intelligence, calendar, correlation & volatility, journal, risk lab, calculators. Classic script sharing globals with app.js; loaded right after it. */
 /* ============ dock: positions / orders / history / alerts ============ */
 const uShort = sym => M(sym).unit === 'pt' ? 'pt' : 'p'; // compact unit after a number: '20p' on FX, '20pt' on a CFD
+// commands sent to the execution server and not answered yet (tradelink.js): no money is shown before the server's report
+const sentRows = (kind, cols) => typeof TradeLink === 'object' && TradeLink.live ? TradeLink.sent(kind).map(c => `<tr class="tl-sent"><td colspan="${cols}"><span class="tag md">Sent</span> ${escHtml(c.label)} <span class="muted small">waiting for the execution server</span></td></tr>`).join('') : '';
+/* F8, F10: '½' and 'BE' say whether they can act now. Grey (aria-disabled: still focusable, the reason in the tip and in
+   the accessible name) when they cannot: '½' when half the position is under the instrument's minimum (halfLots, trade.js:
+   0 = not possible), 'BE' when the price is not past the entry or the stop is already at or beyond break-even (BE_WHY,
+   app.js: the reasons its refusal gives). A grey 'BE' still answers a click with that refusal; a grey '½' is held here,
+   since half of the minimum size would close it all. */
+// the size '½' closes is exactly halfLots(p) (trade.js), the lots the close sends: the tip never names another figure
+const halfOf = p => { const h = +halfLots(p); return Number.isFinite(h) && h > 0 ? h : 0; };
+function beWhy(p) {
+  const q = Engine.quote(p.sym), d = p.side === 'buy' ? 1 : -1;
+  if (p.sl != null && p.sl === p.entry) return 'at';
+  if (p.sl != null && d * (p.sl - p.entry) > 0) return 'tighter';
+  return (d > 0 ? q.bid > p.entry : q.ask < p.entry) ? '' : 'early';
+}
+function setAct(b, off, tip, label) {
+  if (b.dataset.tip !== tip) { b.dataset.tip = tip; b.setAttribute('aria-label', label); }
+  if (off) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+}
+function actState(tr, p) {
+  const hb = tr.querySelector('[data-act=half]'), bb = tr.querySelector('[data-act=be]');
+  if (hb) {
+    const h = halfOf(p), lf = v => lotsFmt(p.sym, v);
+    if (h) setAct(hb, false, `Close half: ${lf(h)} of ${lf(p.lots)} lots`, `½: close ${lf(h)} of ${lf(p.lots)} lots`);
+    else setAct(hb, true, `Minimum size: use Close (${lf(p.lots)} lots cannot be halved)`, '½ unavailable: minimum size, use Close');
+  }
+  if (bb) {
+    const w = beWhy(p), why = w && typeof BE_WHY === 'object' && BE_WHY[w] ? BE_WHY[w][0] : 'Price is not past entry yet';
+    if (!w) setAct(bb, false, 'Move the stop-loss to the entry price (break-even)', 'BE: move the stop-loss to the entry price (break-even)');
+    else setAct(bb, true, why, 'BE unavailable: ' + why);
+  }
+}
+// a grey '½' does nothing but say why (capture phase: before app.js's row handler, which would close the position)
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('#posBody [data-act=half][aria-disabled=true]'); if (!b) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const p = S.positions.find(x => x.id === +b.closest('tr').dataset.id);
+  if (p) toast("Can't close half", `${pretty(p.sym)} #${p.id} is at the minimum size (${lotsFmt(p.sym, p.lots)}): use Close to close it all`, 'info');
+}, true);
 function renderPositions() {
   const body = $('#posBody');
   if (dirty.pos) {
     body.innerHTML = S.positions.map(p => `<tr data-id="${p.id}">
-      <td class="sym" data-sym="${p.sym}">${pretty(p.sym)} <span class="muted small">#${p.id}</span></td>
+      <td class="sym" data-sym="${p.sym}">${pretty(p.sym)} <span class="muted small">#${p.id}</span><span class="pos-sub muted small"><span class="pos-ent">@ ${fp(p.sym, p.entry)}</span><span class="pos-pp"></span></span></td>
       <td><span class="tag ${p.side}">${p.side}</span></td><td>${p.lots.toFixed(2)}</td><td>${fp(p.sym, p.entry)}</td>
       <td data-c="px"></td><td class="editable" data-edit="sl" title="Click to edit"></td><td class="editable" data-edit="tp" title="Click to edit"></td>
       <td data-c="pips"></td><td data-c="pnl"></td>
-      <td><div class="acts"><button data-act="half" title="Close half">½</button><button data-act="be" title="Move stop to break-even">BE</button><button data-act="rev" title="Reverse position">Rev</button><button class="x" data-act="close" title="Close">✕</button></div></td></tr>`).join('');
-    $('#posEmpty').hidden = S.positions.length > 0; $('#cPos').textContent = S.positions.length;
+      <td class="acts-c"><div class="acts"><button data-act="half">½</button><button data-act="be">BE</button><button data-act="rev" data-tip="Close this position and open the same size the other way" aria-label="Rev: close this position and open the same size the other way">Rev</button><button class="x" data-act="close" data-tip="Close this position at market" aria-label="Close this position at market">✕</button></div></td></tr>`).join('') + sentRows('pos', 10);
+    $('#posEmpty').hidden = S.positions.length > 0 || body.querySelector('.tl-sent') != null; $('#cPos').textContent = S.positions.length; { const tb = $('#tab-positions'); if (tb) tb.classList.toggle('has', S.positions.length > 0); }
     dirty.pos = false;
   }
   // the total row: lots and P&L of every open position, in the same cells as the rows above (the column hides apply)
@@ -22,9 +61,10 @@ function renderPositions() {
     const p = S.positions.find(x => x.id === +tr.dataset.id); if (!p) continue;
     const r = posPnl(p); tl += p.lots; tp += r.pnl;
     tr.querySelector('[data-c=px]').textContent = fp(p.sym, r.exit);
-    const pi = tr.querySelector('[data-c=pips]'); pi.textContent = sgn(r.pips); pi.className = cls(r.pips);
+    const pi = tr.querySelector('[data-c=pips]'); pi.textContent = sgn(r.pips); pi.className = cls(r.pips); const sp = tr.querySelector('.pos-pp'); if (sp) { const v = sgn(r.pips) + (M(p.sym).unit === 'pt' ? 'pt' : 'p'); if (sp.textContent !== v) sp.textContent = v; }
     const pn = tr.querySelector('[data-c=pnl]'); pn.textContent = usdFmt(r.pnl, true); pn.className = cls(r.pnl); pn.title = p.swap ? `includes swap ${usdFmt(p.swap, true)}` : '';
-    for (const f of ['sl', 'tp']) { const td = tr.querySelector(`[data-edit=${f}]`); if (!td.querySelector('input')) td.textContent = p[f] != null ? fp(p.sym, p[f]) + (f === 'sl' && p.trail ? ' ↻' : '') : '—'; }
+    actState(tr, p);
+    for (const f of ['sl', 'tp']) { const td = tr.querySelector(`[data-edit=${f}]`); if (!td.querySelector('input')) td.textContent = p[f] != null ? fp(p.sym, p[f]) + (f === 'sl' && p.trail ? ' ↻' : '') : ''; td.classList.toggle('unset', p[f] == null); if (p[f] == null) td.setAttribute('aria-label', f === 'sl' ? 'No stop-loss set' : 'No take-profit set'); else td.removeAttribute('aria-label'); }
   }
   if (ft) {
     ft.hidden = !S.positions.length;
@@ -32,50 +72,65 @@ function renderPositions() {
     ft.querySelector('[data-c=tlots]').textContent = tl.toFixed(2);
     const pn = ft.querySelector('[data-c=tpnl]'); pn.textContent = usdFmt(tp, true); pn.className = cls(tp); pn.title = 'Floating P&L of all open positions, swaps included';
   }
-  const ov = $('#positionOverview');
-  if (ov) {
-    ov.hidden = !S.positions.length;
-    if (S.positions.length) {
-      const gross = S.positions.reduce((n, p) => n + notionalUsd(p.sym, p.lots), 0);
-      const protectedN = S.positions.filter(p => p.sl != null || p.trail).length;
-      const winners = S.positions.filter(p => posPnl(p).pnl > 0).length;
-      const pp = $('#poPnl'); pp.textContent = usdFmt(tp, true); pp.className = 'mono ' + cls(tp);
-      $('#poExposure').textContent = gross >= 1e6 ? '$' + (gross / 1e6).toFixed(2) + 'M' : '$' + (gross / 1000).toFixed(0) + 'k';
-      $('#poProtected').textContent = `${protectedN} / ${S.positions.length}`;
-      $('#poWinners').textContent = `${winners} / ${S.positions.length}`;
-      const read = $('#poRead'), all = protectedN === S.positions.length;
-      read.textContent = all ? 'Every position has defined protection' : `${S.positions.length - protectedN} position${S.positions.length - protectedN === 1 ? '' : 's'} without a protective stop`;
-      read.className = all ? 'st-ok' : 'st-warn';
-    }
-  }
+}
+/* F12: a pending order's SL / TP in prices, as Positions shows them. The order holds them as distances from its fill
+   (slPips, tpPips); the price is where they land if it fills at the order price, the distance stays in the tip. */
+function ordExit(o, f) {
+  const n = +o[f + 'Pips']; if (!(n > 0)) return `<td class="editable unset" data-edit="${f}" title="Click to set a ${f === 'sl' ? 'stop-loss' : 'take-profit'}">—</td>`;
+  const m = M(o.sym), d = (o.side === 'buy' ? 1 : -1) * (f === 'sl' ? -1 : 1), px = o.price + d * n * m.pip;
+  const tip = `${f === 'sl' ? 'Stop-loss' : 'Take-profit'} ${n} ${unitWord(o.sym)} from the fill: ${fp(o.sym, px)} if it fills at the order price`;
+  return `<td class="editable" data-edit="${f}" data-c="${f}" title="${escHtml(tip)} · click to edit">${fp(o.sym, px)}<span class="sr-only"> (${n} ${unitWord(o.sym)} from the fill)</span></td>`;
 }
 function renderOrders() {
   if (dirty.ord) {
-    $('#ordBody').innerHTML = S.orders.map(o => `<tr data-id="${o.id}"><td class="sym" data-sym="${o.sym}">${pretty(o.sym)}</td><td><span class="tag ${o.side}">${o.side} ${o.ot}</span></td><td>${o.lots.toFixed(2)}</td><td data-c="price">${fp(o.sym, o.price)}</td><td data-c="dist"></td><td>${o.slPips ? o.slPips + uShort(o.sym) : '—'}</td><td>${o.tpPips ? o.tpPips + uShort(o.sym) : '—'}</td><td><div class="acts"><button class="x" data-act="cancel">Cancel</button></div></td></tr>`).join('');
-    $('#ordEmpty').hidden = S.orders.length > 0; $('#cOrd').textContent = S.orders.length; dirty.ord = false;
+    $('#ordBody').innerHTML = S.orders.map(o => `<tr data-id="${escHtml(o.id)}"><td class="sym" data-sym="${o.sym}">${pretty(o.sym)}</td><td><span class="tag ${o.side}">${o.side} ${o.ot}</span></td><td>${o.lots.toFixed(2)}</td><td data-c="price">${fp(o.sym, o.price)}</td><td data-c="dist"></td>${ordExit(o, 'sl')}${ordExit(o, 'tp')}<td><div class="acts"><button class="x" data-act="cancel">Cancel</button></div></td></tr>`).join('') + sentRows('ord', 8);
+    $('#ordEmpty').hidden = S.orders.length > 0 || $('#ordBody .tl-sent') != null; $('#cOrd').textContent = S.orders.length; dirty.ord = false; { const tb = $('#tab-orders'); if (tb) tb.classList.toggle('has', S.orders.length > 0); }
   }
   for (const tr of $('#ordBody').children) {
-    const o = S.orders.find(x => x.id === +tr.dataset.id); if (!o) continue;
+    const o = S.orders.find(x => String(x.id) === tr.dataset.id); if (!o) continue;
     const q = Engine.quote(o.sym), ref = o.side === 'buy' ? q.ask : q.bid;
     tr.querySelector('[data-c=dist]').textContent = (Math.abs(o.price - ref) / M(o.sym).pip).toFixed(1) + ' ' + unitWord(o.sym);
     tr.querySelector('[data-c=price]').textContent = fp(o.sym, o.price);
   }
 }
+/* F14: what a closed trade cost and what it left. A trade row (core/account.js closePos, the same on the server) has pnl =
+   price move + swap, swap (credit +, charge −), comm (the commission of the part closed, booked on the balance apart from
+   pnl) and slip (in the exit price already). The columns: P&L (gross) = the price move alone, Costs = swap − commission,
+   Net = pnl − commission (what reached the balance). A row without comm (older saves) shows '—' for Costs and Net. */
+const okAmt = v => typeof v === 'number' && Number.isFinite(v);
+function histMoney(h) {
+  const swap = okAmt(h.swap) ? h.swap : 0, gross = h.pnl - swap;
+  if (h.nbp) return { gross: h.pnl, costs: null, net: h.pnl, why: 'Balance credit (negative balance protection): no trading costs' };
+  if (!okAmt(h.comm)) return { gross, costs: null, net: null, why: `Commission not recorded for this trade; P&L with swap ${usdFmt(h.pnl, true)}` };
+  const sl = okAmt(h.slip) && typeof slipWords === 'function' ? ` · exit slippage ${slipWords(h.slip, h.sym)} (in the exit price)` : '';
+  return { gross, costs: swap - h.comm, net: h.pnl - h.comm, why: `Commission ${usdFmt(-h.comm, true)} · swap ${usdFmt(swap, true)}${sl}` };
+}
+// the head (index.html) gets the time zone, the gross label and the two cost columns once
+function histHead() {
+  const tr = document.querySelector('#histBody')?.closest('table')?.tHead?.rows[0]; if (!tr || tr.dataset.costs) return;
+  tr.dataset.costs = '1';
+  tr.cells[0].textContent = 'Closed (UTC)';
+  tr.cells[8].textContent = 'P&L (gross)'; tr.cells[8].title = 'Price move only, before swap and commission';
+  const th = (t, tip) => { const c = document.createElement('th'); c.textContent = t; c.title = tip; tr.appendChild(c); };
+  th('Comm + swap', 'Swap minus commission. Spread and slippage are not here: they are in the entry and exit prices (see the Receipt of the row)');
+  th('Net', 'What reached the balance: P&L (gross) + costs');
+}
 function renderHistory() {
   if (!dirty.hist) return;
+  histHead();
   // a protection row is a balance credit: no side tag, no size
-  $('#histBody').innerHTML = S.history.slice(0, 200).map(h => `<tr${h.nbp ? ' class="nbp"' : ''}><td>${dts(h.close)}</td><td class="sym" data-sym="${h.sym}">${pretty(h.sym)}</td><td>${h.nbp ? '—' : `<span class="tag ${h.side}">${h.side}</span>`}</td><td>${h.nbp ? '—' : h.lots.toFixed(2)}</td><td>${fp(h.sym, h.entry)}</td><td>${fp(h.sym, h.exit)}</td><td class="${cls(h.pips)}">${sgn(h.pips)}</td><td class="${cls(h.r || 0)}">${h.r != null ? sgn(h.r, 2) + 'R' : '—'}</td><td class="${cls(h.pnl)}">${usdFmt(h.pnl, true)}</td><td class="muted">${escHtml(h.reason)}</td></tr>`).join('');
+  $('#histBody').innerHTML = S.history.slice(0, 200).map(h => { const $m = histMoney(h), why = escHtml($m.why); return `<tr${h.nbp ? ' class="nbp"' : ''}><td>${dts(h.close)}</td><td class="sym" data-sym="${h.sym}">${pretty(h.sym)}</td><td>${h.nbp ? '—' : `<span class="tag ${h.side}">${h.side}</span>`}</td><td>${h.nbp ? '—' : h.lots.toFixed(2)}</td><td>${fp(h.sym, h.entry)}</td><td>${fp(h.sym, h.exit)}</td><td class="${cls(h.pips)}">${sgn(h.pips)}</td><td class="${cls(h.r || 0)}">${h.r != null ? sgn(h.r, 2) + 'R' : '—'}</td><td class="${cls($m.gross)}" title="${escHtml('With swap: ' + usdFmt(h.pnl, true))}">${usdFmt($m.gross, true)}</td><td class="muted">${escHtml(h.reason)}${/stop/i.test(h.reason || '') && okAmt(h.slip) && (h.gap || h.slip >= 5) ? ` <b class="dn">· gap ${h.slip.toFixed(1)}</b>` : ''}</td><td data-c="costs" class="muted" title="${why}">${$m.costs == null ? '—' : usdFmt($m.costs, true)}</td><td data-c="net" class="${$m.net == null ? 'muted' : cls($m.net)}" title="${why}">${$m.net == null ? '—' : usdFmt($m.net, true)}</td></tr>`; }).join('');
   $('#histEmpty').hidden = S.history.length > 0;
   dirty.hist = false; dirty.journal = true;
 }
 function renderAlerts() {
   syncInstrSelect($('#alSym'));
   if (dirty.al) {
-    $('#alBody').innerHTML = S.alerts.map(a => `<tr data-id="${a.id}"><td class="sym" data-sym="${a.sym}">${pretty(a.sym)}</td><td>${a.cond}</td><td>${fp(a.sym, a.price)}</td><td data-c="dist"></td><td>${a.done ? `<span class="tag lo">Triggered ${hhmm(a.at)}</span>` : '<span class="tag md">Active</span>'}</td><td><div class="acts"><button class="x" data-act="del">✕</button></div></td></tr>`).join('');
-    $('#alEmpty').hidden = S.alerts.length > 0; $('#cAl').textContent = S.alerts.filter(a => !a.done).length; dirty.al = false;
+    $('#alBody').innerHTML = S.alerts.map(a => `<tr data-id="${escHtml(a.id)}"><td class="sym" data-sym="${a.sym}">${pretty(a.sym)}</td><td>${a.cond}</td><td>${fp(a.sym, a.price)}</td><td data-c="dist"></td><td>${a.done ? `<span class="tag lo">Triggered ${hhmm(a.at)}</span>` : '<span class="tag md">Active</span>'}</td><td><div class="acts"><button class="x" data-act="del">✕</button></div></td></tr>`).join('');
+    $('#alEmpty').hidden = S.alerts.length > 0; $('#cAl').textContent = S.alerts.filter(a => !a.done).length; { const tb = $('#tab-alerts'); if (tb) tb.classList.toggle('has', S.alerts.some(a => !a.done)); } dirty.al = false;
   }
   for (const tr of $('#alBody').children) {
-    const a = S.alerts.find(x => x.id === +tr.dataset.id); if (!a) continue;
+    const a = S.alerts.find(x => String(x.id) === tr.dataset.id); if (!a) continue;
     tr.querySelector('[data-c=dist]').textContent = ((a.price - Engine.quote(a.sym).mid) / M(a.sym).pip).toFixed(1) + ' ' + unitWord(a.sym);
   }
 }
@@ -92,29 +147,18 @@ function renderAccount() {
   const dd = (S.peak - a.eq) / S.peak * 100;
   $('#mBal').textContent = usdFmt(S.balance); $('#mEq').textContent = usdFmt(a.eq);
   const pn = $('#mPnl'); pn.textContent = usdFmt(a.fl, true); pn.className = cls(a.fl);
-  $('#mMargin').textContent = usdFmt(a.mg); $('#mFree').textContent = usdFmt(a.free);
+  document.body.classList.toggle('link-down', typeof TradeLink === 'object' && TradeLink.live && !TradeLink.up);
+  document.body.classList.toggle('pnl-stale', (typeof TradeLink === 'object' && TradeLink.live && !TradeLink.up) || !!document.querySelector('#feedPill.feed-down')); // figures as last seen (UX-22, UX-23)
+  $('#mMargin').textContent = usdFmt(a.mg); { const fr = $('#mFree'); fr.textContent = usdFmt(a.free); fr.className = a.free < 0 ? 'dn' : ''; }
   syncLevSel(); // also after an import that set #levSel to a bare number
-  const lv = $('#mLevel'); lv.textContent = isFinite(a.level) ? nf0.format(a.level) + '%' : '—'; lv.className = a.level < 150 ? 'dn' : '';
+  const lv = $('#mLevel'); lv.textContent = isFinite(a.level) ? nf0.format(a.level) + '%' : '—'; lv.className = a.level < 100 ? 'dn lv-call' : a.level < 150 ? 'dn' : '';
+  // under 100% the cell says what happens next, for as long as it lasts (UX-5): a toast would be gone in seconds
+  { const lb = lv.previousElementSibling, t = a.level < 100 ? 'Stop-out at 50%' : 'Margin level'; if (lb && lb.textContent !== t) lb.textContent = t; }
   const d = $('#mDD'); d.textContent = pct(-dd, 2); d.className = dd > .01 ? 'dn' : '';
   $('#simClock').textContent = new Date(Engine.simTime * 1000).toISOString().slice(11, 19) + ' UTC';
   const q = Engine.quote(S.set.sym), arr = Engine.candles[S.set.sym], ref = arr[Math.max(0, arr.length - 1441)].close, ch = (q.mid / ref - 1) * 100;
   $('#symMid').innerHTML = bigPx(S.set.sym, q.mid);
   const c = $('#symChg'); c.innerHTML = `${pct(ch)} <span class="chg-per">24h</span>`; c.className = 'chg mono ' + cls(ch);
-  // Decision context: the five numbers that matter before opening the ticket.
-  const m = M(S.set.sym), ctxMarket = $('#ctxMarket');
-  if (ctxMarket) {
-    ctxMarket.textContent = q.open ? 'Open' : q.why === 'off quotes' ? 'Off quotes' : 'Closed';
-    ctxMarket.className = q.open ? 'st-ok' : 'st-warn';
-    $('#ctxSpread').textContent = q.spread.toFixed(1) + uShort(S.set.sym);
-    const at = atr1h(S.set.sym);
-    $('#ctxAtr').textContent = at != null ? (at / m.pip).toFixed(1) + uShort(S.set.sym) : '—';
-    const day = arr.slice(-1440), hi = Math.max(...day.map(x => x.high)), lo = Math.min(...day.map(x => x.low));
-    $('#ctxRange').textContent = isFinite(hi - lo) ? ((hi - lo) / m.pip).toFixed(1) + uShort(S.set.sym) : '—';
-    const net = S.positions.filter(p => p.sym === S.set.sym).reduce((n, p) => n + (p.side === 'buy' ? p.lots : -p.lots), 0);
-    const ex = $('#ctxExposure'); ex.textContent = net ? `${net > 0 ? '+' : '−'}${Math.abs(net).toFixed(2)} ${m.lotName}` : 'Flat'; ex.className = 'mono ' + cls(net);
-  }
-  const dm = $('#dockMargin'); if (dm) dm.textContent = a.eq > 0 ? pct(a.mg / a.eq * 100, 1, false) : '—';
-  const ddd = $('#dockDd'); if (ddd) { ddd.textContent = pct(-dd, 2); ddd.className = 'mono ' + (dd > .01 ? 'dn' : ''); }
 }
 
 /* ============ intelligence ============ */
@@ -128,7 +172,7 @@ function renderStrength() {
   const top = st[0].c, bot = st[st.length - 1].c;
   const p = Engine.PAIRS.find(p => (p.base === top && p.quote === bot) || (p.base === bot && p.quote === top));
   const idea = $('#strIdea');
-  if (p) { const side = p.base === top ? 'buy' : 'sell'; idea.dataset.sym = p.sym; idea.dataset.side = side; idea.innerHTML = `Strongest <b>${top}</b> vs weakest <b>${bot}</b> → ${side === 'buy' ? 'long' : 'short'} bias on <b>${pretty(p.sym)}</b>. Click to load.`; }
+  if (p) { const side = p.base === top ? 'buy' : 'sell'; idea.dataset.sym = p.sym; idea.dataset.side = side; idea.innerHTML = `Strongest <b>${top}</b> vs weakest <b>${bot}</b> → strength gap on <b>${pretty(p.sym)}</b>. Click to load.`; }
   else { idea.dataset.sym = ''; idea.innerHTML = `Strongest <b>${top}</b> vs weakest <b>${bot}</b> · no listed pair for this combination.`; }
 }
 /* Net exposure in USD notional. A pair splits into its two currencies (any of the 15, the G8 and the others). Any
@@ -171,15 +215,40 @@ function renderSessions() {
   $('#sessNow').textContent = hhmm(Engine.simTime) + ' UTC';
 }
 
-/* ============ economic calendar (simulated) ============ */
+/* ============ economic calendar ============
+   With the platform's live prices: the week's real calendar (ForexFactory, /api/calendar, server/calendar.js), read at
+   boot and every 30 minutes; times, impact, forecast and previous as published, no actual values, no effect on prices.
+   On the simulated market (no feed: offline, tests, replays) the simulated calendar below drives the news moves. */
 const TEMPL = [
   ['USD', 'Non-Farm Payrolls', 'hi', 'K', 150, 60], ['USD', 'CPI m/m', 'hi', '%', .3, .15], ['USD', 'Fed Chair Testimony', 'hi', '', null, null], ['USD', 'ISM Services PMI', 'md', '', 52.5, 1.5], ['USD', 'Initial Jobless Claims', 'md', 'K', 225, 12, true], ['USD', 'Retail Sales m/m', 'md', '%', .4, .4],
   ['EUR', 'ECB Rate Decision', 'hi', '%', 2.0, 0], ['EUR', 'German ZEW Sentiment', 'md', '', 12, 8], ['EUR', 'Flash PMI Composite', 'md', '', 50.4, 1.2],
   ['GBP', 'CPI y/y', 'hi', '%', 3.1, .25], ['GBP', 'Retail Sales m/m', 'md', '%', .2, .5], ['JPY', 'BoJ Policy Statement', 'hi', '', null, null], ['JPY', 'Tokyo Core CPI y/y', 'md', '%', 2.2, .2],
   ['AUD', 'Employment Change', 'hi', 'K', 25, 20], ['CAD', 'Employment Change', 'hi', 'K', 20, 18], ['NZD', 'GDP q/q', 'md', '%', .4, .3], ['CHF', 'CPI m/m', 'md', '%', .1, .15], ['USD', 'Crude Oil Inventories', 'lo', 'M', -1.2, 2.5]
 ];
-const CAL = { events: [], nextT: 0 };
-function fmtNum(v, unit) { if (v == null) return '—'; const d = unit === 'K' ? 0 : unit === '%' ? (Math.abs(v) < 1 ? 1 : 2) : 1; const t = v.toFixed(d); return (+t === 0 ? Math.abs(+t).toFixed(d) : t) + unit; }
+const CAL = { events: [], nextT: 0, src: 'sim', at: 0, err: '' };
+const calKey = e => e.t + '|' + e.ccy + '|' + e.name;
+let calNext = 0, calBusy = false;
+function calLoad() {
+  if (calBusy) return; calBusy = true;
+  fetch('/api/calendar', { credentials: 'same-origin', cache: 'no-store' })
+    .then(r => r.json().then(j => { if (!r.ok || !j || !Array.isArray(j.events)) throw new Error((j && j.error) || 'Calendar unavailable (' + r.status + ')'); return j; }))
+    .then(j => {
+      const old = new Map(CAL.events.map(e => [calKey(e), e])), now = Engine.simTime;
+      CAL.events = j.events.filter(e => e && Number.isFinite(e.t) && /^[A-Z]{3}$/.test(e.ccy)).map(e => {
+        const o = old.get(calKey(e)) || {};
+        // a release that was already out when the calendar loaded is history: no toast, no news tag on positions (behav.js)
+        // the feed is a third party's (server/calendar.js): its words reach innerHTML here and in brief.js, so no markup
+        // characters get in (security audit 09.11.2026, F01); fmtNum's output is escaped where it is shown as well
+        const txt = v => (typeof v === 'string' ? v.replace(/[<>"'`]/g, '') : '');
+        return { id: calKey(e), t: e.t, ccy: e.ccy, name: txt(e.name) + (e.holiday && !/holiday/i.test(e.name) ? ' (holiday)' : ''), impact: ['hi', 'md', 'lo'].includes(e.impact) ? e.impact : 'lo', unit: '', fc: txt(e.fc), prev: txt(e.prev), actual: null, done: e.t <= now, real: true, _bh: o._bh || (e.t <= now ? 1 : 0), _seen: o._seen || e.t <= now };
+      });
+      CAL.src = 'live'; CAL.at = j.at || Date.now(); CAL.err = j.stale ? 'stale' : '';
+      if (typeof renderCalendar === 'function') renderCalendar();
+    })
+    .catch(e => { CAL.err = e.message || 'Calendar unavailable'; if (CAL.src !== 'live') { CAL.src = 'down'; CAL.events = []; } })
+    .finally(() => { calBusy = false; calNext = Date.now() + (CAL.src === 'live' ? 30 : 2) * 60000; });
+}
+function fmtNum(v, unit) { if (typeof v === 'string') return v || '—'; if (v == null) return '—'; const d = unit === 'K' ? 0 : unit === '%' ? (Math.abs(v) < 1 ? 1 : 2) : 1; const t = v.toFixed(d); return (+t === 0 ? Math.abs(+t).toFixed(d) : t) + unit; }
 function genEvent(t) {
   const [ccy, name, impact, unit, base, sd, inv] = TEMPL[Math.floor(Math.random() * TEMPL.length)];
   const fc = base == null ? null : base + (Math.random() - .5) * (sd || .1);
@@ -187,6 +256,16 @@ function genEvent(t) {
   return { id: Math.random().toString(36).slice(2), t, ccy, name, impact, unit, fc, prev, sd, inv, done: false, actual: null };
 }
 function calTick() {
+  if (Engine.feedOn) {
+    // real calendar: no generated events, no price or spread effects; a high-impact release says so when it is due
+    if (CAL.src === 'sim') { CAL.events = []; CAL.src = 'down'; }
+    if (Date.now() >= calNext) calLoad();
+    for (const e of CAL.events) if (!e.done && Engine.simTime >= e.t) {
+      e.done = true;
+      if (!e._seen && e.impact === 'hi') { e._seen = true; const exposed = S.positions.some(p => M(p.sym).newsCcy.includes(e.ccy)); toast(`${e.ccy} ${e.name}`, `Scheduled release now${exposed ? ' · you are exposed' : ''} — expect wider spreads for a few minutes`, 'info'); beep('news'); }
+    }
+    return;
+  }
   if (!CAL.nextT) CAL.nextT = Engine.simTime + 15 * 60;
   while (CAL.events.filter(e => !e.done).length < 10) { CAL.events.push(genEvent(CAL.nextT)); CAL.nextT += (35 + Math.random() * 110) * 60; }
   // high-impact releases widen the spreads of their currency ×2–4 from 2 minutes before to 2 minutes after
@@ -210,7 +289,13 @@ function calTick() {
 }
 const fmtIn = s => s < 0 ? '—' : s < 3600 ? `${Math.floor(s / 60)}m ${String(Math.floor(s % 60)).padStart(2, '0')}s` : `${Math.floor(s / 3600)}h ${Math.floor(s % 3600 / 60)}m`;
 // calendar filters live for the session only (not part of the exported state)
-const CALF = { imp: { hi: true, md: true, lo: true }, ccy: '' };
+const CALF = { imp: { hi: true, md: true, lo: true }, ccy: (() => { try { return localStorage.getItem('tb-cal-ccy') || ''; } catch (e) { return ''; } })(), loOpen: false };
+// Med and High releases due within 24 hours count down to the second; the rest keep the short form
+const CAL_CD = 86400;
+const fmtCd = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = String(s % 60).padStart(2, '0'); return h ? `${h}h ${String(m).padStart(2, '0')}m ${x}s` : `${m}m ${x}s`; };
+const calIn = e => { const s = e.t - Engine.simTime; return e.impact !== 'lo' && s >= 0 && s < CAL_CD ? `<span class="cal-cd" data-cd="${e.t}">${fmtCd(s)}</span>` : fmtIn(s); };
+// the countdowns tick every second between the calendar's 2-second redraws
+setInterval(() => { const b = document.getElementById('calBody'); if (!b || !b.offsetParent) return; b.querySelectorAll('[data-cd]').forEach(el => { const t = fmtCd(+el.dataset.cd - Engine.simTime); if (el.textContent !== t) el.textContent = t; }); }, 250);
 function calFilterBar() {
   let f = $('#calF'); if (f) return f;
   const wrap = $('#calBody').closest('.tab'); if (!wrap) return null;
@@ -218,22 +303,93 @@ function calFilterBar() {
   f.innerHTML = `<span class="muted small">Impact</span><div class="mini-seg" role="group" aria-label="Impact">${[['hi', 'High'], ['md', 'Med'], ['lo', 'Low']].map(([k, l]) => `<button data-imp="${k}" class="on" aria-pressed="true">${l}</button>`).join('')}</div><label class="muted small cal-ccy">Currency <select id="calCcy" aria-label="Currency"><option value="">All</option></select></label><span class="muted small cal-n" id="calN"></span>`;
   wrap.prepend(f);
   f.addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b) return; const k = b.dataset.imp; CALF.imp[k] = !CALF.imp[k]; b.classList.toggle('on', CALF.imp[k]); b.setAttribute('aria-pressed', CALF.imp[k]); renderCalendar(); });
-  f.querySelector('#calCcy').addEventListener('change', e => { CALF.ccy = e.target.value; renderCalendar(); });
+  f.querySelector('#calCcy').addEventListener('change', e => { CALF.ccy = e.target.value; try { localStorage.setItem('tb-cal-ccy', CALF.ccy); } catch (x) {} renderCalendar(); });
   return f;
 }
+// small flags for the calendar's currencies (inline SVG: emoji flags are letters on Windows)
+const CAL_FLAG = (() => {
+  const star = (cx, cy, r, f) => `<polygon fill="${f}" points="${[...Array(10)].map((_, i) => { const a = Math.PI / 5 * i - Math.PI / 2, q = i % 2 ? r * .4 : r; return `${(cx + q * Math.cos(a)).toFixed(2)},${(cy + q * Math.sin(a)).toFixed(2)}`; }).join(' ')}"/>`;
+  const uk = '<rect width="60" height="30" fill="#012169"/><path d="M0,0 60,30M60,0 0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 60,30M60,0 0,30" stroke="#C8102E" stroke-width="2"/><path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#C8102E" stroke-width="6"/>';
+  const canton = `<svg width="10" height="5" viewBox="0 0 60 30" preserveAspectRatio="none">${uk}</svg>`;
+  const f = (vb, body) => `<svg class="cal-flg" viewBox="${vb}" preserveAspectRatio="none" aria-hidden="true">${body}</svg>`;
+  return {
+    USD: f('0 0 19 10', '<rect width="19" height="10" fill="#B22234"/>' + [1, 3, 5, 7, 9, 11].map(i => `<rect y="${(i * 10 / 13).toFixed(2)}" width="19" height="${(10 / 13).toFixed(2)}" fill="#fff"/>`).join('') + '<rect width="7.6" height="5.38" fill="#3C3B6E"/>'),
+    EUR: f('0 0 15 10', '<rect width="15" height="10" fill="#039"/>' + [...Array(12)].map((_, i) => star(7.5 + 3 * Math.cos(Math.PI / 6 * i), 5 + 3 * Math.sin(Math.PI / 6 * i), .6, '#FC0')).join('')),
+    GBP: f('0 0 60 30', uk),
+    JPY: f('0 0 15 10', '<rect width="15" height="10" fill="#fff"/><circle cx="7.5" cy="5" r="3" fill="#BC002D"/>'),
+    AUD: f('0 0 20 10', '<rect width="20" height="10" fill="#012169"/>' + canton + star(5, 7.5, 1.5, '#fff') + [[15, 8.3], [12.6, 4.4], [15, 1.9], [17.2, 3.9]].map(([x, y]) => star(x, y, .75, '#fff')).join('')),
+    NZD: f('0 0 20 10', '<rect width="20" height="10" fill="#012169"/>' + canton + [[15, 8.3], [12.6, 4.4], [15, 1.9], [17.2, 3.9]].map(([x, y]) => star(x, y, .85, '#C8102E')).join('')),
+    CAD: f('0 0 20 10', '<rect width="20" height="10" fill="#D52B1E"/><rect x="5" width="10" height="10" fill="#fff"/><polygon fill="#D52B1E" points="10,1.6 10.9,3.4 12.6,2.9 12,5 13.4,5.5 10.4,7.3 10.4,8.8 9.6,8.8 9.6,7.3 6.6,5.5 8,5 7.4,2.9 9.1,3.4"/>'),
+    CHF: f('0 0 15 10', '<rect width="15" height="10" fill="#DA291C"/><rect x="6.5" y="2" width="2" height="6" fill="#fff"/><rect x="4.5" y="4" width="6" height="2" fill="#fff"/>'),
+    CNY: f('0 0 15 10', '<rect width="15" height="10" fill="#DE2910"/>' + star(2.6, 2.6, 1.6, '#FFDE00') + [[5, 1], [6, 2], [6, 3.4], [5, 4.4]].map(([x, y]) => star(x, y, .5, '#FFDE00')).join('')),
+  };
+})();
+const calFlag = c => CAL_FLAG[c] || '<span class="cal-flg cal-flg-x" aria-hidden="true"></span>';
+/* Med and High releases open an explanation of the indicator: what it is, how to read it, how it can move the market.
+   The explanations were researched once (09.11.2026) for every recurring Medium/High ForexFactory event and are kept in
+   indicators.json, read on the first click; titles match exactly, then without Prelim/Flash/Final… and m/m-y/y. */
+let CI_DB = null, CI_LOAD = null;
+const ciLoad = () => CI_LOAD || (CI_LOAD = fetch('indicators.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(j => (CI_DB = Array.isArray(j) ? j : j.indicators || [])).catch(e => { CI_LOAD = null; throw e; }));
+const ciBase = t => t.toLowerCase().replace(/\b(prelim|preliminary|flash|final|revised|advance|second estimate|third estimate)\b/g, '').replace(/\b(m\/m|q\/q|y\/y|3m\/3m|annualized|ann)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+function ciFind(ccy, name) {
+  const db = (CI_DB || []).filter(x => x.ccy === ccy), t = name.replace(/ \(holiday\)$/, '');
+  return db.find(x => (x.titles || []).includes(t))
+    || db.find(x => (x.patterns || []).some(p => { try { return new RegExp(p).test(t); } catch (e) { return false; } }))
+    || db.find(x => (x.titles || []).some(y => ciBase(y) === ciBase(t))) || null;
+}
+function ciOpen(ev) {
+  let el = $('#ciDlg');
+  if (!el) {
+    el = document.createElement('div'); el.className = 'overlay'; el.id = 'ciDlg'; document.body.appendChild(el);
+    el.addEventListener('click', e => { if (e.target === el || e.target.closest('[data-cf]')) ciClose(); });
+    el.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); ciClose(); } });
+  }
+  const imp = { hi: 'High', md: 'Med' }[ev.impact] || 'Low', when = `${dts(ev.t)} UTC · ${ev.done ? 'released' : 'in ' + fmtIn(ev.t - Engine.simTime)}`;
+  const nums = [['Forecast', fmtNum(ev.fc, ev.unit)], ['Previous', fmtNum(ev.prev, ev.unit)]];
+  const show = body => {
+    el.innerHTML = `<div class="modal cf-modal ci-modal" role="dialog" aria-modal="true" aria-labelledby="ciT">
+      <div class="ph"><span class="tag ${ev.impact}">${imp}</span><h2 id="ciT">${calFlag(ev.ccy)}${ev.ccy} · ${escHtml(ev.name)}</h2><button type="button" class="cd-x" data-cf="cancel" aria-label="Close">Close</button></div>
+      <dl class="ci-sum"><div><dt>Release</dt><dd>${when}</dd></div>${nums.map(([k, v]) => `<div><dt>${k}</dt><dd>${escHtml(v || '—')}</dd></div>`).join('')}</dl>
+      <div class="ci-body">${body}</div></div>`;
+    el.hidden = false; el.querySelector('[data-cf=cancel]').focus({ preventScroll: true });
+  };
+  const li = a => `<ul>${(a || []).map(x => `<li>${escHtml(x)}</li>`).join('')}</ul>`;
+  const fill = () => {
+    const x = ciFind(ev.ccy, ev.name);
+    if (!x) return show(`<p class="ci-none">No explanation for this release yet. The library covers the recurring Medium and High events; this one is not in it.</p>`);
+    const better = { higher: 'A result above the forecast is usually read as good for the currency, below as bad.', lower: 'A result below the forecast is usually read as good for the currency, above as bad.' }[x.better];
+    show(`<h3>${escHtml(x.name)}</h3><p class="ci-meta">${escHtml(x.source || '')}${x.freq ? ' · ' + escHtml(x.freq) : ''}</p>
+      <section><h4>What it is</h4><p>${escHtml(x.what || '')}</p></section>
+      <section><h4>How to read it</h4>${li(x.read)}${better ? `<p class="ci-better">${better}</p>` : ''}</section>
+      <section><h4>How it can move the market</h4>${li(x.market)}</section>
+      ${(x.sources || []).length ? `<p class="ci-src">Sources: ${x.sources.map(u => { let h = u; try { h = new URL(u).hostname.replace(/^www\./, ''); } catch (e) {} return /^https?:\/\//.test(u) ? `<a href="${escHtml(u)}" target="_blank" rel="noopener">${escHtml(h)}</a>` : ''; }).filter(Boolean).join(' · ')}</p>` : ''}`);
+  };
+  ciOpen.ret = document.activeElement;
+  if (CI_DB) fill(); else { show('<p class="ci-none">Loading the explanation…</p>'); ciLoad().then(fill, () => show('<p class="ci-none">The explanations could not be loaded. Check the connection and try again.</p>')); }
+}
+function ciClose() { const el = $('#ciDlg'); if (el) el.hidden = true; const r = ciOpen.ret; if (r && r.isConnected) r.focus({ preventScroll: true }); else { const k = r && r.dataset && r.dataset.ci; const b = k && [...document.querySelectorAll('#calBody .cal-x')].find(x => x.dataset.ci === k); if (b) b.focus({ preventScroll: true }); } }
 function renderCalendar() {
   const f = calFilterBar(), sel = f && f.querySelector('#calCcy');
   const all = CAL.events.slice().sort((a, b) => a.t - b.t), ccys = [...new Set(all.map(e => e.ccy))].sort();
   if (sel && sel.dataset.k !== ccys.join()) { sel.dataset.k = ccys.join(); if (CALF.ccy && !ccys.includes(CALF.ccy)) ccys.push(CALF.ccy); sel.innerHTML = '<option value="">All</option>' + ccys.map(c => `<option${c === CALF.ccy ? ' selected' : ''}>${c}</option>`).join(''); }
-  const rows = all.filter(e => CALF.imp[e.impact] !== false && (!CALF.ccy || e.ccy === CALF.ccy));
-  if (f) f.querySelector('#calN').textContent = rows.length === all.length ? `${all.length} events` : `${rows.length} of ${all.length} events`;
+  const match = all.filter(e => CALF.imp[e.impact] !== false && (!CALF.ccy || e.ccy === CALF.ccy));
+  if (f) f.querySelector('#calN').textContent = match.length === all.length ? `${all.length} events` : `${match.length} of ${all.length} events`;
+  // low-impact releases fold into one faded line; a click on it lists them in their places
+  const los = match.filter(e => e.impact === 'lo'), rows = CALF.loOpen ? match : match.filter(e => e.impact !== 'lo');
+  const body = $('#calBody');
+  if (!body.dataset.lo) { body.dataset.lo = '1'; body.addEventListener('click', e => { const x = e.target.closest('.cal-x'); if (x) { const ev = CAL.events.find(v => calKey(v) === x.dataset.ci); if (ev) ciOpen(ev); return; } if (!e.target.closest('.cal-lo-g')) return; CALF.loOpen = !CALF.loOpen; renderCalendar(); }); body.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.cal-lo-g')) { e.preventDefault(); CALF.loOpen = !CALF.loOpen; renderCalendar(); $('#calBody .cal-lo-g')?.focus(); } }); }
+  const loLeft = los.filter(e => !e.done).length;
+  const loRow = los.length ? `<tr class="cal-lo-g${CALF.loOpen ? ' open' : ''}" tabindex="0" role="button" aria-expanded="${CALF.loOpen}" title="${CALF.loOpen ? 'Fold the low-impact releases into one line' : 'List the low-impact releases'}"><td colspan="8"><span class="cal-lo-c" aria-hidden="true">${CALF.loOpen ? '▾' : '▸'}</span><span class="tag lo">Low</span> Low impact · ${los.length} release${los.length > 1 ? 's' : ''}${loLeft < los.length ? ` (${loLeft} still to come)` : ''}<span class="cal-lo-a">${CALF.loOpen ? 'Hide' : 'Show'}</span></td></tr>` : '';
   // compact rows at their natural height (no stretching to the pane); the next release is the panel's hero row
   const next = rows.find(e => !e.done);
   // actual vs forecast is shown as a neutral arrow: above or below forecast is not good or bad for a position
-  $('#calBody').innerHTML = rows.map(e => {
+  body.innerHTML = loRow + rows.map(e => {
     const d = e.actual != null && e.fc != null ? e.actual - e.fc : 0, arr = !e.done || !d ? '' : `<span class="cal-d" title="${d > 0 ? 'Above' : 'Below'} forecast">${d > 0 ? '▲' : '▼'}</span>`;
-    return `<tr class="${e.done ? 'cal-done' : e === next ? 'cal-next' : ''}"><td>${dts(e.t)}</td><td${e === next ? ' title="Next release"' : ''}>${e.done ? 'released' : fmtIn(e.t - Engine.simTime)}</td><td><b>${e.ccy}</b></td><td class="l cal-ev">${escHtml(e.name)}</td><td><span class="tag ${e.impact}">${{ hi: 'High', md: 'Med', lo: 'Low' }[e.impact]}</span></td><td>${fmtNum(e.fc, e.unit)}</td><td>${fmtNum(e.prev, e.unit)}</td><td>${e.done ? fmtNum(e.actual, e.unit) + arr : ''}</td></tr>`;
-  }).join('') || `<tr><td colspan="8" class="empty">No events match these filters.</td></tr>`;
+    return `<tr class="cal-${e.impact}${e.done ? ' cal-done' : e === next ? ' cal-next' : ''}"><td>${dts(e.t)}</td><td${e === next ? ' title="Next release"' : ''}>${e.done ? 'released' : calIn(e)}</td><td class="cal-c">${calFlag(e.ccy)}<b>${e.ccy}</b></td><td class="l cal-ev">${e.impact === 'lo' ? escHtml(e.name) : `<button type="button" class="link cal-x" data-ci="${escHtml(calKey(e))}" aria-haspopup="dialog" title="What this indicator is and how it can move the market">${escHtml(e.name)}</button>`}</td><td><span class="tag ${e.impact}">${{ hi: 'High', md: 'Med', lo: 'Low' }[e.impact]}</span></td><td>${escHtml(fmtNum(e.fc, e.unit))}</td><td>${escHtml(fmtNum(e.prev, e.unit))}</td><td${e.real && e.done ? ' title="Actual values are not in the free calendar feed"' : ''}>${e.done ? fmtNum(e.actual, e.unit) + arr : ''}</td></tr>`;
+  }).join('') || (loRow ? '' : `<tr><td colspan="8" class="empty">${CAL.src === 'down' ? `Economic calendar unavailable${CAL.err ? ' (' + escHtml(CAL.err) + ')' : ''}. It is tried again in a couple of minutes.` : 'No events match these filters.'}</td></tr>`);
+  const foot = $('#calFoot');
+  if (foot) foot.textContent = CAL.src === 'sim' ? 'Built-in practice events, not the real calendar (no live prices). When an event releases, the surprise versus forecast moves its currency — plan stops around high-impact releases.'
+    : `Real economic calendar for this week, from ForexFactory${CAL.at ? ', read ' + new Date(CAL.at).toISOString().slice(11, 16) + ' UTC' : ''}${CAL.err === 'stale' ? ' (the feed did not answer; last good copy)' : ''}. Times, impact, forecast and previous as published; actual values are not in this feed. Spreads widen around high-impact releases.`;
 }
 
 /* ============ correlation & volatility ============ */
@@ -302,6 +458,18 @@ function corrRecent(a, b, n = CORR_FILL_N) {
   }
   return corrAligned(xa.reverse(), xb.reverse());
 }
+/* G8 matrix: the last lb minutes of trading both pairs share, matched minute by minute (k-minute returns on the
+   clock's k-minute marks). Each pair's own last lb bars are NOT aligned with another's: on live prices every pair
+   misses different minutes, and pairing them by position shifted the series and pulled ρ towards 0. */
+function corrTrading(a, b, lb = S.set.corrLb || 1440, k = CORR.ret || 1) {
+  const A = Engine.candles[a] || [], B = Engine.candles[b] || [], xa = [], xb = [], step = k * 60, need = Math.floor(lb / k) + 1;
+  let i = A.length - 1, j = B.length - 1; const end = Engine.simTime;
+  while (i >= 0 && A[i].time > end) i--; while (j >= 0 && B[j].time > end) j--;
+  while (i >= 0 && j >= 0 && xa.length < need) {
+    if (A[i].time === B[j].time) { if (k === 1 || A[i].time % step === 0) { xa.push(A[i]); xb.push(B[j]); } i--; j--; } else if (A[i].time > B[j].time) i--; else j--;
+  }
+  return corrAligned(xa.reverse(), xb.reverse());
+}
 function corrCluster(ps, rOf) {
   const n = ps.length, D = ps.map((a, i) => ps.map((b, j) => i === j ? 0 : Math.sqrt(Math.max(0, 2 * (1 - Math.abs(Number.isFinite(rOf(a, b)) ? rOf(a, b) : 0))))));
   const inT = Array(n).fill(false), best = Array(n).fill(Infinity), par = Array(n).fill(-1), adj = ps.map(() => []); best[0] = 0;
@@ -327,7 +495,7 @@ function renderCorr() {
     $('#corr').addEventListener('mouseover', e => {
       const c = e.target.closest('#corr > div[data-a]'); $$('#corr .hx').forEach(x => x.classList.remove('hx'));
       if (!c) return; const i = c.dataset.i, j = c.dataset.j; $$(`#corr > [data-i="${i}"], #corr > [data-j="${j}"], #corr > [data-row="${i}"], #corr > [data-col="${j}"]`).forEach(x => x.classList.add('hx'));
-      if (c.dataset.tip && !c.dataset.more) { c.dataset.more = 1; const a = c.dataset.a, b2 = c.dataset.b, other = [[240, '4H'], [1440, '1D'], [4320, '3D']].filter(([w]) => w >= CORR_RET_MIN[CORR.ret]).map(([w, l]) => { const v = CORR.set === 'all' ? corrPair(a, b2, w).r : Engine.corr(corrRet(a, w), corrRet(b2, w)); return `${l} ${Number.isFinite(v) ? nfx(v, 2) : '—'}`; }).join(' · '); c.dataset.tip += ` Windows: ${other}.`; }
+      if (c.dataset.tip && !c.dataset.more) { c.dataset.more = 1; const a = c.dataset.a, b2 = c.dataset.b, other = [[240, '4H'], [1440, '1D'], [4320, '3D']].filter(([w]) => w >= CORR_RET_MIN[CORR.ret]).map(([w, l]) => { const v = CORR.set === 'all' ? corrPair(a, b2, w).r : corrTrading(a, b2, w).r; return `${l} ${Number.isFinite(v) ? nfx(v, 2) : '—'}`; }).join(' · '); c.dataset.tip += ` Windows: ${other}.`; }
     });
     $('#corr').addEventListener('mouseleave', () => $$('#corr .hx').forEach(x => x.classList.remove('hx')));
   }
@@ -336,8 +504,8 @@ function renderCorr() {
   const ps0 = corrSyms(), lb = S.set.corrLb || 1440, mine = CORR.set === 'all';
   // G8 pairs share every minute: the engine's own index-aligned returns; Yours: each pair paired on common minutes
   // over the lookback ending at the last minute both have a bar (corrPair), so a closed market reads its last session
-  const R = mine ? null : Object.fromEntries(ps0.map(s => [s, corrRet(s, lb)])), C = mine ? {} : null;
-  const memo = {}, rx = (a, b) => { const k = a < b ? a + '|' + b : b + '|' + a; return memo[k] || (memo[k] = mine ? corrPair(a, b, lb, C) : { r: Engine.corr(R[a], R[b]), n: Math.min(R[a].length, R[b].length) }); };
+  const C = mine ? {} : null;
+  const memo = {}, rx = (a, b) => { const k = a < b ? a + '|' + b : b + '|' + a; return memo[k] || (memo[k] = mine ? corrPair(a, b, lb, C) : corrTrading(a, b, lb)); };
   const ps = CORR.ord === 'clu' ? corrCluster(ps0, (a, b) => rx(a, b).r) : ps0;
   // the summary: strongest links, the most independent instrument, and what your own positions share
   const links = []; ps.forEach((a, i) => ps.slice(i + 1).forEach(b => { const r = rx(a, b).r; if (Number.isFinite(r)) links.push([a, b, r]); }));
@@ -421,6 +589,8 @@ function renderVol() {
 
 /* ============ journal ============ */
 // one trade = one position (tradesOf: partial closes merged) at net P&L (pnl − commission, shared.js)
+// the money a trade risked at its open: stored on newer trades, otherwise P&L ÷ R (R is P&L over the risk at the stop)
+const tradeRisk = t => t.risk > 0 ? t.risk : t.r && Number.isFinite(t.r) && t.pnl ? Math.abs(t.pnl / t.r) : null;
 function journalStats() {
   const all = S.history, h = tradesOf(all), wins = h.filter(x => x.net > 0), losses = h.filter(x => x.net <= 0);
   const gw = wins.reduce((s, x) => s + x.net, 0), gl = -losses.reduce((s, x) => s + x.net, 0);
@@ -430,9 +600,10 @@ function journalStats() {
   // paid at its open and is no closed trade's, so it is added back
   const openComm = S.positions.reduce((s, p) => s + (+p.comm || 0), 0);
   const start = S.balance + openComm - all.reduce((s, x) => s + netPnl(x), 0), last = new Map(h.map(x => [x.rows[0], x]));
-  const ev = []; for (const x of [...all].reverse()) { if (x.nbp) ev.push({ v: netPnl(x), t: x.close, nbp: true }); else if (last.has(x)) ev.push({ v: last.get(x).net, t: x.close }); }
+  const ev = []; for (const x of [...all].reverse()) { if (x.nbp) ev.push({ v: netPnl(x), t: x.close, nbp: true }); else if (last.has(x)) ev.push({ v: last.get(x).net, t: x.close, risk: tradeRisk(last.get(x)) }); }
   let eq = start, peak = start, mdd = 0; const curve = [start], curveT = [ev.length ? all[all.length - 1].open ?? ev[0].t : 0];
-  for (const e of ev) { eq += e.v; curve.push(eq); curveT.push(e.t); }
+  const riskPcts = []; // the risk each trade actually took at its open, as % of the balance before it
+  for (const e of ev) { if (e.risk > 0 && eq > 0) riskPcts.push(e.risk / eq * 100); eq += e.v; curve.push(eq); curveT.push(e.t); }
   // negative balance protection: the closes just before a protection row that took the balance below zero are shown
   // at zero, since the client never owed that money (the curve and drawdown stop at −100% of the balance)
   for (let i = curve.length - 1, prot = false; i > 0; i--) { if (ev[i - 1].nbp) prot = true; else if (prot && curve[i] < 0) curve[i] = 0; else prot = false; }
@@ -443,32 +614,62 @@ function journalStats() {
     avgW: wins.length ? gw / wins.length : 0, avgL: losses.length ? -gl / losses.length : 0, exp: h.length ? (gw - gl) / h.length : 0,
     avgR: rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null, mdd: mdd * 100, curve, curveT, trades: h,
     best: h.length ? Math.max(...h.map(x => x.net)) : 0, worst: h.length ? Math.min(...h.map(x => x.net)) : 0,
-    avgWinR: wr.length ? wr.reduce((a, b) => a + b, 0) / wr.length : null, avgLossR: lr.length ? -lr.reduce((a, b) => a + b, 0) / lr.length : null, rN: rs.length
+    avgWinR: wr.length ? wr.reduce((a, b) => a + b, 0) / wr.length : null, avgLossR: lr.length ? -lr.reduce((a, b) => a + b, 0) / lr.length : null, rN: rs.length,
+    winRateR: rs.length ? wr.length / rs.length * 100 : null, riskMed: riskPcts.length ? riskPcts.slice().sort((a, b) => a - b)[Math.floor((riskPcts.length - 1) / 2)] : null, riskN: riskPcts.length
   };
 }
 // the win rate with its 95% Wilson interval (shared.js wrTxt): the rate large, the interval and n under it
 const WR_TIP = 'Share of winning trades with its 95% Wilson interval: with few trades the true rate can sit anywhere in that range';
+const AVGR_TIP = 'Average R|Average result in R, where 1R is the money at risk when the trade opened (entry to stop). Only trades that had a stop have an R, so n can be lower than Trades; the other figures use every trade.';
+// front 15.11.2026: a hover explanation for every figure on the Journal: what it is, how to read it, what to watch for
+function jKpiTips(s) {
+  const f = v => usdFmt(v, true), n = s.n, any = n > 0; if (!any) return {};
+  const W = s.nWin, L = s.nLoss, gw = s.avgW * W, gl = Math.abs(s.avgL * L), pay = s.avgL ? s.avgW / Math.abs(s.avgL) : null;
+  return {
+    'Net P&L': `Net P&L|Everything the closed trades made or lost, after commission (swap included). Open positions are not counted. It is the result, not the quality: read it together with the trade count and the drawdown.`,
+    'Trades': `Trades|Closed trades. A position closed in several parts counts once. Everything on this page is computed from them, and below about 30 trades most figures can be chance.`,
+    'Win rate': `Win rate|${W} of ${n} trades closed in profit. The range in brackets is the 95% interval: with ${n} trades the true rate can sit anywhere in it. A low win rate is fine if the average win is clearly larger than the average loss.`,
+    'Profit factor': `Profit factor|Gross profit ${usdFmt(gw)} divided by gross loss ${usdFmt(gl)}. Above 1 the book makes money; 1.0 is break-even. Under about 1.3 it is thin: a wider spread or a few slips can erase it. Very high values on few trades are usually luck.`,
+    'Avg win': `Average win|Total of the winning trades divided by their count (${W}). Compare with the average loss: it tells how much each win pays against each loss.`,
+    'Avg loss': `Average loss|Total of the losing trades divided by their count (${L}). If it is much larger than the average win, you need a high win rate to survive: that usually means stops are too wide or losers are held too long.`,
+    'Expectancy': `Expectancy|The average result per trade: win rate × average win − loss rate × average loss = ${f(s.exp)}${pay ? `. Average win is ${pay.toFixed(1)}× the average loss` : ''}. Positive means the habit pays on average; its size next to the average loss shows how much room there is.`,
+    'Avg R': AVGR_TIP,
+    'Max drawdown': `Maximum drawdown|The deepest fall of the balance from a peak, over the closed trades: ${pct(-s.mdd, 2)}. It is the worst stretch you had to sit through. Open positions are not included. Plan for a future one at least this large.`,
+    'Best / worst': `Best / worst trade|The largest win and the largest loss, net of commission. If the best trade is a big share of Net P&L, the result depends on a few trades. A worst trade far beyond the average loss means a stop was missing or moved.`
+  };
+}
 function wrHtml(k, n) { const w = wrTxt(k, n), i = w.indexOf(' '); return `${w.slice(0, i)}<small style="display:block;font-size:var(--fs-xs);font-weight:400;color:var(--tx3)">${w.slice(i)}</small>`; }
+let jFil = 'all', jLim = 40;
+const JFT = {"all": "All trades|Every closed trade, newest first.", "loss": "Losses|Trades that closed at zero or below, net of commission. Read the notes on these first: what repeats?", "nostop": "No stop|Trades opened without a stop loss. Their R is unknown, so they are left out of Avg R. They carry the risk of an unbounded loss.", "reentry": "After a loss|Trades opened within the revenge window after a losing trade closed. A habit of quick re-entries is how revenge trading starts."};
 function renderJournal() {
   const s = journalStats(), any = s.n > 0, D = '—';
   const k = [['Net P&L', any ? usdFmt(s.net, true) : D, cls(s.net)], ['Trades', s.n], ['Win rate', any ? wrHtml(s.nWin, s.n) : D], ['Profit factor', !any || !s.nWin && !s.nLoss ? D : isFinite(s.pf) ? s.pf.toFixed(2) : '∞'],
-  ['Avg win', s.nWin ? usdFmt(s.avgW, true) : D, s.nWin ? 'up' : ''], ['Avg loss', s.nLoss ? usdFmt(s.avgL, true) : D, s.nLoss && s.avgL ? 'dn' : ''], ['Expectancy', any ? usdFmt(s.exp, true) : D, cls(s.exp)], ['Avg R', s.avgR != null ? sgn(s.avgR, 2) + 'R' : D],
+  ['Avg win', s.nWin ? usdFmt(s.avgW, true) : D, s.nWin ? 'up' : ''], ['Avg loss', s.nLoss ? usdFmt(s.avgL, true) : D, s.nLoss && s.avgL ? 'dn' : ''], ['Expectancy', any ? usdFmt(s.exp, true) : D, cls(s.exp)], ['Avg R', s.avgR != null ? `${sgn(s.avgR, 2)}R<small style="display:block;font-size:var(--fs-xs);font-weight:400;color:var(--tx3)">n=${s.rN}${s.rN < s.n ? ` of ${s.n}` : ''}</small>` : D],
   ['Max drawdown', s.curve.length > 1 ? pct(-s.mdd, 2) : D, s.mdd ? 'dn' : ''], ['Best / worst', any ? `<span class="${cls(s.best)}">${usdFmt(s.best, true).replace('.00', '')}</span> / <span class="${cls(s.worst)}">${usdFmt(s.worst, true).replace('.00', '')}</span>` : D]];
   // emphasis tiers: Net P&L is the hero, the rest are key figures
-  $('#kpis').innerHTML = k.map(([a, b, c], i) => `<div class="kpi ${i ? 'key' : 'hero'}${a === 'Best / worst' ? ' wide' : ''}"${a === 'Win rate' ? ` title="${WR_TIP}"` : ''}><label>${a}</label><b class="${c || ''}">${b}</b></div>`).join('');
+  const KT = jKpiTips(s);
+  $('#kpis').innerHTML = k.map(([a, b, c], i) => `<div class="kpi ${i ? 'key' : 'hero'}${a === 'Best / worst' ? ' wide' : ''}"${KT[a] ? ` data-tip="${escHtml(KT[a])}" data-rich="kpi:${escHtml(a)}" tabindex="0"` : ''}><label>${a}</label><b class="${c || ''}">${b}</b></div>`).join('');
   drawCurve($('#eqCanvas'), s.curve, s.curveT);
   renderCoach();
   const SET = ['', 'Breakout', 'Trend', 'Pullback', 'Reversal', 'Range', 'News', 'Impulse'];
-  // one row per trade (a table: Symbol | Side | P&L | Setup | Note); its note and setup live on the trade's first
+  // one row per trade (a table: Symbol | Side | P&L | Note); its note lives on the trade's first
   // history row (tradesOf reads them from there)
   const NOTE_PH = 'What did you see? What would you change?';
-  const items = s.trades.slice(0, 40).map(h => {
+  // front 15.11.2026: filters (all / losses / no stop / re-entry) and a "show more" past 40 rows
+  const closesJ = [...s.trades].sort((x, y) => x.close - y.close), reJ = new Set(s.trades.filter(x => closesJ.some(y => y !== x && y.net < 0 && y.close <= x.open && x.open - y.close < REVENGE_MIN * 60)));
+  const JF = [['all', 'All', () => true], ['loss', 'Losses', x => x.net <= 0], ['nostop', 'No stop', x => x.r == null], ['reentry', 'After a loss', x => reJ.has(x)]];
+  if (!JF.some(f => f[0] === jFil)) jFil = 'all';
+  const shown = s.trades.filter(JF.find(f => f[0] === jFil)[2]), cnt = f => s.trades.filter(f[2]).length;
+  const dtJ = t => new Date(t * 1000).toISOString().slice(5, 16).replace('T', ' ');
+  const items = shown.slice(0, jLim).map(h => {
     const i = S.history.indexOf(h.rows[h.rows.length - 1]), side = h.side === 'buy' ? 'buy' : 'sell';
     const parts = h.parts > 1 ? `${h.parts} parts${h.complete ? '' : ', still open'}` : '';
-    return `<div class="jitem" data-i="${i}"><div class="top"><span class="jsym">${escHtml(pretty(h.sym))}${parts ? ` <span class="muted small" title="${parts}">${parts}</span>` : ''}</span><span class="jside"><span class="tag ${side}">${side}</span></span><span class="jpnl ${cls(h.net)}" title="${h.comm ? `net of ${usdFmt(h.comm)} commission` : 'net P&L'}">${usdFmt(h.net, true)}</span></div><div class="row"><select data-j="setup" aria-label="Setup">${SET.map(x => `<option ${x === h.setup ? 'selected' : ''} value="${x}">${x || 'Setup…'}</option>`).join('')}</select><input data-j="note" aria-label="Note" placeholder="${NOTE_PH}" title="${NOTE_PH}" value="${escHtml(h.note || '')}"></div></div>`;
+    return `<div class="jitem" data-i="${i}"><div class="top"><span class="jsym" data-rich="jp:${escHtml(h.sym)}">${escHtml(pretty(h.sym))}${parts ? ` <span class="muted small" title="${parts}">${parts}</span>` : ''}<span class="jdt muted" data-rich="jt:${i}" data-tip="Closed|When the trade closed (UTC). Click for the full story of the trade, including how long it was open.">${dtJ(h.close)}</span></span><span class="jside" data-rich="js:${h.side}"><span class="tag ${side}">${side}</span></span><span class="jpnl ${cls(h.net)}" data-rich="jt:${i}" data-tip="Net P&L|${h.comm ? `Result after ${usdFmt(h.comm)} commission${h.swap ? ' and swap' : ''}.` : 'Result of the trade.'}${h.r != null ? ` ${sgn(h.r, 2)}R: the result in multiples of the money risked at the stop.` : ' No stop was set, so there is no R.'}">${usdFmt(h.net, true)}</span></div><div class="row"><input data-j="note" aria-label="Note" placeholder="${NOTE_PH}" title="${NOTE_PH}" value="${escHtml(h.note || '')}"></div></div>`;
   });
-  $('#jList').innerHTML = items.length ? '<div class="jhead" aria-hidden="true"><span>Symbol</span><span>Side</span><span>P&amp;L</span><span>Setup</span><span>Note</span></div>' + items.join('')
-    : '<div class="muted small">Close trades to start journaling. Tag each setup to see what each one costs or pays, net of costs.</div>';
+  const bar = `<div class="seg jfil" role="group" aria-label="Filter trades">${JF.map(f => `<button type="button" data-jf="${f[0]}" data-rich-tip="jf:${f[0]}" data-tip="${escHtml(JFT[f[0]])}" class="${f[0] === jFil ? 'on' : ''}" aria-pressed="${f[0] === jFil}">${f[1]} <small>${cnt(f)}</small></button>`).join('')}</div>`;
+  const more = shown.length > jLim ? `<div class="jmore small muted">Showing ${jLim} of ${shown.length} · <button type="button" class="link" data-jmore="1">Show more</button></div>` : '';
+  $('#jList').innerHTML = bar + (items.length ? '<div class="jhead" aria-hidden="true"><span data-rich="gl:Symbol">Symbol</span><span data-rich="gl:Side">Side</span><span data-rich="gl:P&amp;L">P&amp;L</span><span data-rich="gl:Note">Note</span></div>' + items.join('') + more
+    : s.trades.length ? '<div class="muted small">No trades match this filter.</div>' : '<div class="muted small">Close trades to start journaling. Write a note on each trade: what you saw, what you would change.</div>');
   dirty.journal = false;
 }
 // step = the axis step: labels keep enough precision that neighbouring gridlines never read the same
@@ -529,11 +730,11 @@ function runLab() {
   const p = clamp(+$('#lWin').value / 100, .01, .99), rr = Math.max(.1, +$('#lRR').value), risk = clamp(+$('#lRisk').value / 100, .0005, .5), N = clamp(Math.round(+$('#lN').value), 10, 2000);
   const P = 1000, paths = [], finals = [], dds = []; let ruin = 0, dd20 = 0;
   for (let k = 0; k < P; k++) {
-    let e = 1, peak = 1, mdd = 0, ruined = false; const path = k < 40 ? [1] : null; const snap = [];
+    let e = 1, peak = 1, mdd = 0, ruined = false; const snap = [];
     for (let i = 0; i < N; i++) {
       e *= Math.random() < p ? 1 + risk * rr : 1 - risk;
       peak = Math.max(peak, e); mdd = Math.max(mdd, 1 - e / peak); if (e < .5) ruined = true;
-      if (path) path.push(e); snap.push(e);
+      snap.push(e);
     }
     paths.push(snap); finals.push(e); dds.push(mdd); if (ruined) ruin++; if (mdd > .2) dd20++;
   }
@@ -541,13 +742,17 @@ function runLab() {
   const bands = [.05, .25, .5, .75, .95].map(f => [1, ...Array.from({ length: N }, (_, i) => q(paths.map(pp => pp[i]), f))]);
   const expR = p * rr - (1 - p);
   const out = [['Expectancy', sgn(expR, 2) + 'R / trade', cls(expR)], ['Median result', pct((q(finals, .5) - 1) * 100, 1), cls(q(finals, .5) - 1)], ['5th pct', pct((q(finals, .05) - 1) * 100, 1), cls(q(finals, .05) - 1)], ['95th pct', pct((q(finals, .95) - 1) * 100, 1), cls(q(finals, .95) - 1)],
-  ['Profitable paths', pct(finals.filter(f => f > 1).length / P * 100, 1, false)], ['Median max DD', pct(-q(dds, .5) * 100, 1), 'dn'], ['P(DD > 20%)', pct(dd20 / P * 100, 1, false)], ['Risk of ruin (−50%)', pct(ruin / P * 100, 1, false), ruin ? 'dn' : 'up']];
+  ['Profitable paths', pct(finals.filter(f => f > 1).length / P * 100, 1, false)], ['Median max DD', pct(-q(dds, .5) * 100, 1), 'dn'], ['P(DD > 20%)', pct(dd20 / P * 100, 1, false)], ['Risk of ruin (−50%)', pct(ruin / P * 100, 1, false), ruin ? 'dn' : '']];
   // emphasis tiers: the median result is the hero; the tail, the typical drawdown and ruin are the key figures
   out.unshift(...out.splice(1, 1)); // the hero reads first
   const tier = { 'Median result': 'lo-hero','5th pct': 'lo-key', 'Median max DD': 'lo-key', 'Risk of ruin (−50%)': 'lo-key' };
-  $('#labOut').innerHTML = out.map(([a, b, c]) => `<div class="${tier[a] || 'lo-sec'}"><label>${a}</label><b class="${c || ''}">${b}</b></div>`).join('');
-  drawFan($('#labCanvas'), bands, paths.slice(0, 40));
+  $('#labOut').innerHTML = out.map(([a, b, c]) => `<div class="${tier[a] || 'lo-sec'}"><label>${a}</label><b class="${c || ''}">${b}</b></div>`).join('') + '<p class="note" style="grid-column:1/-1">Hypothetical: 1,000 random paths from the inputs above. Not a forecast of your results.</p>';
+  LAB_LAST = { bands, samples: paths.slice(0, 40) };
+  drawFan($('#labCanvas'), LAB_LAST.bands, LAB_LAST.samples);
 }
+// a resize or a return to the tab redraws the same 1,000 paths; only Run (or new inputs) draws new random ones
+let LAB_LAST = null;
+function redrawLab() { if (LAB_LAST) drawFan($('#labCanvas'), LAB_LAST.bands, LAB_LAST.samples); else runLab(); }
 function drawFan(cv, bands, samples) {
   const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
   cv.width = w * dpr; cv.height = h * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
@@ -591,9 +796,12 @@ function renderCalcs() {
     return `${nf2.format(u)} ${m.sizeUnit || 'units'}`;
   };
   const vName = sym => M(sym).unit === 'pt' ? 'Point value' : 'Pip value';
-  const prof = sym => { const j = jurOf(S.set); return `${j.none ? 'Sheet' : j.name} 1:${effLev(sym)}`; };
+  const prof = sym => { const j = jurOf(S.set); return `${j.none ? (S.set.lev == null ? 'Sheet' : 'Your choice') : j.name} 1:${effLev(sym)}`; };
   const err = t => `<div class="calc-err" role="status"><span>${t}</span></div>`, note = t => `<div class="calc-note"><span>${t}</span></div>`;
   // position size: floored to the sheet's volume step (never more risk than asked), every figure from the size shown
+  // a new instrument starts from the same default stop as New order, in its own unit (pips, or the platform point on CFDs)
+  const slEl = $('#cpSL'), s0 = $('#cpSym').value;
+  if (slEl && M(s0) && slEl.dataset.s !== s0) { slEl.dataset.s = s0; if (typeof tkDefaults === 'function') { const d = tkDefaults(s0).sl; if (d > 0) slEl.value = d; } }
   const s1 = $('#cpSym').value, acc = +$('#cpAcc').value, r = +$('#cpRisk').value, sl = +$('#cpSL').value, m1 = M(s1);
   const cu = $('#cpUnit'); if (cu) cu.textContent = unitWord(s1);
   const bad1 = !m1 ? 'Pick an instrument.' : !(acc > 0) ? 'Account must be above 0.' : !(r > 0) ? 'Risk % must be above 0.' : !(sl > 0) ? `Stop must be above 0 ${unitWord(s1)}.` : '';
@@ -605,7 +813,8 @@ function renderCalcs() {
     else if (lots > vMax + 1e-9) warn.push(`${vw}: an order this size is refused.`);
     if (n1 > acc * MAX_NOTIONAL_X) warn.push(`Notional ${usdFmt(n1)} is above the per-order cap of ${MAX_NOTIONAL_X}× equity (${usdFmt(acc * MAX_NOTIONAL_X)}): an order this size is refused.`);
     $('#cpOut').innerHTML = row('Position size', escHtml(lotsWord(s1, lots)), 1) + row('Units', units(s1, lots)) + row('Amount at risk', usdFmt(atRisk)) + row(vName(s1), usdFmt(pv * lots))
-      + row('Margin at profile', `${usdFmt(n1 / effLev(s1))} (${escHtml(prof(s1))})`) + warn.map(err).join('');
+      + row('Margin at profile', `${usdFmt(n1 / effLev(s1))} (${escHtml(prof(s1))})`) + warn.map(err).join('')
+      + (warn.length ? '' : `<button type="button" class="ghost sm" id="cpToTk" data-sym="${escHtml(s1)}" data-lots="${lots}" data-sl="${sl}">Send size and stop to the ticket</button>`);
   }
   // margin: the account's effective leverage on the instrument (the sheet's, or the user's choice up to its maximum,
   // capped by the jurisdiction). A jurisdiction cap fixes the field; without one any what-if up to the sheet maximum
@@ -614,12 +823,29 @@ function renderCalcs() {
   const n2 = notionalUsd(s2, l2), free = !!j2.none, ceil = free ? m2.p.lev[1] : effLev(s2), key = levKey() + '|' + s2;
   if (lvEl.dataset.k !== key || !free) { lvEl.dataset.k = key; lvEl.value = effLev(s2); }
   lvEl.readOnly = !free; lvEl.max = ceil;
-  lvEl.title = free ? `No jurisdiction cap: any leverage up to 1:${ceil}, the instrument sheet maximum` : `Set by the ${j2.name} cap (Settings) on the sheet's 1:${sheetLev(s2)}`;
-  const tg = $('#pvLevTag'); if (tg) tg.textContent = free ? `Sheet 1:${effLev(s2)} · maximum 1:${ceil}` : prof(s2);
+  lvEl.title = free ? `No EU limit (ESMA caps ${esmaCapText(s2)}): any leverage up to 1:${ceil}, the instrument sheet maximum` : `Set by the ${j2.name} cap (Settings) on the sheet's 1:${sheetLev(s2)}`;
+  const tg = $('#pvLevTag'); if (tg) tg.textContent = free ? `${S.set.lev == null ? 'Sheet' : 'Your choice'} 1:${effLev(s2)} · maximum 1:${ceil}` : prof(s2); // set.lev null = the sheet default
   const lev = lvEl.value.trim() === '' ? NaN : +lvEl.value;
   const bad2 = !(l2 > 0) ? 'Lots must be above 0.' : !(lev >= 1) ? 'Leverage must be at least 1:1.' : lev > ceil ? `Above the 1:${ceil} ceiling for ${escHtml(pretty(s2))}: the instrument sheet maximum.` : '';
-  $('#pvOut').innerHTML = bad2 ? err(bad2) : row(vName(s2), usdFmt(pipValue(s2, l2)), 1) + row('Units', units(s2, l2)) + row('Margin', usdFmt(n2 / lev)) + row('Notional', usdFmt(n2)) + row('Spread cost', usdFmt(Engine.quote(s2).spread * pipValue(s2, l2)))
-    + (lev !== effLev(s2) ? note(`Your account uses 1:${effLev(s2)} on ${escHtml(pretty(s2))} (${escHtml(free ? 'sheet, no jurisdiction cap' : j2.name)}); this figure is a what-if.`) : '');
+  // amounts under a cent keep two significant digits instead of rounding to $0.00; the sheet's volume limits are checked
+  const money = v => Math.abs(v) > 0 && Math.abs(v) < .01 ? '$' + v.toLocaleString('en-US', { maximumSignificantDigits: 2 }) : usdFmt(v);
+  const [mn2, mx2] = m2.p.vol, vw2 = l2 > 0 ? volWhy(s2, l2) : '';
+  const lim2 = !bad2 && l2 < mn2 - 1e-9 ? err(`Below the sheet's minimum: ${vw2} — an order this size is refused.`) : !bad2 && l2 > mx2 + 1e-9 ? err(`${vw2}: an order this size is refused.`) : '';
+  $('#pvOut').innerHTML = bad2 ? err(bad2) : row(vName(s2), money(pipValue(s2, l2)), 1) + row('Units', units(s2, l2)) + row('Margin', money(n2 / lev)) + row('Notional', money(n2)) + row('Spread cost', money(Engine.quote(s2).spread * pipValue(s2, l2))) + lim2
+    + (lev !== effLev(s2) ? note(`Your account uses 1:${effLev(s2)} on ${escHtml(pretty(s2))} (${escHtml(free ? `no EU limit (ESMA caps ${esmaCapText(s2)})` : j2.name)}); this figure is a what-if.`) : '');
   const st = +$('#cgStart').value, ret = +$('#cgRet').value / 100, mo = +$('#cgM').value, fin = st * Math.pow(1 + ret, mo);
-  $('#cgOut').innerHTML = row('Final balance', usdFmt(fin), 1) + row('Total gain', usdFmt(fin - st, true)) + row('Total return', pct((fin / st - 1) * 100, 1)) + row('Annualised', pct((Math.pow(1 + ret, 12) - 1) * 100, 1));
+  const bad3 = !(st > 0) ? 'Start must be above 0.' : !(ret > -1) ? 'Monthly return must be above −100%.' : !(mo >= 1 && Number.isInteger(mo)) ? 'Months must be a whole number, 1 or more.' : '';
+  if (bad3) { $('#cgOut').innerHTML = err(bad3); return; }
+  $('#cgOut').innerHTML = row('Final balance', usdFmt(fin), 1) + row('Total gain', usdFmt(fin - st, true)) + row('Total return', pct((fin / st - 1) * 100, 1)) + row('Annualised', pct((Math.pow(1 + ret, 12) - 1) * 100, 1)) + '<p class="note">Arithmetic only: assumes the same return every month, with no losing months. Real results vary.</p>';
 }
+
+/* Position size → ticket (UX-84): the size and the stop go to New order; nothing is sent */
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('#cpToTk'); if (!b) return;
+  const sym = b.dataset.sym; if (!M(sym)) return;
+  if (S.set.sym !== sym) setSymbol(sym);
+  Object.assign(S.tk, { sm: 'lots', lots: +b.dataset.lots, sl: +b.dataset.sl, useSL: true });
+  syncTicketInputs();
+  const tv = document.querySelector('#views [data-view="trade"]'); if (tv) tv.click();
+  toast('Ticket ready — not sent', `${lotsWord(sym, +b.dataset.lots)} ${pretty(sym)} with a stop of ${b.dataset.sl} ${unitWord(sym)}: choose the side and send.`, 'info');
+});

@@ -1,12 +1,16 @@
 'use strict';
 /* tradeBerry — Market Brief.
-   An analyst-style brief generated on the device from simulated terminal data:
+   An analyst-style brief generated on the device from the terminal's prices (the platform's, or the simulation's):
    multi-timeframe trend, momentum, volatility, swing-pivot levels, currency strength,
    calendar risk and the user's own positioning. Deterministic and explainable: every
-   sentence is backed by a number shown in the brief. Descriptive only: the market is a simulated
-   driftless random walk, so the trend score describes the past and predicts nothing. */
+   sentence is backed by a number shown in the brief. Descriptive only: the trend score describes the past and
+   predicts nothing (on the simulated market, a driftless random walk, by construction). */
 
 const BR = { sym: null, data: null, at: 0, typing: 0 };
+// where the numbers come from, said as it is: the platform's live prices or the simulation
+const brSrc = () => (Engine.feedOn ? 'platform prices' : 'the terminal’s own prices (not market data)');
+const brCal = () => (Engine.feedOn && CAL.src !== 'live' ? ' (calendar unavailable)' : '');
+const brPast = () => ('Past trend does not predict the next move.');
 
 /* ---------- analytics ---------- */
 function emaArr(vals, n) { const k = 2 / (n + 1), out = []; vals.forEach((v, i) => out.push(i ? out[i - 1] + k * (v - out[i - 1]) : v)); return out; }
@@ -32,12 +36,11 @@ function trendOn(sym, tf) {
   // pos / slp: the two parts of the score (Why panel), the same arithmetic as score before the clamp
   return { score, label, slope, px, e20: e20[n], e50: e50[n], atr, rsi: rsiOf(b), stretch: (px - e20[n]) / atr, pos: stack / 2 * .55, slp: clamp(slope / 1.2, -1, 1) * .45 };
 }
-// the last 24 hours of 1-minute bars (a market closed for longer: its last session's bars, up to 1440)
-function lastDay(sym) {
-  const arr = Engine.candles[sym], t0 = Engine.simTime - 86400; let i = arr.length;
-  while (i > 0 && arr[i - 1].time >= t0) i--;
-  return i < arr.length ? arr.slice(i) : arr.slice(-1440);
-}
+// The last 24 hours up to the instrument's last bar (the Monitor's window, shell.js stats); the 24h change is measured
+// from the close of the bar before them (dayRef: the previous session's close on a market that closes)
+function dayStart(arr) { const n = arr.length; if (!n) return 0; const t0 = arr[n - 1].time - 86400; let i = n; while (i > 0 && arr[i - 1].time > t0) i--; return i; }
+function lastDay(sym) { const arr = Engine.candles[sym]; return arr.slice(Math.min(dayStart(arr), Math.max(0, arr.length - 1))); }
+function dayRef(sym) { const arr = Engine.candles[sym], i = dayStart(arr); return arr.length ? arr[Math.max(0, i - 1)].close : NaN; }
 /* Round-number grid: 50 pips on a pair (.005 on EUR/USD, .50 on USD/JPY); off FX a 1-2-2.5-5 step near 8 one-hour
    moves of the instrument's own volatility (σ per hour from the sheet calibration × price), so a stock, an index and
    bitcoin all get levels a few hours of movement apart. */
@@ -86,7 +89,7 @@ function analyse(sym) {
   const strDiff = m.kind === 'cfd' || !(m.base in st) || !(m.quote in st) ? null : st[m.base] - st[m.quote];
   const h1 = tfs['1H'], lv = pivotLevels(sym);
   const day = lastDay(sym), dHi = Math.max(...day.map(c => c.high)), dLo = Math.min(...day.map(c => c.low));
-  const rangePos = (q.mid - dLo) / (dHi - dLo || 1), ch24 = (q.mid / day[0].close - 1) * 100;
+  const rangePos = (q.mid - dLo) / (dHi - dLo || 1), ch24 = (q.mid / dayRef(sym) - 1) * 100;
   // the 1H ATR the brief quotes and plans with is the terminal's one: Wilder's ATR(14) on complete hours (atr1h)
   const a1 = atr1h(sym); if (a1 != null) h1.atr = a1;
   const atrPips = h1.atr / m.pip;
@@ -127,9 +130,9 @@ function makePlan(a) {
   const stretched = Math.abs(h1.stretch) > 1.1 && Math.sign(h1.stretch) === dir;
   let ot = 'market', entry = ref;
   if (stretched) { ot = 'limit'; entry = R(dir > 0 ? Math.max(h1.e20, zone ? zone.p + atr * .1 : h1.e20) : Math.min(h1.e20, zone ? zone.p - atr * .1 : h1.e20)); }
-  let stop = zone ? zone.p - dir * atr * .5 : entry - dir * atr * 1.5;
-  if (Math.abs(entry - stop) < atr * .8) stop = entry - dir * atr * 1.2;
-  if (Math.abs(entry - stop) > atr * 3) stop = entry - dir * atr * 2;
+  let stop = zone ? zone.p - dir * atr * .5 : entry - dir * atr * 1.5, stopWhy = zone ? 'zone' : 'none';
+  if (Math.abs(entry - stop) < atr * .8) { stop = entry - dir * atr * 1.2; stopWhy = 'min'; }
+  if (Math.abs(entry - stop) > atr * 3) { stop = entry - dir * atr * 2; stopWhy = 'max'; }
   stop = R(stop);
   const risk = Math.abs(entry - stop);
   let target = obj.find(l => Math.abs(l.p - entry) >= risk * 1.5);
@@ -137,7 +140,7 @@ function makePlan(a) {
   const why = stretched
     ? `Trend-following template: the 4H trend has been ${dir > 0 ? 'up' : 'down'} and price is ${Math.abs(h1.stretch).toFixed(1)} ATR from the 1H EMA20, so the template uses a limit order near the EMA20. Past trend does not predict the next move; the plan only fixes entry, stop and target before you trade.`
     : `Trend-following template: the 4H trend has been ${dir > 0 ? 'up' : 'down'} and price is ${Math.abs(h1.stretch).toFixed(1)} ATR from the 1H EMA20, so the template enters at market. Past trend does not predict the next move; the plan only fixes entry, stop and target before you trade.`;
-  return { kind: 'trend', side, ot, entry: R(entry), stop, target, why };
+  return { kind: 'trend', side, ot, entry: R(entry), stop, target, why, stopWhy };
 }
 
 /* ---------- text ---------- */
@@ -146,7 +149,7 @@ function makePlan(a) {
 function writeBrief(a, plan, N = x => x) {
   const { sym, m, tfs, dir, score, strDiff, lv, rangePos, ch24, atrPips, volRatio, h1, events, hiSoon, mine, exp } = a;
   const P = pretty(sym), tone = dir > 0 ? 'up' : dir < 0 ? 'dn' : '';
-  const lead = `${P}: 4H trend score ${N(sgn(score, 0), tone, `4H trend score|From −100 (strong down) to +100 (strong up). It combines where price sits against the EMA20 and EMA50 on 4H (55%) and how fast the EMA20 slopes (45%); the Why panel shows the parts.`, 'ema')} (descriptive) — ${N(tfs['4H'].label.toLowerCase(), tone, `${tfs['4H'].label}|Above +55 strong up, +20 to +55 up, −20 to +20 flat, −55 to −20 down, below −55 strong down.`, 'ema')} over the recent 4H bars. On this simulated market past trend does not predict the next move.`;
+  const lead = `${P}: 4H trend score ${N(sgn(score, 0), tone, `4H trend score|From −100 (strong down) to +100 (strong up). It combines where price sits against the EMA20 and EMA50 on 4H (55%) and how fast the EMA20 slopes (45%); the Why panel shows the parts.`, 'ema')} (descriptive) — ${N(tfs['4H'].label.toLowerCase(), tone, `${tfs['4H'].label}|Above +55 strong up, +20 to +55 up, −20 to +20 flat, −55 to −20 down, below −55 strong down.`, 'ema')} over the recent 4H bars. ${brPast()}`;
   const tAll = Object.entries(tfs).map(([k, t]) => `${k} ${t.label.toLowerCase()}`).join(', ');
   const align = a.agree === 3 ? 'All three timeframes point the same way' : a.agree === 2 ? 'Two of three timeframes point the same way' : dir ? 'Only the 4H trend points that way' : 'Timeframes are mixed';
   const un = unitWord(sym), cfd = m.kind === 'cfd';
@@ -164,8 +167,8 @@ function writeBrief(a, plan, N = x => x) {
   const bull = r1 ? `Nearest mapped level above: ${LN(r1, 'R1')}${lv.res[1] ? `, then ${LN(lv.res[1], 'R2')}` : ''}.` : 'No mapped level above on the 1H chart this week.';
   const bear = s1 ? `Nearest mapped level below: ${LN(s1, 'S1')}${lv.sup[1] ? `, then ${LN(lv.sup[1], 'S2')}` : ''}.` : 'No mapped level below on the 1H chart this week.';
   const risk = [];
-  if (hiSoon) risk.push(`High-impact ${N(`${hiSoon.ccy} ${hiSoon.name} in ${fmtIn(hiSoon.t - Engine.simTime)}`, 'wn', `${hiSoon.ccy} ${hiSoon.name}|A high-impact release from the calendar. Around it price can jump in either direction, and spreads and slippage widen.`, 'ev')} — expect a volatility spike in either direction; spreads and slippage widen around it.`);
-  else if (events.length) risk.push(`Next relevant release: ${events[0].ccy} ${events[0].name} (${{ hi: 'high', md: 'medium', lo: 'low' }[events[0].impact]} impact) in ${fmtIn(events[0].t - Engine.simTime)}.`);
+  if (hiSoon) risk.push(`High-impact${brCal()} ${N(`${hiSoon.ccy} ${hiSoon.name} in ${fmtIn(hiSoon.t - Engine.simTime)}`, 'wn', `${hiSoon.ccy} ${hiSoon.name}|A high-impact release from the calendar. Around it price can jump in either direction, and spreads and slippage widen.`, 'ev')} — expect a volatility spike in either direction; spreads and slippage widen around it.`);
+  else if (events.length) risk.push(`Next relevant release${brCal()}: ${events[0].ccy} ${events[0].name} (${{ hi: 'high', md: 'medium', lo: 'low' }[events[0].impact]} impact) in ${fmtIn(events[0].t - Engine.simTime)}.`);
   else risk.push(cfd ? `No scheduled ${m.newsCcy.join(' or ')} releases in the next 6 hours.` : 'No scheduled releases for either currency in the next 6 hours.');
   if (mine.length) {
     const pnl = mine.reduce((s, p) => s + posPnl(p).pnl, 0), side = mine[0].side;
@@ -189,6 +192,9 @@ function writeBrief(a, plan, N = x => x) {
    One trend score each (about 10 ms), cached for two minutes of market time. */
 function scanUniverse(sym) {
   const m = M(sym), c = CAT_OF[m.group], sub = subOf(m), list = listedInstr();
+  // a group picked in the scanner's menu wins over the one around the open instrument
+  const pick = S.set.brUni && wlOrder(list).find(([gc, gs]) => gc + '|' + gs === S.set.brUni);
+  if (pick) return { syms: pick[2].map(x => x.sym), name: `${pick[2].length} ${pick[1] === catName(pick[0]) ? pick[1] : catName(pick[0]) + ' · ' + pick[1]}` };
   if (c === 'fx' && G8_PAIRS.has(sym)) return { syms: Engine.PAIRS.map(p => p.sym), name: '16 FX majors' };
   const same = c === 'fx' || c === 'stock' ? list.filter(x => CAT_OF[x.group] === c && subOf(x) === sub) : list.filter(x => CAT_OF[x.group] === c);
   const syms = same.map(x => x.sym); if (!syms.includes(sym)) syms.push(sym);
@@ -199,8 +205,15 @@ function renderScanner() {
   const u = scanUniverse(BR.sym || S.set.sym);
   const rows = u.syms.map(s => ({ sym: s, ...quickTrend(s) })).sort((x, y) => Math.abs(y.b) - Math.abs(x.b));
   const n = $('#brScanN'); if (n) n.textContent = u.name;
+  // the group menu: around the open instrument, or any category and subgroup of the sheet
+  const uSel = $('#brScanU');
+  if (uSel) {
+    const groups = wlOrder(listedInstr()), cur = S.set.brUni && groups.some(([gc, gs]) => gc + '|' + gs === S.set.brUni) ? S.set.brUni : '';
+    uSel.innerHTML = `<option value="">Around ${escHtml(pretty(BR.sym || S.set.sym))}</option>` + groups.map(([gc, gs, l]) => `<option value="${escHtml(gc + '|' + gs)}"${gc + '|' + gs === cur ? ' selected' : ''}>${escHtml(catName(gc))} · ${escHtml(gs)} (${l.length})</option>`).join('');
+    uSel.value = cur;
+  }
   // a column head over the rows (a div, not a .scan-row: the rows are the instruments)
-  $('#brScan').innerHTML = '<div class="scan-cols" aria-hidden="true"><span>Pair</span><span>Strength</span><span>Score</span><span>Trend</span></div>' + rows.map(r => {
+  $('#brScan').innerHTML = '<div class="scan-cols" aria-hidden="true"><span>Pair</span><span class="scan-sc">Score 4H</span><span>Trend</span></div>' + rows.map(r => {
     const w = Math.abs(r.b) * 50, col = r.b > .2 ? 'var(--up)' : r.b < -.2 ? 'var(--dn)' : 'var(--tx3)';
     const lb = r.b > .55 ? 'Strong up' : r.b > .2 ? 'Up' : r.b < -.55 ? 'Strong down' : r.b < -.2 ? 'Down' : 'Flat', k = r.b > .2 ? 'up' : r.b < -.2 ? 'dn' : 'muted';
     return `<button class="scan-row ${r.sym === BR.sym ? 'on' : ''}" data-sym="${r.sym}"${tipAttr(`${pretty(r.sym)} · ${sgn(Math.round(r.b * 100), 0)}|4H trend score: ${lb.toLowerCase()}. Click to load its brief.`)}><b>${escHtml(M(r.sym).kind === 'cfd' ? M(r.sym).short : pretty(r.sym))}</b><span class="str-track"><span class="str-fill" style="left:${r.b >= 0 ? 50 : 50 - w}%;width:${w}%;background:${col}"></span></span><span class="mono sc ${k}">${sgn(Math.round(r.b * 100), 0)}</span><em class="${k}">${lb}</em></button>`;
@@ -245,22 +258,22 @@ function generateBrief(sym) {
   const planHtml = plan && plan.kind !== 'wait' ? (() => {
     const risk = Math.abs(plan.entry - plan.stop) / m.pip, rew = Math.abs(plan.target - plan.entry) / m.pip, sell = plan.side === 'sell';
     const steps = plan.kind === 'trend'
-      ? [`Direction follows the 4H trend: ${sell ? 'down, so sell' : 'up, so buy'}.`, plan.ot === 'market' ? `Price is ${Math.abs(a.h1.stretch).toFixed(1)} ATR from the 1H EMA20 (under 1.1): enter at market.` : `Price is ${Math.abs(a.h1.stretch).toFixed(1)} ATR from the 1H EMA20 (over 1.1): wait with a limit order near it.`, `Stop beyond the nearest ${sell ? 'resistance' : 'support'} with half an ATR of room.`, 'Target at the first level at least 1.5× the risk away.']
+      ? [`Direction follows the 4H trend: ${sell ? 'down; this plan sells' : 'up; this plan buys'}.`, plan.ot === 'market' ? `Price is ${Math.abs(a.h1.stretch).toFixed(1)} ATR from the 1H EMA20 (under 1.1): enter at market.` : `Price is ${Math.abs(a.h1.stretch).toFixed(1)} ATR from the 1H EMA20 (over 1.1): wait with a limit order near it.`, ({ zone: `Stop beyond the nearest ${sell ? 'resistance' : 'support'} with half an ATR of room.`, min: `Stop 1.2 ATR from the entry: the nearest ${sell ? 'resistance' : 'support'} plus half an ATR was closer than 0.8 ATR.`, max: `Stop 2 ATR from the entry: the nearest ${sell ? 'resistance' : 'support'} was more than 3 ATR away.`, none: `Stop 1.5 ATR from the entry: no mapped ${sell ? 'resistance' : 'support'} this week.` })[plan.stopWhy] || `Stop beyond the nearest ${sell ? 'resistance' : 'support'} with half an ATR of room.`, 'Target at the first level at least 1.5× the risk away.']
       : ['No clear 4H trend: the template trades the range edges.', `${sell ? 'Sell near the top' : 'Buy near the bottom'} with a limit order.`, 'Stop beyond the edge with 0.6 ATR of room.', 'Target just before the opposite edge.'];
     const lots = S.tk.sm === 'lots' && S.tk.lots > 0 ? S.tk.lots : m.p.vol[0];
-    return `<div class="brx-plan-h"><span class="brx-pill ${sell ? 'dn' : 'up'}">${sell ? 'Sell' : 'Buy'} ${plan.ot === 'market' ? 'at market' : plan.ot}</span><span class="muted small">${plan.kind === 'trend' ? 'Trend template' : 'Range template'}</span></div>
+    return `<div class="brx-seg"><h4>Order</h4><div class="brx-plan-h"><span class="brx-pill ${sell ? 'dn' : 'up'}">${sell ? 'Sell' : 'Buy'} ${plan.ot === 'market' ? 'at market' : plan.ot}</span><span class="muted small">${plan.kind === 'trend' ? 'Trend template' : 'Range template'}</span></div>
       <div class="brx-plan-g">
         <div tabindex="0"${tipAttr(plan.ot === 'market' ? 'Entry|At market: the order fills at the current price.' : 'Entry|A limit order: it fills only if price comes back to this level.', 'plan')}><label>Entry</label><b class="mono">${fp(sym, plan.entry)}</b><small>${plan.ot}</small></div>
         <div tabindex="0"${tipAttr(`Stop|Where the trade closes at a loss: ${risk.toFixed(0)} ${un} from the entry.`, 'plan')}><label>Stop</label><b class="mono dn">${fp(sym, plan.stop)}</b><small>${risk.toFixed(0)} ${un}</small></div>
         <div tabindex="0"${tipAttr(`Target|Where the trade takes profit: ${rew.toFixed(0)} ${un} from the entry.`, 'plan')}><label>Target</label><b class="mono up">${fp(sym, plan.target)}</b><small>${rew.toFixed(0)} ${un}</small></div>
         <div tabindex="0"${tipAttr(`Reward : risk|The potential gain divided by the risk: ${rew.toFixed(0)} / ${risk.toFixed(0)}. The trend template looks for at least 1 : 1.5.`)}><label>Reward : risk</label><b class="mono">1 : ${(rew / risk).toFixed(2)}</b><small>min 1 : 1.5</small></div>
       </div>
-      <div class="brx-rr" aria-hidden="true"><span class="dn" style="flex:${risk.toFixed(1)}">risk ${risk.toFixed(0)}${u}</span><span class="up" style="flex:${rew.toFixed(1)}">reward ${rew.toFixed(0)}${u}</span></div>
-      <label class="brx-size">Size <input id="brLots" type="number" value="${lots}" min="${m.p.vol[0]}" step="${m.p.vol[2]}" inputmode="decimal"> ${m.lotName === 'shares' ? 'shares' : 'lots'}</label>
-      <p class="brx-risk" id="brRisk" data-risk="${risk}" data-rew="${rew}"></p>
-      <ol class="brx-steps">${steps.map(x => `<li>${x}</li>`).join('')}</ol>
-      <p class="muted small">${t.planText}</p>
-      <div class="plan-btns"><button class="cta sm ${plan.side}" id="brLoad">Load plan into ticket</button><button class="ghost sm" id="brAlerts">Alerts at key levels</button></div>`;
+      <div class="brx-rr" aria-hidden="true"><span class="dn" style="flex:${risk.toFixed(1)}">risk ${risk.toFixed(0)}${u}</span><span class="up" style="flex:${rew.toFixed(1)}">reward ${rew.toFixed(0)}${u}</span></div></div>
+      <div class="brx-seg"><h4>Size and risk</h4><label class="brx-size">Size <input id="brLots" type="number" value="${lots}" min="${m.p.vol[0]}" step="${m.p.vol[2]}" inputmode="decimal"> ${m.lotName === 'shares' ? 'shares' : 'lots'}</label>
+      <p class="brx-risk" id="brRisk" data-risk="${risk}" data-rew="${rew}"></p></div>
+      <div class="brx-seg"><h4>How the template built it</h4><ol class="brx-steps">${steps.map(x => `<li>${x}</li>`).join('')}</ol>
+      <p class="muted small">${t.planText}</p></div>
+      <div class="plan-btns brx-seg-act"><button class="cta sm ${plan.side}" id="brLoad">Load plan into ticket</button><button class="ghost sm" id="brAlerts">Alerts at key levels</button></div>`;
   })() : `<p class="muted small">${t.planText}</p><div class="plan-btns"><button class="ghost sm" id="brAlerts">Alerts at key levels</button></div>`;
   const strRows = a.strDiff == null ? '' : [m.base, m.quote].map(c => { const v = a.st[c], w = Math.min(50, Math.abs(v) * 2); return `<b>${c}</b><span class="str-track"><span class="str-fill" style="left:${v >= 0 ? 50 : 50 - w}%;width:${w}%;background:var(${v >= 0 ? '--up' : '--dn'})"></span></span><span class="mono ${v >= 0 ? 'up' : 'dn'}">${sgn(v, 0)} bp</span>`; }).join('');
   const layers = [['ema', 'EMA 20 / 50', '--ind1'], ['lv', 'Key levels', '--tx2'], ['plan', 'Plan', '--dn'], ['rng', '24h range', '--tx3'], ['ev', 'Events', '--warn']];
@@ -268,8 +281,8 @@ function generateBrief(sym) {
     <div class="br-head brx-head">
       <div class="brx-id"><span class="br-sym">${pretty(sym)}</span><span class="mono brx-px">${fp(sym, q.mid)}</span>
         <span class="brx-verdict ${tone}" tabindex="0"${tipAttr(`${t4.label}|From the 4H trend score ${sgn(a.score, 0)}. It describes the last days of price; it does not predict the next move.`)}>${a.dir > 0 ? '▲' : a.dir < 0 ? '▼' : '■'} ${t4.label === 'Flat' ? 'No clear trend' : t4.label + ' trend'}</span></div>
-      <span class="muted small">Generated ${new Date(a.at * 1000).toISOString().slice(11, 16)} UTC · from simulated terminal data</span>
-      <div class="br-actions"><button class="ghost sm" id="brRegen" title="Regenerate with the latest data">Refresh</button><button class="ghost sm" id="brCopy" title="Copy brief as text">Copy</button></div>
+      <span class="muted small">Generated ${new Date(a.at * 1000).toISOString().slice(11, 16)} UTC · from ${brSrc()}</span>
+      <div class="br-actions"><button class="ghost sm" id="brRegen">Refresh</button><button class="ghost sm" id="brCopy">Copy</button></div>
     </div>
     <div class="brx-kpis">
       ${kpi('Trend 4H', sgn(a.score, 0), tag(t4.label, tone), '4H trend score|From −100 to +100: where price sits against the EMA20 and EMA50 on 4H (55%) and how fast the EMA20 slopes (45%). It describes the past.', tone, meter(50 + a.score / 2))}
@@ -280,7 +293,7 @@ function generateBrief(sym) {
     </div>
     <div class="brx-g2">
       <section class="brx-card brx-chart">
-        <div class="brx-hd"><h3>Chart</h3><div class="mini-seg" id="brTf" role="group" aria-label="Chart timeframe">${[[60, '1H', 'One-hour bars, last 5 days: the timeframe of the plan (1H EMA20, 1H ATR)'], [240, '4H', 'Four-hour bars, last 20 days: the timeframe of the trend score']].map(([v, l, d]) => `<button data-tf="${v}" class="${BR.tf === v ? 'on' : ''}" aria-pressed="${BR.tf === v}" title="${d}">${l}</button>`).join('')}</div><div class="brx-layers" id="brLayers" role="group" aria-label="Chart layers">${layers.map(([k, l, c]) => `<button class="brx-tg${BR.layers[k] ? ' on' : ''}" data-l="${k}" aria-pressed="${!!BR.layers[k]}"><i style="background:var(${c})"></i>${l}</button>`).join('')}</div></div>
+        <div class="brx-hd"><h3>Chart</h3><div class="mini-seg" id="brTf" role="group" aria-label="Chart timeframe">${[[60, '1H', 'One-hour bars, last 5 days: the timeframe of the plan (1H EMA20, 1H ATR)'], [240, '4H', 'Four-hour bars, last 20 days: the timeframe of the trend score']].map(([v, l, d]) => `<button data-tf="${v}" class="${BR.tf === v ? 'on' : ''}" aria-pressed="${BR.tf === v}">${l}</button>`).join('')}</div><div class="brx-layers" id="brLayers" role="group" aria-label="Chart layers">${layers.map(([k, l, c]) => `<button class="brx-tg${BR.layers[k] ? ' on' : ''}" data-l="${k}" aria-pressed="${!!BR.layers[k]}"><i style="background:var(${c})"></i>${l}</button>`).join('')}</div></div>
         <div class="brx-cv"><canvas id="brCh" role="img" aria-label="Chart of ${pretty(sym)} with the moving averages, the key levels and the plan"></canvas></div>
         <div class="brx-cv rsi"><canvas id="brRsi" role="img" aria-label="RSI 14 on the chart's timeframe"></canvas></div>
         <p class="muted small">Hover the chart for prices and indicator values; hover a highlighted number to find it on the chart. 4H shows the EMAs the trend score reads; 1H the ones the plan uses.</p>
@@ -319,11 +332,286 @@ function generateBrief(sym) {
         ${strRows ? `<div tabindex="0"${tipAttr('Currency strength, 4 hours|Each currency against the average of the G8 currencies, in basis points (0.01%).')}><span class="muted">Strength 4H</span><div class="brx-str">${strRows}</div></div>` : ''}
       </section>
     </div>
-    <p class="br-disc">Generated by rules from tradeBerry's own indicators on simulated data — every statement maps to a number above and describes the past. On this simulated market past trend does not predict the next move. This is not financial advice.</p>`;
+    <p class="br-disc">Generated by rules from tradeBerry's own indicators on ${Engine.feedOn ? "the platform's prices" : "the terminal's prices"} — every statement maps to a number above and describes the past. ${brPast()} This is not financial advice.</p>`;
   renderScanner();
   brChart(); brRisk();
 }
 // the plan's risk in money for the size typed under it (the ticket's size by default)
+/* ---------- Teach me: a guided walk through the page ----------
+   Every part of the brief in turn: a spotlight on it and a card with what it is, how to read it and how to use it,
+   with the numbers on screen now. Back / Next, ← →, Esc; the tour's look is the app tour's (.tour-spot, .tour-card). */
+// brTeach() walks the whole page, Key levels and Plan template element by element
+function brTeach(panel) {
+  if (!BR.data || document.querySelector('.tour-card')) return;
+  const main = $('#brMain'), Q = s => () => main.querySelector(s) || document.querySelector(s);
+  const card = h => () => [...main.querySelectorAll('section.brx-card')].find(c => (c.querySelector('h3') || {}).textContent?.startsWith(h));
+  const kpi = k => () => main.querySelectorAll('.brx-kpi')[k];
+  const lvRow = k => () => [...main.querySelectorAll('.brx-lv')].find(r => (r.querySelector('.brx-tag') || {}).textContent === k);
+  const live = () => { const d = BR.data, a = d.a, sym = a.sym, un = unitWord(sym), px = v => fp(sym, v); return { d, a, sym, un, px, P: pretty(sym), plan: d.plan }; };
+  const sgnS = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  const STEPS = [
+    [Q('.br-scan'), 'Trend scanner', () => { const { P } = live(); return [
+      `The instruments around ${P} (its group or category), ranked by the 4H trend score, the same number this page explains for one instrument.`,
+      'Above +55 strong up, +20 to +55 up, −20 to +20 flat, below −55 strong down. The bar shows the same score as a gauge.',
+      'Scan for clear trends (large scores, either sign) and for the exceptions that move against their group. Click a row to load it here and everywhere in the terminal.']; }],
+    [Q('.brx-id'), 'Instrument and verdict', () => { const { P, a, px } = live(); return [
+      `${P} at ${px(a.q.mid)} and the 4H trend in two words.`,
+      'The verdict is the label of the 4H trend score (Trend 4H, next). It describes the recent bars, not what comes next.',
+      'Confirm you are reading the instrument you meant; the page follows the symbol chosen anywhere in the terminal.']; }],
+    [Q('.br-actions'), 'Refresh, Copy, data source', () => [
+      `“Generated … from ${brSrc()}” says when the brief was computed and from which prices. It recomputes by itself after 30 minutes.`,
+      'Refresh recomputes now with the latest bars. Copy puts the whole brief on the clipboard as plain text.',
+      'Refresh before acting on an older brief; Copy to keep a note in your journal or share the reading.']],
+    [() => [...document.querySelectorAll('#guideBtn, .mtool-guide')].find(b => !b.hidden && b.getClientRects().length) || null, 'Guide', () => [
+      'The full written guide of the Market Brief, in a new tab: every part, how each number is calculated, diagrams and examples.',
+      'This tour shows where things are; the guide explains them in depth, with all the thresholds in one table.',
+      'Read it once in full; Back to the terminal brings you back to this page.']],
+    [kpi(0), 'Trend 4H', () => { const { a } = live(); return [
+      `The headline: ${sgnS(a.score)} on a −100…+100 scale, on 4-hour bars.`,
+      'It combines where price sits against its EMA20 and EMA50 (55%) and how steeply the EMA20 slopes (45%). Beyond ±55 the trend is strong; within ±20 there is none.',
+      'Use it as the context: trade with it, or know you are trading against it. The Why panel shows how the number is built.']; }],
+    [kpi(1), 'Timeframes', () => { const { a } = live(); return [
+      `How many of 15m, 1H and 4H point the same way as the 4H trend: ${a.agree}/3 now.`,
+      '3/3 is a consistent trend. 2/3 or 1/3 with the short timeframes against it is a pullback inside the trend; mixed with no 4H trend is a range.',
+      'Pullbacks (1/3, 2/3) are where trend traders look for an entry; 3/3 after a long run often means the move is stretched.']; }],
+    [kpi(2), 'Momentum · RSI 1H', () => { const { a } = live(); return [
+      `RSI(14) on 1-hour bars: ${a.h1.rsi.toFixed(0)}. The average up-move against the average down-move over 14 hours, 0–100.`,
+      'Around 50 the moves balance. Under 30 recent losses dominated, over 70 gains did. It measures pressure, not a turning point.',
+      'With the trend, an RSI back near 50 is a calmer entry than one at an extreme; an extreme against your position is a reason to tighten the plan, not a signal by itself.']; }],
+    [kpi(3), 'Volatility · ATR 1H', () => { const { a, un } = live(); return [
+      `How far one hour moves on average: ${a.atrPips.toFixed(1)} ${un} (Wilder ATR 14), shown against the same hours earlier this week: ${a.volRatio.toFixed(1)}×.`,
+      'Above 1.25× is elevated (wider swings), below 0.8× compressed (quiet, and quiet tends not to last). It says nothing about direction.',
+      'Size and stops follow it: elevated means a wider stop or a smaller size for the same money at risk. The plan below already uses this ATR.']; }],
+    [kpi(4), 'Event risk', () => [
+      'The next scheduled release for the currencies that move this instrument, with its impact and a countdown.',
+      'High impact: price can jump either way and spreads widen for a few minutes around it.' + (CAL.src === 'live' ? ' The calendar is the real one for this week (ForexFactory): times, impact, forecast and previous.' : ''),
+      'Avoid opening right before a high-impact release, or size down and accept the wider spread.']],
+    [Q('#brTf'), 'Chart timeframe', () => [
+      '1H shows the last 5 days of one-hour bars (the plan’s timeframe); 4H the last 20 days (the trend score’s timeframe).',
+      'Read the 4H view for the trend and the EMAs the score uses, the 1H view for entries, stops and targets.',
+      'Switch to 4H to see why the score is what it is, back to 1H to check the plan against recent price action.']],
+    [Q('#brLayers'), 'Chart layers', () => [
+      'What is drawn on the chart: EMA 20/50, key levels, the plan (entry, stop, target), the 24h range and calendar events.',
+      'Each button turns its layer on or off; the coloured mark matches the line on the chart.',
+      'Turn layers off to see price alone, on again to check the plan sits where the levels are.']],
+    [Q('.brx-cv'), 'Chart', () => [
+      'Candles with the chosen layers, and the RSI pane under them.',
+      'Hover for the price and indicator values of a bar. Hovering a highlighted number in the text finds it on the chart.',
+      'Check the story the numbers tell: are the EMAs really sloping, is price really near the level the plan uses?']],
+    [card('Why'), 'Why this score', () => { const { a } = live(), t = a.tfs['4H']; return [
+      `The 4H score taken apart: position ${sgnS(Math.round(t.pos * 100))} and slope ${sgnS(a.score - Math.round(t.pos * 100))}, total ${sgnS(a.score)}.`,
+      'Position: price above or below the EMA20, and the EMA20 above or below the EMA50 (±1 each, worth up to 55 points). Slope: how many ATRs the EMA20 moved over the last 5 bars (up to 45 points).',
+      'A score made mostly of position with little slope is a trend that is slowing; a large slope with mixed position is a fresh turn.']; }],
+    [Q('table.brx-tf'), 'The same score on each timeframe', () => [
+      'The same calculation on 15m, 1H and 4H: price above EMA20, EMA20 above EMA50, the score and the RSI.',
+      'Ticks and crosses show at a glance which timeframes agree; the shortest ones turn first.',
+      'When 15m and 1H turn back in the 4H direction after a pullback, the trend has resumed on the timeframes you enter on.']],
+    [card('Reading'), 'Reading', () => [
+      'The numbers above written as an analyst would: trend, timeframes and currencies, today, levels, risk and your positions.',
+      'Every highlighted number has an explanation on hover and maps to a figure on the page; nothing in the text is a forecast.',
+      'Read the last paragraph first when you hold positions: it says whether they go with or against the trend and reminds you to check their stops.']],
+    [card('Key levels'), 'Key levels', () => [
+      'Prices where the market turned or paused this week: 1H swing highs and lows, the 24h high and low, round numbers. Levels closer than half an ATR merge into one.',
+      'R = above the price (resistance), S = below (support). The dots are the strength: one per touch, one more for a 24h extreme, half for a round number. Distance is from the current price.',
+      'Expect reactions there; plan entries near them and stops beyond them. The Alert button warns you when price gets there.']],
+    [lvRow('R1'), 'A level', () => { const { a, px, un } = live(), r = a.lv.res[0]; return [
+      r ? `R1 ${px(r.p)}: ${r.why}, strength ${r.str}, ${Math.abs((r.p - a.q.mid) / a.m.pip).toFixed(0)} ${un} above.` : 'The nearest level above the price.',
+      'A merged level shows the average of the prices it groups, so it can differ a little from the single 24h high or low it names.',
+      'Click Alert to be told when price reaches it, instead of watching the screen.']; }],
+    [card('Plan template'), 'Plan template', () => { const { plan } = live(); return [
+      plan && plan.kind !== 'wait' ? `A ${plan.kind === 'trend' ? 'trend-following' : 'range'} template: ${plan.side} ${plan.ot === 'market' ? 'at market' : 'with a ' + plan.ot + ' order'}.` : 'No plan now: the structure is too tight or unclear.',
+      'Rules, written under it: direction from the 4H trend; at market only if price is within 1.1 ATR of the 1H EMA20, else a limit near it; stop beyond the nearest level; target at the first level at least 1.5× the risk away.',
+      'It is a structure fixed before the trade, not a signal: use it to decide entry, stop and target in advance.']; }],
+    [Q('.brx-plan-g'), 'Entry, stop, target, reward : risk', () => { const { plan, px, un } = live(); return [
+      plan && plan.entry ? `Entry ${px(plan.entry)}, stop ${px(plan.stop)}, target ${px(plan.target)}.` : 'The plan’s prices.',
+      `Each figure shows its distance in ${un}. Reward : risk divides the distance to the target by the distance to the stop; the template wants at least 1 : 1.5.`,
+      'Under 1 : 1.5 the trade is not worth its risk by this template’s rule; skip it or wait for a better entry.']; }],
+    [Q('.brx-size'), 'Size and money at risk', () => [
+      'The size you would trade, in lots (shares for stocks); the line under it turns the plan into money.',
+      'Risk = loss at the stop, as dollars and as a share of your equity; “at target” is the gain if the target is reached.',
+      'Set the size so the risk is the share of equity you accept per trade (often 0.5–1%), then load the plan.']],
+    [Q('.brx-steps'), 'Why each price', () => [
+      'The template’s rules as they applied now: direction, entry type, how the stop was placed, where the target is.',
+      'When a rule overrode another (a minimum or maximum stop distance), the line says so.',
+      'If you disagree with a rule for this market, change the price in the ticket after loading; the reason is here to check.']],
+    [Q('#brLoad'), 'Load plan, alerts', () => [
+      'Load plan into ticket fills New order with the side, entry, stop, target and size. Alerts at key levels sets alerts at R1 and S1.',
+      'Loading sends nothing: the order goes only when you confirm it in the ticket.',
+      'Load, review the ticket’s own risk and margin figures, then decide. Use alerts to come back when price reaches the zone.']],
+    [card('Indicators'), 'Indicators', () => { const { a } = live(); return [
+      'The same figures as gauges: RSI with its 30/70 marks, the ATR now against the week, the position in the 24h range' + (a.m.kind === 'cfd' ? '.' : ', and the strength of the two currencies.'),
+      `Position in the 24h range: 0% at the day’s low, 100% at its high (now ${(a.rangePos * 100).toFixed(0)}%). The 24h change is measured from the previous session’s close (${a.ch24 >= 0 ? '+' : '−'}${Math.abs(a.ch24).toFixed(2)}%).`,
+      'A quick check before acting: is price stretched (top or bottom of its range, RSI extreme) or in the middle?']; }],
+    [Q('.br-disc'), 'What the brief is', () => [
+      `Rules applied to tradeBerry’s own indicators on ${Engine.feedOn ? 'the platform’s prices' : 'the terminal’s prices'}: every sentence maps to a number on the page.`,
+      'It describes the past. Past trend does not predict the next move, and nothing here is financial advice.',
+      'Use it to understand the market and to fix a plan before you trade, then judge the trade yourself.']]
+  ];
+  const lvCard = card('Key levels'), plCard = card('Plan template');
+  const inLv = sel => () => { const c = lvCard(); return c && c.querySelector(sel); };
+  const inPl = sel => () => { const c = plCard(); return c && c.querySelector(sel); };
+  const lvFar = () => { const { a } = live(); return a.lv.res[1] || a.lv.sup[1]; };
+  const PANELS = {
+    levels: [
+      [lvCard, 'Key levels', () => { const { a } = live(); return [
+        `The prices where ${pretty(a.sym)} turned or paused this week: ${a.lv.res.length} above the current price and ${a.lv.sup.length} below it.`,
+        'Resistance rows (red, R) sit above the price, support rows (green, S) below it, ordered by price; the amber line between them is where price is now.',
+        'Use the table to know where the market may react before you trade: where to enter, where a stop belongs, where a target is realistic.']; }],
+      [inLv('.brx-lvh'), 'The columns', () => [
+        'Level is the name of the level, Price its value, Why what built it, Strength how much it has been respected, Distance how far it is from the current price.',
+        'Read a row left to right: which level, where, why it matters, how strong, how far.',
+        'Scan Distance first to see what is close enough to matter today, then Strength to see what is worth respecting.']],
+      [inLv('.brx-lv[data-k="R1"]'), 'Resistance (R1, R2)', () => { const { a, px, un } = live(), r = a.lv.res[0]; return [
+        r ? `R1 at ${px(r.p)} is the nearest level above the price (${Math.abs((r.p - a.q.mid) / a.m.pip).toFixed(0)} ${un} away); R2, if shown, is the next one up.` : 'No mapped level above the price this week.',
+        'Resistance is where rallies stopped before: sellers took over there. Price often slows or turns near it; a clean close above it means the level gave way and may later act as support.',
+        'Buyers: take profit or tighten the stop near R1. Sellers: look for an entry near it, with the stop just beyond. Do not buy right under a strong resistance.']; }],
+      [inLv('.brx-lv.now'), 'Current price', () => { const { a, px } = live(); return [
+        `The live price, ${px(a.q.mid)}, placed between the levels above and below it.`,
+        'The rows above it are resistance, the rows below it support. The closer the nearest row, the sooner a reaction may come.',
+        'Price in the middle of a wide gap between R1 and S1 has room to move; price pressed against a level is at a decision point.']; }],
+      [inLv('.brx-lv[data-k="S1"]'), 'Support (S1, S2)', () => { const { a, px, un } = live(), s1 = a.lv.sup[0]; return [
+        s1 ? `S1 at ${px(s1.p)} is the nearest level below the price (${Math.abs((s1.p - a.q.mid) / a.m.pip).toFixed(0)} ${un} away); S2, if shown, is the next one down.` : 'No mapped level below the price this week.',
+        'Support is where declines stopped before: buyers stepped in there. A clean close below it means the level broke and may later act as resistance.',
+        'Sellers: take profit or tighten the stop near S1. Buyers: look for an entry near it, with the stop just below. Do not sell right above a strong support.']; }],
+      [inLv('.brx-lv[data-k] .why'), 'Why', () => [
+        'What built the level: a 1H swing high or low (a turn in price), the 24h high or low, or a round number. “6 touches” counts how many times price turned there.',
+        'Levels closer than half an ATR merge into one, so a row can name several sources; its price is the average of the prices it groups.',
+        'A level with several sources (swing + 24h extreme + round number) is watched by more traders and tends to matter more.']],
+      [inLv('.brx-lv[data-k] .brx-dots'), 'Strength', () => [
+        'One dot per touch, one more if it is the 24h high or low, half a dot (◐) for a round number; five dots is the maximum shown.',
+        'More dots: price has respected the level more often, so more traders will expect it to hold. One or half a dot: a weak reference.',
+        'Put stops beyond strong levels, not just before them; treat weak levels as checkpoints, not walls.']],
+      [inLv('.brx-lv[data-k] > .mono:nth-child(5)'), 'Distance', () => { const { un } = live(); return [
+        `How far the level is from the current price, in ${un}: + above, − below.`,
+        'Compare it with the hourly ATR in the Indicators panel: a level less than one ATR away can be reached within the hour.',
+        'A target farther than the realistic move for your holding time is wishful; a stop closer than one ATR is likely to be hit by ordinary noise.']; }],
+      [inLv('.brx-lv[data-k] button[data-alert]'), 'Alert', () => [
+        'Sets a price alert at that level in one click. The alert appears in the Alerts list and notifies you when price gets there.',
+        'Nothing is traded: an alert only tells you that price reached the level.',
+        'Set alerts at the levels you plan around, then stop watching the screen; come back when the alert fires and decide then.']],
+      [inLv('.brx-lv ~ p.muted'), 'How the levels are found', () => [
+        'Swing highs and lows on the 1H chart over the last 7 days, the 24h high and low, and round numbers.',
+        'The levels are recomputed with every refresh of the brief, so they move as new swings form.',
+        'Check them on the chart (Key levels layer) before relying on one: a level is a zone of a few points, not an exact price.']]
+    ],
+    plan: [
+      [plCard, 'Plan template', () => { const { plan } = live(); return [
+        plan && plan.kind !== 'wait' ? `A ${plan.kind === 'trend' ? 'trend-following' : 'range'} plan built by fixed rules from the trend, the ATR and the key levels: ${plan.side} ${plan.ot === 'market' ? 'at market' : 'with a ' + plan.ot + ' order'}.` : 'No plan now: the structure is too tight or unclear for the template.',
+        'Read it top down: the order, the size and money at risk, then how each price was chosen. Nothing is sent until you confirm in the ticket.',
+        'Use it to fix entry, stop and target before you trade, so the decision is made with a cool head and not in the middle of a move.']; }],
+      [inPl('.brx-plan-h'), 'Direction and order type', () => { const { plan } = live(); return [
+        plan ? `${plan.side === 'sell' ? 'Sell' : 'Buy'} ${plan.ot === 'market' ? 'at market: the order fills at the current price' : 'with a ' + plan.ot + ' order: it fills only if price comes to the entry'}. ${plan.kind === 'trend' ? 'Trend template' : 'Range template'}.` : '',
+        plan && plan.kind === 'trend' ? 'Trend template: it follows the 4H trend. It buys in an uptrend and sells in a downtrend, never against it.' : 'Range template: with no clear 4H trend it sells near the top of the range and buys near the bottom.',
+        'If the direction disagrees with your own view, do not force it: skip the plan rather than reverse it.']; }],
+      [inPl('.brx-plan-g > div:nth-child(1)'), 'Entry', () => { const { plan, px } = live(); return [
+        `The price at which the trade opens: ${px(plan.entry)}.`,
+        plan.ot === 'market' ? 'At market: price is close enough to the 1H EMA20 to enter now.' : 'Limit: price is stretched away from the 1H EMA20, so the plan waits for it to come back; if it never does, there is no trade.',
+        'A limit entry that does not fill is a missed trade, not a loss. Do not chase price with a market order instead.']; }],
+      [inPl('.brx-plan-g > div:nth-child(2)'), 'Stop', () => { const { plan, px, un } = live(); return [
+        `Where the trade closes at a loss: ${px(plan.stop)}, ${(Math.abs(plan.entry - plan.stop) / BR.data.a.m.pip).toFixed(0)} ${un} from the entry.`,
+        'It sits beyond the nearest level with room for normal swings (part of an ATR). If price gets there, the idea behind the trade was wrong.',
+        'Never move it further away once the trade is open. Its distance, together with the size, sets how much money you can lose.']; }],
+      [inPl('.brx-plan-g > div:nth-child(3)'), 'Target', () => { const { plan, px, un } = live(); return [
+        `Where the trade takes profit: ${px(plan.target)}, ${(Math.abs(plan.target - plan.entry) / BR.data.a.m.pip).toFixed(0)} ${un} from the entry.`,
+        plan.kind === 'trend' ? 'The first key level at least 1.5× the stop distance away: the first place the move may stall.' : 'Just before the opposite edge of the range, where the move is expected to stall.',
+        'Take profit there or move the stop to protect the gain; do not hold past the target hoping for more without a new plan.']; }],
+      [inPl('.brx-plan-g > div:nth-child(4)'), 'Reward : risk', () => { const { plan } = live(), rr = Math.abs(plan.target - plan.entry) / Math.abs(plan.entry - plan.stop); return [
+        `The possible gain divided by the possible loss: 1 : ${rr.toFixed(2)} now.`,
+        'At 1 : 2 you can be wrong twice for each win and still break even. The template asks for at least 1 : 1.5.',
+        'Below 1 : 1.5, skip the trade or wait for a better entry. A high ratio does not make the trade more likely to work; it only makes it worth taking.']; }],
+      [inPl('.brx-rr'), 'Risk and reward bar', () => [
+        'The same two distances drawn to scale: red is the way to the stop, green the way to the target.',
+        'The longer the green part against the red one, the better the trade pays when it works.',
+        'A glance check: if red and green are about equal, the trade barely pays for its risk.']],
+      [inPl('.brx-size'), 'Size', () => [
+        'How much you would trade, in lots (shares for stocks). It starts from the ticket’s size.',
+        'Changing it updates the money line under it immediately; the prices of the plan stay the same.',
+        'Choose the size from the money you accept to lose, not from how sure you feel about the trade.']],
+      [inPl('#brRisk'), 'Money at risk', () => [
+        'Risk is what you lose if the stop is hit, in dollars and as a share of your equity; at target is what you gain if the target is reached.',
+        'It already uses the stop distance and the size above.',
+        'Keep the risk per trade small and constant, often 0.5–1% of equity; adjust the size until the line says so.']],
+      [inPl('.brx-steps'), 'How the template built it', () => [
+        'The rules as they applied now, one line each: direction, entry type, where the stop went, where the target went.',
+        'When a rule overrode another (a minimum or maximum stop distance), the line says so.',
+        'Check each line against the chart; if one does not hold for this market, adjust that price in the ticket after loading.']],
+      [inPl('.brx-steps + p'), 'In short', () => [
+        'The whole plan in two sentences, with the reminder that it fixes prices in advance and does not predict the move.',
+        'Past trend does not predict the next move; the plan only makes the risk known before you take it.',
+        'Copy (top of the page) puts this text in your clipboard for your journal.']],
+      [inPl('#brLoad'), 'Load plan into ticket', () => [
+        'Fills New order with the side, entry, stop, target and size of this plan.',
+        'Loading sends nothing: the order goes only when you confirm it in the ticket.',
+        'Load, check the ticket’s own margin and risk figures, then confirm or change it.']],
+      [inPl('#brAlerts'), 'Alerts at key levels', () => [
+        'Sets two price alerts in one click, at R1 and S1.',
+        'You are told when price reaches either level; nothing is traded.',
+        'Use it when the plan is a limit entry or when you want to come back only once price reaches the zone.']]
+    ]
+  };
+  // the page tour walks Key levels and Plan template element by element, in place of their one-card summaries
+  const OLD = new Set(['Key levels', 'A level', 'Plan template', 'Entry, stop, target, reward : risk', 'Size and money at risk', 'Why each price', 'Load plan, alerts']);
+  const ALL = STEPS.flatMap(st => st[1] === 'Reading' ? [st, ...PANELS.levels, ...PANELS.plan] : OLD.has(st[1]) ? [] : [st]);
+  teachTour((PANELS[panel] || ALL), 'brTT');
+}
+/* teachTour(steps, id): the guided walk shared by the pages. steps = [getElement, title, () => [what, read, use], prep?];
+   prep (optional) brings the element on screen first (a sub-page); other steps whose element is missing or hidden are skipped. Spotlight + card, Back / Next / Close, Esc and arrow keys. */
+function teachTour(list, id = 'tourTT') {
+  if (document.querySelector('.tour-card')) return;
+  // window.teachForced = { done } (teach.js, a new user's first visit to a page): no Close, no Esc, the page behind
+  // does not take clicks; done() runs at Finish
+  const forced = window.teachForced || null; window.teachForced = null;
+  let i = 0, spot, box, block, opener = document.activeElement;
+  const steps = list.filter(s => { if (forced && forced.skipShared && s.shared) return false; if (s[3]) return true; const e = s[0](); return e && e.getClientRects().length; });
+  if (!steps.length) { if (forced) forced.done(); return; }
+  function place() {
+    if (!box) return;
+    const st = steps[i], el = st[0](); if (!el) return;
+    const r = el.getBoundingClientRect(), pad = 4;
+    Object.assign(spot.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px' });
+    const cw = box.offsetWidth, ch = box.offsetHeight, m = 12;
+    let x, y;
+    if (innerWidth - r.right > cw + m * 2) { x = r.right + m; y = r.top; } else if (r.left > cw + m * 2) { x = r.left - cw - m; y = r.top; }
+    else if (innerHeight - r.bottom > ch + m * 2) { x = r.left; y = r.bottom + m; } else if (r.top > ch + m * 2) { x = r.left; y = r.top - ch - m; } else { x = innerWidth - cw - 16; y = innerHeight - ch - 16; }
+    Object.assign(box.style, { left: Math.max(8, Math.min(innerWidth - cw - 8, x)) + 'px', top: Math.max(8, Math.min(innerHeight - ch - 8, y)) + 'px' });
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(steps.length - 1, n));
+    if (steps[i][3]) steps[i][3]();
+    const [get, title, body] = steps[i], el = get(), [what, read, use] = body();
+    if (el) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    box.querySelector('.tour-n').textContent = `${i + 1} / ${steps.length}`;
+    box.querySelector('.tour-t').textContent = title;
+    box.querySelector('.br-tc').innerHTML = [['What it is', what], ['How to read it', read], ['How to use it', use]].map(([h, t]) => `<div><b>${h}</b><p>${escHtml(t)}</p></div>`).join('');
+    box.querySelector('[data-t=back]').disabled = i === 0;
+    box.querySelector('[data-t=next]').textContent = i === steps.length - 1 ? 'Finish' : 'Next';
+    requestAnimationFrame(place);
+    box.querySelector('[data-t=next]').focus({ preventScroll: true });
+  }
+  function end(fin) {
+    if (!box) return; /* the first-visit tour can be closed too (UX-60) */ spot.remove(); box.remove(); if (block) block.remove(); spot = box = block = null;
+    if (forced) forced.done();
+    removeEventListener('resize', place); document.removeEventListener('scroll', place, true);
+    if (opener && opener.isConnected) opener.focus({ preventScroll: true });
+  }
+  spot = document.createElement('div'); spot.className = 'tour-spot br-tspot'; spot.setAttribute('aria-hidden', 'true');
+  box = document.createElement('div'); box.className = 'tour-card br-tcard'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', id);
+  box.innerHTML = `<div class="tour-top"><span class="tour-n"></span>${forced ? '<span class="tour-req">First visit · reopen from the account menu</span>' : ''}<button class="tour-x" data-t="skip" aria-label="Close Teach me">Close</button></div><b class="tour-t" id="${id}"></b><div class="br-tc" aria-live="polite"></div>
+    <div class="tour-act"><button class="ghost" data-t="back">Back</button><button class="tour-next btn-pri" data-t="next">Next</button></div>`;
+  if (forced) { block = document.createElement('div'); block.className = 'tour-block'; block.setAttribute('aria-hidden', 'true'); document.body.append(block); }
+  document.body.append(spot, box);
+  box.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; const k = b.dataset.t; if (k === 'next') i === steps.length - 1 ? end(true) : show(i + 1); if (k === 'back') show(i - 1); if (k === 'skip') end(); });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); end(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); i === steps.length - 1 ? end(true) : show(i + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Tab') { const f = [...box.querySelectorAll('button:not([disabled])')], a = f.indexOf(document.activeElement); if (e.shiftKey && a <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && a === f.length - 1) { e.preventDefault(); f[0].focus(); } }
+    if (forced) e.stopPropagation(); // the app's keyboard shortcuts wait until Finish
+  });
+  spot.addEventListener('click', () => end());
+  addEventListener('resize', place); document.addEventListener('scroll', place, true);
+  show(0);
+}
 function brRisk() {
   const el = $('#brRisk'), inp = $('#brLots'); if (!el || !inp || !BR.data) return;
   const sym = BR.data.a.sym, lots = Math.max(0, +inp.value || 0), pv = pipValue(sym, lots), eq = account().eq;
@@ -383,13 +671,39 @@ function brChart() {
   r.fillStyle = c.tx2; r.fillText(`RSI 14 · ${tf === 240 ? '4H' : '1H'}`, 4, 14);
   if (BR.hov >= 0) { r.strokeStyle = c.line; r.beginPath(); r.moveTo(X(BR.hov), 0); r.lineTo(X(BR.hov), RH); r.stroke(); }
 }
+/* ---------- the hint cards are a separate bundle (build.mjs: window.MFX_HINTS), loaded once the first screen is up ---------- */
+function hintsLoad() {
+  if (window.HX || !window.MFX_HINTS || hintsLoad.p) return;
+  if (matchMedia('(max-width:720px)').matches || document.body.classList.contains('mnav-on')) return; // the phone has no hover and no cards: the bundle is not even fetched
+  hintsLoad.p = 1;
+  const s = document.createElement('script'); s.src = window.MFX_HINTS; s.async = true; s.onerror = () => { hintsLoad.p = 0; }; document.body.appendChild(s);
+}
+if (window.MFX_HINTS) {
+  const later = () => { if ('requestIdleCallback' in window) requestIdleCallback(hintsLoad, { timeout: 2500 }); else setTimeout(hintsLoad, 1200); };
+  if (document.readyState === 'complete') setTimeout(later, 300); else addEventListener('load', () => setTimeout(later, 300));
+  for (const ev of ['pointermove', 'pointerdown', 'keydown', 'touchstart']) addEventListener(ev, hintsLoad, { once: true, passive: true, capture: true }); // an early hand: do not wait for the idle moment
+}
 /* ---------- explanations on hover and focus ---------- */
-function brTipShow(raw, x, y, html) {
+// a rich card (hints.js) when the element has one, else its plain 'Title|text'
+function tipShowFor(el, x, y) {
+  const rich = el.dataset.richTip && typeof hintRich === 'function' ? hintRich(el.dataset.richTip, el) : null; // buttons keep their click: the card shows on hover
+  if (!rich && !el.dataset.tip) return;
+  brTipShow(rich || el.dataset.tip, x, y, !!rich, rich ? el.getBoundingClientRect() : null); // a card is anchored to its element, it does not follow the pointer
+}
+function brTipShow(raw, x, y, html, anc) {
   let tip = $('#brTip'); if (!tip) { tip = document.createElement('div'); tip.id = 'brTip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
-  const i = raw.indexOf('|');
-  tip.innerHTML = html ? raw : i < 0 ? escHtml(raw) : `<b>${escHtml(raw.slice(0, i))}</b>${escHtml(raw.slice(i + 1))}`;
+  const i = raw.indexOf('|'), key = (html ? 'h' : 't') + raw, rich = !!html && raw.startsWith('<div class="rt">'); tip.classList.toggle('rich', rich);
+  if (tip._k !== key) { tip.innerHTML = html ? raw : i < 0 ? escHtml(raw) : `<b>${escHtml(raw.slice(0, i))}</b>${escHtml(raw.slice(i + 1))}`; tip._k = key; }
   tip.style.display = 'block';
   const r = tip.getBoundingClientRect();
+  if (rich && anc) { // anchored: beside the element, still while the pointer moves over it
+    const left = anc.right + 8 + r.width > innerWidth - 8 ? anc.left - r.width - 8 : anc.right + 8;
+    tip.style.left = Math.max(8, left) + 'px'; tip.style.top = Math.max(8, Math.min(anc.top, innerHeight - r.height - 8)) + 'px'; return;
+  }
+  if (rich) { // rich card: beside the pointer, never off screen
+    const left = x + 18 + r.width > innerWidth - 8 ? x - r.width - 18 : x + 18;
+    tip.style.left = Math.max(8, left) + 'px'; tip.style.top = Math.max(8, Math.min(y - 24, innerHeight - r.height - 8)) + 'px'; return;
+  }
   tip.style.left = Math.max(8, Math.min(x + 14, innerWidth - r.width - 8)) + 'px';
   tip.style.top = (y + 20 + r.height > innerHeight ? y - r.height - 12 : y + 20) + 'px';
 }
@@ -402,18 +716,19 @@ function brLight(k) {
 /* One explanation layer for the analysis pages (Market Brief, Observatory): any [data-tip] inside them shows its
    'Title|explanation' on hover and focus. CV_HOVER[canvas id](event | null) draws a chart's own readout under the
    pointer (null: the pointer left). */
-const TIP_SCOPE = '.brief, .obs, .corr-wrap, .volgrid', CV_HOVER = {};
+const TIP_SCOPE = '.brief, .obs, .corr-wrap, .volgrid, .journal, #coachDlg, #tipsTgl', CV_HOVER = {};
 let tipBound = false;
 function tipBind() {
   if (tipBound) return; tipBound = true;
-  const tipOf = e => { const el = e.target.closest && e.target.closest('[data-tip]'); return el && el.closest(TIP_SCOPE) ? el : null; };
-  const over = e => { const el = tipOf(e); if (!el) return; const r = el.getBoundingClientRect(); brTipShow(el.dataset.tip, e.clientX ?? r.left, e.clientY ?? r.bottom - 10); if (el.closest('#brMain')) brLight(el.dataset.k || null); };
+  // an element with a hover card (data-rich-tip, hint engine) gets it anywhere in the app; a plain data-tip only on the analysis pages. Opted-out elements (data-hx-off) get nothing.
+  const tipOf = e => { if (document.body.classList.contains('no-hints')) return null; /* front: the Hints switch */ const el = e.target.closest && e.target.closest('[data-tip],[data-rich-tip]'); if (!el || el.closest('[data-hx-off]')) return null; return el.dataset.richTip || (el.closest(TIP_SCOPE) && !el.dataset.rich) ? el : null; /* data-rich: the ? and its modal (hints.js) */ };
+  const over = e => { const el = tipOf(e); if (!el) return; const r = el.getBoundingClientRect(); tipShowFor(el, e.clientX ?? r.left, e.clientY ?? r.bottom - 10); if (el.closest('#brMain')) brLight(el.dataset.k || null); };
   const out = e => { const el = tipOf(e); if (!el || (e.relatedTarget && el.contains(e.relatedTarget))) return; brTipHide(); if (el.closest('#brMain')) brLight(null); };
   document.addEventListener('mouseover', over); document.addEventListener('mouseout', out);
   document.addEventListener('focusin', over); document.addEventListener('focusout', out);
   document.addEventListener('mousemove', e => {
     const id = e.target.id; if (id && CV_HOVER[id]) return CV_HOVER[id](e);
-    const el = tipOf(e), tip = $('#brTip'); if (el && tip && tip.style.display === 'block') brTipShow(el.dataset.tip, e.clientX, e.clientY);
+    const el = tipOf(e), tip = $('#brTip'); if (el && tip && tip.style.display === 'block') tipShowFor(el, e.clientX, e.clientY);
   });
   document.addEventListener('mouseout', e => { const id = e.target.id; if (id && CV_HOVER[id] && !(e.relatedTarget && e.target.contains(e.relatedTarget))) { brTipHide(); CV_HOVER[id](null); } });
 }
@@ -454,6 +769,7 @@ function loadPlan() {
   if (reset != null) S.tk.lots = Math.max(m.p.vol[0], 1);
   syncTicketInputs();
   toast('Plan loaded into ticket', `${p.side} ${p.ot} ${pretty(sym)} · SL ${S.tk.sl}${uShort(sym)} · TP ${S.tk.tp}${uShort(sym)}${reset != null ? ` · size reset from ${reset} to ${lotsWord(sym, S.tk.lots)}` : ''} — review size, then submit`, 'info');
+  { const tv = document.querySelector('#views [data-view="trade"]'); if (tv && (document.body.dataset.view || 'trade') !== 'trade') tv.click(); } // the ticket in front (UX-58)
   document.querySelector('.ticket').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   const t = document.querySelector('.ticket'); t.classList.add('pulse'); setTimeout(() => t.classList.remove('pulse'), 1400);
 }
@@ -465,6 +781,7 @@ function openBrief(sym) {
 
 function bindBrief() {
   $('#briefBtn').addEventListener('click', () => openBrief());
+  $('#brScanU')?.addEventListener('change', e => { S.set.brUni = e.target.value || undefined; save(); renderScanner(); });
   $('#brScan').addEventListener('click', e => { const b = e.target.closest('.scan-row'); if (b) { setSymbol(b.dataset.sym); generateBrief(b.dataset.sym); } });
   tipBind();
   CV_HOVER.brCh = e => { if (e) return brHover(e); if (BR.hov !== -1) { BR.hov = -1; brChart(); } };
@@ -495,6 +812,6 @@ function briefTick() {
   if (BR.sym !== S.set.sym) { generateBrief(S.set.sym); return; }
   const evIn = $('#brEvIn'); if (evIn) evIn.textContent = fmtIn(+evIn.dataset.t - Engine.simTime);
   const stale = $('#brMain .br-head .muted.small');
-  if (stale && BR.data) { const mins = Math.round((Engine.simTime - BR.at) / 60); stale.textContent = `Generated ${new Date(BR.at * 1000).toISOString().slice(11, 16)} UTC${mins >= 1 ? ` · ${mins} min ago` : ''} · from simulated terminal data`; }
+  if (stale && BR.data) { const mins = Math.round((Engine.simTime - BR.at) / 60); stale.textContent = `Generated ${new Date(BR.at * 1000).toISOString().slice(11, 16)} UTC${mins >= 1 ? ` · ${mins} min ago` : ''} · from ${brSrc()}`; }
   if (Engine.simTime - BR.at > 30 * 60) generateBrief(BR.sym);
 }

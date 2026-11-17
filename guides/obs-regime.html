@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regime map guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Regime map in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Regime map</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Regime map</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#what-you-see"><span>02</span>What you see</a>
+  <a href="#controls"><span>03</span>Controls</a>
+  <a href="#how-it-is-computed"><span>04</span>How it is computed</a>
+  <a href="#zones-and-labels"><span>05</span>Zones and labels</a>
+  <a href="#the-right-hand-cards"><span>06</span>The right-hand cards</a>
+  <a href="#more"><span>07</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Regime map</h1>
+  <p class="g-lede">How to read, interpret and use Regime map: what it shows, how it is computed and how to act on it.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Regime map</b></div>
+    <div><label>Covers</label><b>The 16 G8 FX pairs</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“Has each pair's recent path been persistent, anti-persistent or like noise over 1–32 minutes? Every pair is placed by its memory (Hurst) and its randomness (entropy), against the band where the same returns with random signs land. It describes the window; it does not forecast.”</p></div>
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">02</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+<svg class="wide" viewBox="0 0 760 390" role="img" aria-label="Schematic Regime map: Hurst across, permutation entropy up, with the noise band shaded">
+<rect x="490" y="40" width="210" height="290" style="fill:var(--ind1);fill-opacity:.10"/>
+<rect x="70" y="40" width="210" height="290" style="fill:var(--info);fill-opacity:.10"/>
+<rect x="280" y="40" width="210" height="130.5" style="fill:var(--tx2);fill-opacity:.14"/>
+<line x1="280" x2="280" y1="40" y2="330" class="s-ln3" stroke-dasharray="4 4"/>
+<line x1="385" x2="385" y1="40" y2="330" class="s-ln3" stroke-dasharray="4 4"/>
+<line x1="490" x2="490" y1="40" y2="330" class="s-ln3" stroke-dasharray="4 4"/>
+<line x1="70" x2="700" y1="170.5" y2="170.5" class="s-ln3" stroke-dasharray="4 4"/>
+<rect x="70" y="40" width="630" height="290" class="s-ln"/>
+<text x="122.5" y="346" text-anchor="middle" class="m s s-tx3">0.40</text>
+<text x="253.8" y="346" text-anchor="middle" class="m s s-tx3">0.45</text>
+<text x="385" y="346" text-anchor="middle" class="m s s-tx3">0.50</text>
+<text x="516.3" y="346" text-anchor="middle" class="m s s-tx3">0.55</text>
+<text x="647.5" y="346" text-anchor="middle" class="m s s-tx3">0.60</text>
+<text x="64" y="334" text-anchor="end" class="m s s-tx3">0.960</text>
+<text x="64" y="261.5" text-anchor="end" class="m s s-tx3">0.970</text>
+<text x="64" y="189" text-anchor="end" class="m s s-tx3">0.980</text>
+<text x="64" y="116.5" text-anchor="end" class="m s s-tx3">0.990</text>
+<text x="64" y="44" text-anchor="end" class="m s s-tx3">1.000</text>
+<text x="385" y="366" text-anchor="middle" class="s s-tx2">Hurst exponent (memory of the path over 1–32 minutes)</text>
+<text x="14" y="185" transform="rotate(-90 14 185)" text-anchor="middle" class="s s-tx2">permutation entropy (noise ≈ 0.991)</text>
+<text x="272" y="32" text-anchor="end" class="b s s-in">← anti-persistent</text>
+<text x="385" y="32" text-anchor="middle" class="b s s-tx2">noise band</text>
+<text x="498" y="32" class="b s" style="fill:var(--ind1)">persistent →</text>
+<circle cx="608.1" cy="134.2" r="12.7" class="s-up" style="fill-opacity:0.87;stroke:none"/>
+<text x="622.1" y="122.2" text-anchor="start" class="b s s-tx">USD/JPY <tspan class="s-up">▲</tspan></text>
+<circle cx="555.6" cy="159.6" r="14" class="s-dn" style="fill-opacity:0.95;stroke:none"/>
+<text x="571.6" y="175.6" text-anchor="start" class="b s s-tx">GBP/JPY <tspan class="s-dn">▼</tspan></text>
+<circle cx="161.9" cy="119.8" r="8.9" class="s-dn" style="fill-opacity:0.63;stroke:none"/>
+<text x="173.9" y="123.8" text-anchor="start" class="b s s-tx">AUD/NZD <tspan class="s-dn">▼</tspan></text>
+<circle cx="398.1" cy="272" r="8.2" class="s-up" style="fill-opacity:0.59;stroke:none"/>
+<text x="410.1" y="277" text-anchor="start" class="b s s-tx">EUR/CHF <tspan class="s-up">▲</tspan></text>
+<circle cx="364" cy="87.1" r="10.8" class="s-up" style="fill-opacity:0.67;stroke:var(--acc);stroke-width:2.2"/>
+<text x="379" y="91" class="b s s-tx">EUR/USD <tspan class="s-up">▲</tspan></text>
+<circle cx="442.8" cy="130.6" r="11.4" class="s-up" style="fill-opacity:0.71;stroke:none"/>
+<circle cx="301" cy="72.6" r="10.5" class="s-dn" style="fill-opacity:0.66;stroke:none"/>
+<circle cx="416.5" cy="58.1" r="12.1" class="s-up" style="fill-opacity:0.75;stroke:none"/>
+<circle cx="474.3" cy="79.9" r="12.4" class="s-up" style="fill-opacity:0.68;stroke:none"/>
+<circle cx="327.2" cy="137.9" r="10.1" class="s-dn" style="fill-opacity:0.60;stroke:none"/>
+<circle cx="471.6" cy="152.4" r="12.7" class="s-dn" style="fill-opacity:0.71;stroke:none"/>
+<circle cx="390.2" cy="148.8" r="13.4" class="s-up" style="fill-opacity:0.62;stroke:none"/>
+<circle cx="301" cy="156" r="12.1" class="s-dn" style="fill-opacity:0.59;stroke:none"/>
+<circle cx="337.7" cy="58.1" r="8.5" class="s-up" style="fill-opacity:0.58;stroke:none"/>
+<circle cx="419.1" cy="108.9" r="11.4" class="s-dn" style="fill-opacity:0.67;stroke:none"/>
+<circle cx="327.2" cy="101.6" r="11.1" class="s-dn" style="fill-opacity:0.74;stroke:none"/>
+<text x="690" y="184" text-anchor="end" class="s s-tx3">below the entropy band: some repeating micro-patterns</text>
+</svg>
+    <div class="legend"><span><i style="height:8px;opacity:.35"></i>noise band</span><span style="color:var(--ind1)"><i style="height:8px;opacity:.5"></i>persistent</span><span class="in"><i style="height:8px;opacity:.5"></i>anti-persistent</span><span class="up">▲ up over the window</span><span class="dn">▼ down over the window</span><span>dot size = volatility</span><span style="color:var(--acc)">◯ open pair</span></div>
+  </div><figcaption><b>Fig. 1</b>Illustration on a 1D window: 12 of 16 pairs inside the noise band; four outside it, each in its own way.</figcaption></figure>
+  <p>Across: the <b>Hurst exponent</b>, the memory of the path. Up and down: <b>permutation entropy</b>, how random the order of the moves was. Dashed lines mark the band edges and Hurst 0.5. Dot colour is the move over the whole window (deeper up to 30 bp), dot size the volatility. Each dot is a target: hover it for its numbers, click it (or press Enter) to open the pair.</p>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">03</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Window</td><td class="n">4H · <b>1D</b> · 3D</td><td>The last 240, 1,440 or 4,320 one-minute bars. Hurst on their 1-minute returns; entropy on their 5-minute returns, averaged over the five ways to cut the 5-minute grid. Shared with the Constellation.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-it-is-computed">
+  <div class="ch-h"><span class="n">04</span><h3>How it is computed</h3></div>
+
+  <div class="fml">
+    <div>Hurst   Var(sum of k returns) for k = 1, 2, 4, 8, 16, 32   <span class="c">(at least 12 sums per level)</span></div>
+    <div>        H = slope of ln Var against ln k ÷ 2, kept in 0…1   <span class="c">needs ≥ 48 returns</span></div>
+    <div>Entropy 4-point up/down patterns of 5-minute returns, ties skipped</div>
+    <div>        PE = Shannon entropy ÷ ln 24, mean of the 5 grid offsets   <span class="c">≥ 24 patterns each; 145 bars</span></div>
+    <div>Efficiency ER = |Σ r| ÷ Σ |r|   <span class="c">100% = a straight line</span></div>
+    <div>Band    160 copies with each return’s sign flipped at random → 5th–95th percentile of H, PE, ER</div>
+    <div class="c">A pair with fewer than half its 1-minute returns non-zero is not measured (“its quotes barely moved in the window”); so is one without enough bars free of a closed market.</div>
+  </div>
+</section>
+
+<section class="ch" id="zones-and-labels">
+  <div class="ch-h"><span class="n">05</span><h3>Zones and labels</h3></div>
+  <div class="two">
+    <div>
+      <table class="g-t">
+        <thead><tr><th>Condition</th><th>The tool writes</th></tr></thead>
+        <tbody>
+          <tr><td>H above the band</td><td>persistent over 1–32 minutes (above the noise band: its moves ran on more than chance)</td></tr>
+          <tr><td>H inside the band</td><td>within the noise band — random-walk-like over 1–32 minutes</td></tr>
+          <tr><td>H below the band</td><td>anti-persistent over 1–32 minutes (below the noise band: its moves were undone more than chance)</td></tr>
+          <tr><td>PE below its band</td><td>below the noise band — some repeating micro-patterns</td></tr>
+          <tr><td>PE otherwise</td><td>within the noise band — indistinguishable from noise</td></tr>
+        </tbody>
+      </table>
+      <p class="mut">Entropy only deviates downwards: noise is already as random as it gets. The zone (and its tint) is set by Hurst alone.</p>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 230" role="img" aria-label="Aggregated variance: on log scales, the variance of sums grows with slope 2H">
+        <path d="M40 20 V190 H340" class="s-ln3"/>
+        <path d="M50 180 L330 40" style="stroke:var(--ind1);stroke-width:2;fill:none"/>
+        <path d="M50 180 L330 64" class="s-px"/>
+        <path d="M50 180 L330 88" style="stroke:var(--info);stroke-width:2;fill:none"/>
+        <text x="210" y="146" class="b s" style="fill:var(--ind1)">H 0.60 · persistent</text>
+        <text x="210" y="162" class="b s s-tx">H 0.50 · random walk</text>
+        <text x="210" y="178" class="b s s-in">H 0.40 · anti-persistent</text>
+        <g class="m s s-tx3"><text x="50" y="206" text-anchor="middle" class="m s s-tx3">1</text><text x="106" y="206" text-anchor="middle" class="m s s-tx3">2</text><text x="162" y="206" text-anchor="middle" class="m s s-tx3">4</text><text x="218" y="206" text-anchor="middle" class="m s s-tx3">8</text><text x="274" y="206" text-anchor="middle" class="m s s-tx3">16</text><text x="330" y="206" text-anchor="middle" class="m s s-tx3">32</text></g>
+        <text x="190" y="224" text-anchor="middle" class="s s-tx3">k minutes summed (log scale)</text>
+        <text x="16" y="105" transform="rotate(-90 16 105)" text-anchor="middle" class="s s-tx3">variance of the sums (log)</text>
+      </svg>
+    </div><figcaption><b>Fig. 2</b>Moves that run on make long sums vary more than chance; moves that are undone, less.</figcaption></figure>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="the-right-hand-cards">
+  <div class="ch-h"><span class="n">06</span><h3>The right-hand cards</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Card</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td>&lt;Pair&gt; right now</td><td>The open pair (or EUR/USD if the open instrument is not on the map). Hero <code>H 0.59</code> with its zone, then: “Hurst 0.59 (noise band 0.46–0.54) — persistent … Entropy 0.987 (noise band 0.982–0.996) — within the noise band … Efficiency ratio 9% of the path was net progress (typical noise ≈ 3%; 90% of the noise copies stay under 7%).”</td></tr>
+      <tr><td>Rolling Hurst</td><td>A sparkline of the pair’s 12-hour Hurst, one point per hour of trading (up to 48), against the noise band of its own last 12 hours; dashed line 0.50.</td></tr>
+      <tr><td>Time in zone</td><td>How many hourly windows, from now back, share today’s zone: <code>In this zone (persistent) for 3 h of trading</code>. The windows overlap, so a zone tends to last about as long as the window itself.</td></tr>
+      <tr><td>Largest deviations</td><td><code>(12 of 16 within noise band)</code> and the four furthest pairs, each pill showing the measure that deviates most: <code>H 0.59</code> or <code>PE 0.968</code>. Click to open.</td></tr>
+      <tr><td>All 16 pairs</td><td>A folded table: Pair, H, PE, ER, Zone, In zone. Click a header to sort (zones order anti-persistent → noise → persistent).</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cards">
+    <div class="card"><h5>Match the style</h5><p>Persistent + low entropy + higher efficiency = a cleaner trend in the window; left of the band = chopping. Most pairs inside: the market is mostly noise right now.</p></div>
+    <div class="card"><h5>Check the change</h5><p>Look at 1D first; switch to 4H to see whether a pair has just changed character. A reading that holds on all three windows is structure.</p></div>
+    <div class="card"><h5>Describe, then plan</h5><p>Use the map to describe character, then let your plan decide entries and exits.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>A point outside the band describes the recent path; it does not predict the next move. Measured noise sits at an entropy a little below 1 and around, not exactly at, a Hurst of 0.5: that is why the band, not the textbook value, is the reference.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">07</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Regime map guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>
