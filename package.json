@@ -1,0 +1,22 @@
+{
+  "name": "tradeberry",
+  "version": "15.7.1",
+  "private": true,
+  "description": "tradeBerry — browser FX trading terminal (simulated market seeded with ECB rates)",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/run.mjs",
+    "serve": "python3 -m http.server 8765",
+    "dev:server": "npm run release && npx wrangler d1 migrations apply tradeberry --local && npx wrangler pages dev --port 8788",
+    "deploy": "npm run release && npx wrangler d1 migrations apply tradeberry --remote && npx wrangler pages deploy --branch main",
+    "deploy:ui": "npm run release && npx wrangler pages deploy --branch main",
+    "deploy:relay": "npx wrangler deploy --config relay/wrangler.toml",
+    "dev:relay": "npx wrangler dev --config relay/wrangler.toml --port 8789",
+    "serve:dist": "cd dist && python3 -m http.server 8767",
+    "release": "node build.mjs && rsync -a --delete dist/ ../1-aplicatie-publicabila/"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "^1.64.1"
+  }
+}

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090c10">
+  <title>trade.Berry — Opening Note</title>
+  <style>
+    :root {
+      --bg: #090c10;
+      --ink: #f3f5f7;
+      --muted: rgba(255,255,255,.66);
+      --quiet: rgba(255,255,255,.4);
+      --line: rgba(255,255,255,.16);
+      --accent: #e8b04a;
+      --ease: cubic-bezier(.2,.8,.2,1);
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    /* A minimal terminal exists only to demonstrate the approved fade-in. */
+    .terminal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-rows: 48px 1fr 28px;
+      background: #080b0f;
+      color: #a3acba;
+    }
+    .terminal-top {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      border-bottom: 1px solid #2d3542;
+      background: #0f1319;
+    }
+    .terminal-brand { padding: 0 24px; color: white; font-size: 13px; }
+    .terminal-brand b { color: var(--accent); }
+    .terminal-nav { padding: 17px 22px; border-left: 1px solid #232a35; font-size: 10px; letter-spacing: .1em; }
+    .terminal-nav.active { color: white; box-shadow: inset 0 -2px var(--accent); }
+    .terminal-equity { margin-left: auto; padding: 0 22px; font: 600 13px ui-monospace, monospace; color: white; }
+    .terminal-back { padding: 17px 20px; border-left: 1px solid #232a35; color: #a3acba; font-size: 10px; letter-spacing: .08em; text-decoration: none; }
+    .terminal-back:hover { color: white; }
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: 230px 1fr 330px;
+      gap: 8px;
+      padding: 8px;
+    }
+    .mock-panel { overflow: hidden; border: 1px solid #29313d; border-radius: 5px; background: #0f1319; }
+    .mock-head { height: 40px; padding: 14px; border-bottom: 1px solid #29313d; background: #141920; font-size: 9px; letter-spacing: .11em; }
+    .mock-rows { padding: 0 12px; }
+    .mock-row { height: 42px; border-bottom: 1px solid #202630; }
+    .mock-chart { position: relative; }
+    .mock-chart::before {
+      content: "";
+      position: absolute;
+      inset: 25% 5% 14%;
+      opacity: .55;
+      background:
+        linear-gradient(155deg, transparent 0 19%, #a78bfa 20% 20.5%, transparent 21% 34%, #a78bfa 35% 35.5%, transparent 36% 46%, #a78bfa 47% 47.5%, transparent 48% 60%, #a78bfa 61% 61.5%, transparent 62% 73%, #a78bfa 74% 74.5%, transparent 75%),
+        repeating-linear-gradient(0deg, transparent 0 55px, #202630 56px);
+    }
+    .mock-ticket { display: grid; align-content: start; gap: 10px; padding: 16px; }
+    .mock-button { height: 90px; border: 1px solid #29313d; background: #11171c; }
+    .terminal-status { border-top: 1px solid #29313d; background: #0f1319; }
+    .replay {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 4;
+      padding: 10px 14px;
+      border: 1px solid #3a4351;
+      border-radius: 3px;
+      background: #141920;
+      color: white;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .3s, transform .3s;
+    }
+    body.complete .replay { opacity: 1; transform: none; }
+
+    /* Opening Note */
+    .opening {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: clamp(24px,4vw,64px);
+      overflow: hidden;
+      isolation: isolate;
+      background: var(--bg);
+      opacity: 1;
+    }
+    .art {
+      position: absolute;
+      z-index: -3;
+      inset: -3% -3% -3% 38%;
+      background: url("https://images.unsplash.com/photo-1728930684281-103d3e6a5032?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixlib=rb-4.1.0&q=86&w=1800") center 42%/cover no-repeat;
+      filter: grayscale(1) contrast(1.08) blur(1.5px);
+      opacity: .52;
+      transform: scale(1.025);
+      animation: drift 16s ease-out both;
+    }
+    .shade {
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      background:
+        linear-gradient(90deg,#090c10 0%,#090c10 28%,rgba(9,12,16,.92) 43%,rgba(9,12,16,.32) 72%,rgba(9,12,16,.62) 100%),
+        linear-gradient(0deg,#090c10 0%,transparent 42%,rgba(9,12,16,.25) 100%);
+    }
+    .opening::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      opacity: .17;
+      background: radial-gradient(circle at 72% 42%,rgba(232,176,74,.24),transparent 24%);
+      pointer-events: none;
+    }
+    .opening-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 16px; letter-spacing: .02em; }
+    .brand svg { width: 28px; height: 28px; }
+    .brand .trade { font-weight: 300; }
+    .brand .berry { font-weight: 700; }
+    .opening-links { display: flex; align-items: center; gap: 16px; }
+    .accent-lab-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(232,176,74,.65);
+      border-radius: 3px;
+      background: rgba(9,12,16,.45);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .accent-lab-link:hover { border-color: var(--accent); background: rgba(232,176,74,.12); }
+    .date { color: rgba(255,255,255,.55); font: 10px ui-monospace, monospace; letter-spacing: .07em; text-transform: uppercase; }
+    .copy {
+      width: min(650px,58vw);
+      margin: auto 0;
+      padding: clamp(48px,8vh,100px) 0;
+      animation: copy-in .8s .25s var(--ease) both;
+    }
+    .kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: rgba(255,255,255,.58); font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+    .kicker span:first-child { color: var(--accent); }
+    .kicker i { width: 20px; height: 1px; background: rgba(255,255,255,.25); }
+    h1 { max-width: 620px; margin: 0 0 16px; font-size: clamp(40px,5.2vw,76px); font-weight: 500; line-height: 1.02; letter-spacing: -.045em; text-wrap: balance; }
+    .copy > p { max-width: 560px; margin: 0; color: var(--muted); font-size: clamp(14px,1.2vw,17px); line-height: 1.7; }
+    blockquote { max-width: 590px; margin: 16px 0 0; padding-left: 16px; border-left: 2px solid var(--accent); color: white; font-size: clamp(17px,1.5vw,22px); font-weight: 500; line-height: 1.45; }
+    .welcome { display: flex; align-items: baseline; gap: 8px; margin-top: clamp(28px,5vh,46px); color: rgba(255,255,255,.58); font-size: 12px; }
+    .welcome span { color: var(--accent); font-weight: 600; }
+    .welcome strong { color: rgba(255,255,255,.78); font-weight: 500; }
+    .actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .begin { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; min-width: 210px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(255,255,255,.24); background: var(--ink); color: #0b0e12; font-size: 12px; font-weight: 700; }
+    .begin:hover { border-color: var(--accent); background: var(--accent); }
+    .begin span { font-size: 15px; }
+    .skip { min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: rgba(255,255,255,.54); font-size: 11px; }
+    .skip:hover { color: white; }
+    .meta { display: flex; gap: 24px; margin-top: 16px; color: rgba(255,255,255,.38); font: 10px ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .credit { position: absolute; right: clamp(24px,4vw,64px); bottom: clamp(24px,4vw,48px); color: rgba(255,255,255,.38); font-size: 10px; text-decoration: none; }
+    .credit:hover { color: rgba(255,255,255,.72); }
+
+    /* Approved transition:
+       background → main content → secondary details → logo → black → terminal */
+    .opening.transitioning { background: #050607; transition: background-color 1s var(--ease), opacity .9s var(--ease); }
+    .opening.transitioning .art { opacity: 0; transform: scale(1.01); transition: opacity .9s var(--ease), transform 1.2s var(--ease); }
+    .opening.transitioning .shade, .opening.transitioning::after { opacity: 0; transition: opacity .85s var(--ease); }
+    .opening.transitioning .copy { opacity: 0; visibility: hidden; transform: translateY(-7px); transition: opacity .85s .38s var(--ease), visibility .85s .38s, transform 1s .38s var(--ease); }
+    .opening.transitioning .date, .opening.transitioning .credit { opacity: 0; visibility: hidden; transition: opacity .65s .85s var(--ease), visibility .65s .85s; }
+    .opening.transitioning .brand { opacity: 0; visibility: hidden; transform: scale(.98); transition: opacity .8s 1.48s var(--ease), visibility .8s 1.48s, transform 1s 1.48s var(--ease); }
+    .opening.transitioning.revealing { opacity: 0; }
+
+    .terminal.arriving .mock-chart { animation: terminal-in .8s .04s var(--ease) both; }
+    .terminal.arriving .terminal-top { animation: terminal-in .65s .12s var(--ease) both; }
+    .terminal.arriving .mock-left { animation: terminal-in .7s .2s var(--ease) both; }
+    .terminal.arriving .mock-right { animation: terminal-in .7s .28s var(--ease) both; }
+    .terminal.arriving .terminal-status { animation: terminal-in .6s .42s var(--ease) both; }
+
+    @keyframes copy-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { transform: scale(1.055) translateX(8px); } to { transform: scale(1.025); } }
+    @keyframes terminal-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 720px) {
+      .opening { padding: 24px 20px 30px; }
+      .art { inset: 0 0 38% 12%; opacity: .4; background-position: center 38%; }
+      .shade { background: linear-gradient(0deg,#090c10 0%,#090c10 45%,rgba(9,12,16,.72) 72%,rgba(9,12,16,.3) 100%); }
+      .date { font-size: 9px; }
+      .copy { width: 100%; margin-top: auto; margin-bottom: 0; padding: 34vh 0 0; }
+      h1 { font-size: clamp(38px,12vw,58px); }
+      .copy > p { font-size: 13px; line-height: 1.65; }
+      .actions { align-items: stretch; flex-direction: column; margin-top: 16px; }
+      .begin { width: 100%; }
+      .skip { min-height: 34px; }
+      .credit { display: none; }
+      .terminal-grid { grid-template-columns: 1fr; }
+      .mock-left, .mock-right { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .art, .copy, .terminal.arriving > * { animation: none !important; }
+      .opening, .opening * { transition-duration: .01ms !important; transition-delay: 0ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="terminal" id="terminal" aria-hidden="true">
+    <header class="terminal-top">
+      <span class="terminal-brand">trade<b>.Berry</b></span>
+      <span class="terminal-nav active">TRADE</span>
+      <span class="terminal-nav">MARKETS</span>
+      <span class="terminal-nav">RESEARCH</span>
+      <span class="terminal-equity">$100,000.00</span>
+      <a class="terminal-back" href="accent-system.html">ACCENT LAB</a>
+      <a class="terminal-back" href="./">BACK TO PLATFORM</a>
+    </header>
+    <section class="terminal-grid">
+      <aside class="mock-panel mock-left"><div class="mock-head">INSTRUMENTS</div><div class="mock-rows"><div class="mock-row"></div><div class="mock-row"></div><div class="mock-row"></div><div class="mock-row"></div></div></aside>
+      <section class="mock-panel mock-chart"><div class="mock-head">EUR / USD · 15M</div></section>
+      <aside class="mock-panel mock-right"><div class="mock-head">ORDER TICKET</div><div class="mock-ticket"><div class="mock-button"></div><div class="mock-button"></div></div></aside>
+    </section>
+    <footer class="terminal-status"></footer>
+  </main>
+
+  <section class="opening" id="opening" role="dialog" aria-modal="true" aria-labelledby="title">
+    <div class="art" aria-hidden="true"></div>
+    <div class="shade" aria-hidden="true"></div>
+    <header class="opening-header">
+      <div class="brand" aria-label="trade.Berry">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="5.5" y="20" width="3.4" height="7" rx=".8" fill="#ff4757"/>
+          <rect x="11.5" y="15" width="3.4" height="12" rx=".8" fill="#f1c40f"/>
+          <rect x="17.5" y="10" width="3.4" height="17" rx=".8" fill="#3498db"/>
+          <rect x="23.5" y="5" width="3.4" height="22" rx=".8" fill="#7ac943"/>
+        </svg>
+        <span><span class="trade">trade</span><span class="berry">.Berry</span></span>
+      </div>
+      <div class="opening-links">
+        <a class="accent-lab-link" href="accent-system.html">Deschide Accent Lab →</a>
+        <span class="date" id="date"></span>
+      </div>
+    </header>
+
+    <article class="copy">
+      <div class="kicker"><span>Opening note</span><i></i><span>Trading psychology</span></div>
+      <h1 id="title">Patience is a position, too.</h1>
+      <p>Some of the most expensive decisions are made not when markets move too quickly, but when we feel we must participate. Before your first trade today, ask yourself:</p>
+      <blockquote>What new information makes this risk worth taking?</blockquote>
+      <div class="welcome"><span id="hello">Good evening.</span><strong>trade.Berry is ready when you are.</strong></div>
+      <div class="actions">
+        <button class="begin" id="begin">Let’s begin <span>→</span></button>
+        <button class="skip" id="skip">Don’t show again today</button>
+      </div>
+      <div class="meta"><span>18 sec read</span><span>Edition 01</span></div>
+    </article>
+
+    <a class="credit" href="https://unsplash.com/@martinrajdl" target="_blank" rel="noopener">Photo by Martin Rajdl on Unsplash</a>
+  </section>
+
+  <button class="replay" id="replay">Replay Opening Note</button>
+
+  <script>
+    (() => {
+      const opening = document.getElementById('opening');
+      const terminal = document.getElementById('terminal');
+      const begin = document.getElementById('begin');
+      const hour = new Date().getHours();
+      document.getElementById('hello').textContent =
+        (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + '.';
+      document.getElementById('date').textContent =
+        new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+
+      function startTransition() {
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        opening.classList.add('transitioning');
+        setTimeout(() => {
+          terminal.classList.add('arriving');
+          terminal.setAttribute('aria-hidden', 'false');
+          opening.classList.add('revealing');
+        }, reduced ? 40 : 2450);
+        setTimeout(() => {
+          opening.hidden = true;
+          terminal.classList.remove('arriving');
+          document.body.classList.add('complete');
+        }, reduced ? 100 : 3400);
+      }
+      function replay() {
+        document.body.classList.remove('complete');
+        opening.hidden = false;
+        opening.classList.remove('transitioning', 'revealing');
+        terminal.setAttribute('aria-hidden', 'true');
+        setTimeout(() => begin.focus({ preventScroll: true }), 80);
+      }
+
+      begin.addEventListener('click', startTransition);
+      document.getElementById('skip').addEventListener('click', startTransition);
+      document.getElementById('replay').addEventListener('click', replay);
+      opening.addEventListener('keydown', event => { if (event.key === 'Escape') startTransition(); });
+      setTimeout(() => begin.focus({ preventScroll: true }), 900);
+    })();
+  </script>
+</body>
+</html>

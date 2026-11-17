@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d11" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#eef0f3" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="trade.Berry">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>trade.Berry — Trading Terminal</title>
+<meta name="description" content="trade.Berry: a professional trading terminal with live charting, risk-first execution, market research and portfolio analytics.">
+<link rel="preload" as="script" href="vendor/lightweight-charts-5.2.1.js">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<section id="boot" class="boot" aria-label="Loading trade.Berry"><div class="boot-inner"><svg class="logo boot-logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="lg-bar lg-r" x="5.5" y="20" width="3.4" height="7" rx="0.8"/><rect class="lg-bar lg-y" x="11.5" y="15" width="3.4" height="12" rx="0.8"/><rect class="lg-bar lg-b" x="17.5" y="10" width="3.4" height="17" rx="0.8"/><rect class="lg-bar lg-g" x="23.5" y="5" width="3.4" height="22" rx="0.8"/></svg><div class="wordmark lg"><span class="wm-t">trade</span><span class="wm-b">.Berry</span></div><div class="boot-bar"><i></i></div><div class="boot-msg">Loading reference rates and building one week of market history…</div></div></section>
+
+<section class="opening-note" id="openingNote" role="dialog" aria-modal="true" aria-labelledby="openingTitle">
+  <div class="opening-art" aria-hidden="true"></div>
+  <div class="opening-shade" aria-hidden="true"></div>
+  <header class="opening-brand">
+    <div class="wordmark" aria-label="trade.Berry"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect class="lg-bar lg-r" x="5.5" y="20" width="3.4" height="7" rx="0.8"/><rect class="lg-bar lg-y" x="11.5" y="15" width="3.4" height="12" rx="0.8"/><rect class="lg-bar lg-b" x="17.5" y="10" width="3.4" height="17" rx="0.8"/><rect class="lg-bar lg-g" x="23.5" y="5" width="3.4" height="22" rx="0.8"/></svg><span class="wm-t">trade</span><span class="wm-b">.Berry</span></div>
+    <span class="opening-date" id="openingDate"></span>
+  </header>
+  <article class="opening-copy">
+    <div class="opening-kicker"><span>Opening note</span><i></i><span>Trading psychology</span></div>
+    <h1 id="openingTitle">Patience is a position, too.</h1>
+    <p>Some of the most expensive decisions are made not when markets move too quickly, but when we feel we must participate. Before your first trade today, ask yourself:</p>
+    <blockquote>What new information makes this risk worth taking?</blockquote>
+    <div class="opening-welcome">
+      <span id="openingHello">Good morning.</span>
+      <strong>trade.Berry is ready when you are.</strong>
+    </div>
+    <div class="opening-actions">
+      <button type="button" class="opening-enter" id="openingEnter">Let’s begin <span>→</span></button>
+      <a class="opening-accent-link" href="accent-system.html">Deschide Accent Lab <span>→</span></a>
+      <button type="button" class="opening-skip" id="openingSkip">Don’t show again today</button>
+    </div>
+    <div class="opening-meta"><span>18 sec read</span><span>Edition 01</span></div>
+  </article>
+  <a class="opening-credit" href="https://unsplash.com/@martinrajdl" target="_blank" rel="noopener">Photo by Martin Rajdl on Unsplash</a>
+</section>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="wordmark" aria-label="trade.Berry"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="lg-bar lg-r" x="5.5" y="20" width="3.4" height="7" rx="0.8"/><rect class="lg-bar lg-y" x="11.5" y="15" width="3.4" height="12" rx="0.8"/><rect class="lg-bar lg-b" x="17.5" y="10" width="3.4" height="17" rx="0.8"/><rect class="lg-bar lg-g" x="23.5" y="5" width="3.4" height="22" rx="0.8"/></svg><span class="wm-t">trade</span><span class="wm-b">.Berry</span></div>
+  </div>
+  <a class="opening-showcase-link" href="opening-note.html">Opening Note</a>
+  <a class="opening-showcase-link" href="accent-system.html">Accent Lab</a>
+  <nav class="views" id="views" aria-label="Workspaces">
+    <button data-view="trade" class="on" aria-current="page" title="Trade — execution and open positions (Alt+1)">Trade</button><button data-view="monitor" title="Markets — discover and monitor instruments (Alt+2)">Markets</button><button data-view="research" title="Research — briefs, correlation, volatility and calendar (Alt+3)">Research</button><button data-view="lab" title="Lab — backtesting, risk simulation and calculators (Alt+4)">Lab</button><button data-view="coach" title="Coach — journal and behaviour analytics (Alt+5)">Coach</button>
+  </nav>
+  <div class="acct" id="acct">
+    <div class="m m-sec"><label>Balance</label><b id="mBal">—</b></div>
+    <div class="m"><label>Equity</label><b id="mEq">—</b></div>
+    <div class="m"><label>Floating P&amp;L</label><b id="mPnl">—</b></div>
+    <div class="m m-sec"><label>Free margin</label><b id="mFree">—</b></div>
+    <div class="m"><label>Margin level</label><b id="mLevel">—</b></div>
+  </div>
+  <div class="acct-x" id="acctX"><button class="acct-more" id="acctMore" aria-expanded="false" aria-controls="acctPop" aria-label="Show balance and free margin" title="Balance and free margin"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="acct-pop" id="acctPop" role="group" aria-label="Balance and free margin" hidden><div class="m"><label>Balance</label><b id="mBalX">—</b></div><div class="m"><label>Free margin</label><b id="mFreeX">—</b></div></div></div>
+  <div class="ctrls">
+    <button class="icon-btn" id="cmdBtn" title="Command bar (Ctrl/⌘ K)"><svg viewBox="0 0 24 24"><path d="M4 17l6-5-6-5M12 19h8"/></svg><kbd>⌘K</kbd></button>
+    <span class="son-wrap"><button class="icon-btn" id="sonBtn" title="Listen to the market (sonification)" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0116 0v3M4 15a2 2 0 012-2h1v6H6a2 2 0 01-2-2v-2zM20 15a2 2 0 00-2-2h-1v6h1a2 2 0 002-2v-2z"/></svg></button><button class="son-more" id="sonMore" title="Sound settings" aria-label="Sound settings">▾</button>
+      <div class="son-pop" id="sonPop" hidden><b>Listen to the market</b><label><input type="checkbox" id="sonTicks"> Price ticks of the active pair</label><label><input type="checkbox" id="sonHeart"> Portfolio heartbeat (open P&amp;L)</label><label>Volume <input type="range" id="sonVol" min="0" max="1" step=".05"></label><label>Sensitivity <input type="range" id="sonSens" min=".25" max="3" step=".25"></label><small class="muted">Based on Janata &amp; Childs (2004): rising two-note chime = uptick, falling = downtick, register follows distance from the daily open.</small></div></span>
+    <button class="icon-btn" id="soundBtn" title="Toggle sounds"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 010 7M19 5a10 10 0 010 14"/></svg></button>
+    <button class="icon-btn" id="themeBtn" title="Toggle light/dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+    <button class="icon-btn" id="helpBtn" title="Shortcuts & guide"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/></svg></button>
+  </div>
+</header>
+
+<main class="grid">
+  <!-- Watchlist -->
+  <aside class="panel watch" aria-label="Watchlist">
+    <div class="ph"><h2>Instruments</h2><input id="wlSearch" class="search" type="search" placeholder="Search…" aria-label="Search instruments: symbol, name, sector or exchange" autocomplete="off"></div>
+    <div class="mini-seg wl-cls" id="wlCls" role="group" aria-label="Instrument category"><button data-wl="all" class="on" aria-pressed="true">All</button><button data-wl="fav" title="Favourites">★ Fav</button><button data-wl="fx">FX</button><button data-wl="index">Indices</button><button data-wl="commodity">Commodities</button><button data-wl="crypto">Crypto</button><button data-wl="stock">Stocks</button></div><span class="sr-only" id="wlLive" aria-live="polite"></span>
+    <div class="wl-head"><span>Symbol</span><span>Bid</span><span>Ask</span><span>Spr</span><span>Chg%</span><span title="Time of the last price change, UTC">Time</span><button type="button" class="wl-cols" id="wlColsBtn" aria-expanded="false" aria-controls="wl" title="Show spread, 24 h change and range">›</button></div>
+    <div id="wl" class="wl"></div>
+    <div class="wl-det" id="wlDet"></div>
+  </aside>
+
+  <!-- Chart -->
+  <section class="panel chartp" aria-label="Chart">
+    <div class="chart-top">
+      <div class="sym-block">
+        <button class="sym-name" id="symName">EUR/USD</button><button type="button" class="fav-btn" id="favBtn" aria-pressed="false" aria-label="Add to favourites" title="Add to favourites"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button><span class="tag lo sym-cls" id="symCls" hidden></span><div class="dd ins-dd" id="insDD"><button class="dd-btn ins-btn" id="insBtn" aria-haspopup="true" aria-expanded="false" aria-label="Specifications" title="Specifications">i</button><div class="dd-pop ins-pop" id="insPop" role="dialog" aria-label="Specifications" hidden></div></div>
+        <div class="sym-px"><span id="symMid" class="mono">—</span><span id="symChg" class="chg mono">—</span></div>
+        <button class="brief-btn" id="briefBtn" title="Market brief for this instrument (I)"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Brief</button>
+      </div>
+      <div class="seg" id="tfSeg" role="group" aria-label="Timeframe">
+        <button data-tf="1">1m</button><button data-tf="5">5m</button><button data-tf="15" class="on">15m</button><button data-tf="60">1H</button><button data-tf="240">4H</button>
+      </div>
+      <div class="dd" id="typeDD"><button class="dd-btn" id="typeBtn" aria-haspopup="true" aria-expanded="false" title="Chart type"><span id="typeLbl">Candles</span><svg class="dd-car" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button><div class="dd-pop" hidden><div class="seg" id="typeSeg" role="group" aria-label="Chart type">
+        <button data-type="candles" class="on">Candles</button><button data-type="ha">Heikin‑Ashi</button><button data-type="it" title="Intrinsic time: one candle per move of δ instead of per time period">Intrinsic</button>
+      </div></div></div>
+      <div class="dd" id="indDD"><button class="dd-btn" id="indBtn" aria-haspopup="true" aria-expanded="false" title="Indicators and overlays">Indicators <span class="count" id="indN">0</span><svg class="dd-car" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button><div class="dd-pop" hidden><div class="seg" id="indSeg" role="group" aria-label="Indicators">
+        <button data-ind="ema20" class="on">EMA20</button><button data-ind="ema50" class="on">EMA50</button><button data-ind="bb">BB</button><button data-ind="rsi" class="on">RSI</button><button data-ind="zones" class="on" title="Shaded risk / reward zones">Zones</button>
+      </div></div></div>
+      <div class="dd lay-dd" id="layDD"><button class="dd-btn lay-btn" id="layBtn" aria-haspopup="true" aria-expanded="false" aria-label="Chart layout" title="Chart layout (G cycles layouts)"><span class="lay-ic" id="layIc" aria-hidden="true"></span><svg class="dd-car" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button><div class="dd-pop lay-pop" hidden><div class="seg" id="mcSeg" role="group" aria-label="Chart layout"><button data-l="1" title="Single chart"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/></svg><span class="lay-n">Single chart</span></button><button data-l="2h" title="Two side by side"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5.5" height="12" rx="1.2"/><rect x="8.5" y="2" width="5.5" height="12" rx="1.2"/></svg><span class="lay-n">Two side by side</span></button><button data-l="2v" title="Two stacked"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="5.5" rx="1.2"/><rect x="2" y="8.5" width="12" height="5.5" rx="1.2"/></svg><span class="lay-n">Two stacked</span></button><button data-l="3" title="One large + two"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="7" height="12" rx="1.2"/><rect x="10" y="2" width="4" height="5.5" rx="1"/><rect x="10" y="8.5" width="4" height="5.5" rx="1"/></svg><span class="lay-n">One large + two</span></button><button data-l="4" title="2 × 2 grid (G cycles layouts)"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="2" width="5.5" height="5.5" rx="1"/><rect x="2" y="8.5" width="5.5" height="5.5" rx="1"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1"/></svg><span class="lay-n">2 × 2 grid</span></button></div></div></div>
+      <div class="mc-more" id="mcMoreWrap" hidden><button class="mc-more-btn" id="mcMore" aria-haspopup="true" aria-expanded="false" title="Layout options"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6"/><circle cx="11" cy="8" r="1.6"/><circle cx="7" cy="12" r="1.6"/></svg></button>
+        <div class="mc-pop" id="mcOpts" role="menu" hidden>
+          <button data-o="sync" role="menuitemcheckbox"><b>Sync crosshair</b><small>Hover one chart, see the same time on all</small></button>
+          <button data-o="link" role="menuitemcheckbox"><b>Link timeframe</b><small>Panes follow the main chart's timeframe</small></button>
+          <button data-o="auto" role="menuitem" class="act"><b>Fill with related pairs</b><small>Most correlated to the main pair</small></button>
+          <button data-o="reset" role="menuitem" class="act"><b>Reset pane sizes</b><small>Or double-click a divider</small></button>
+        </div></div>
+    </div>
+    <div class="decision-bar" aria-label="Current instrument context">
+      <div><span>Market</span><b id="ctxMarket">—</b></div>
+      <div><span>Spread</span><b id="ctxSpread" class="mono">—</b></div>
+      <div><span>ATR · 1H</span><b id="ctxAtr" class="mono">—</b></div>
+      <div><span>Day range</span><b id="ctxRange" class="mono">—</b></div>
+      <div><span>My exposure</span><b id="ctxExposure" class="mono">Flat</b></div>
+      <span class="decision-note">Context before action</span>
+    </div>
+    <div class="chart-body">
+    <div class="tool-strip" id="toolStrip"><div class="seg" id="toolSeg" role="group" aria-label="Levels and alerts">
+        <button data-tool="hline" title="Click chart to place a horizontal level"><svg viewBox="0 0 16 16"><path d="M2 8h12"/><circle cx="8" cy="8" r="1.6"/></svg><span class="tl">Level</span></button><button data-tool="alert" title="Click chart to place a price alert"><svg viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 018 0v4l1 1.5H3zM6.8 14h2.4"/></svg><span class="tl">Alert</span></button><button data-tool="measure" title="Click two points to measure pips, time and $ per lot (M)"><svg viewBox="0 0 16 16"><path d="M2 12L12 2l2 2L4 14z"/><path d="M5 9l1.2 1.2M7 7l1.2 1.2M9 5l1.2 1.2"/></svg><span class="tl">Measure</span></button><button data-tool="clear" title="Clear levels, alerts and drawings on this symbol"><svg viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/></svg><span class="tl">Clear</span></button>
+      </div><div class="seg" id="drawSeg" role="group" aria-label="Drawing tools">
+        <button data-tool="trend" title="Trendline — 2 clicks (L)"><svg viewBox="0 0 16 16"><path d="M2 13L14 3"/><circle cx="2.5" cy="12.5" r="1.6"/><circle cx="13.5" cy="3.5" r="1.6"/></svg><span class="tl">Trend</span></button><button data-tool="ray" title="Ray — extends to the right, 2 clicks"><svg viewBox="0 0 16 16"><path d="M2 12L15 4"/><circle cx="2.5" cy="11.7" r="1.6"/></svg><span class="tl">Ray</span></button><button data-tool="channel" title="Parallel channel — 3 clicks"><svg viewBox="0 0 16 16"><path d="M1 10L11 3M5 14L15 7"/></svg><span class="tl">Channel</span></button><button data-tool="fib" title="Fibonacci retracement — 2 clicks (F)"><svg viewBox="0 0 16 16"><path d="M2 3h12M2 6.5h12M2 9.5h12M2 13h12"/></svg><span class="tl">Fib</span></button><button data-tool="fibx" title="Fibonacci extension — 3 clicks (A, B, C)"><svg viewBox="0 0 16 16"><path d="M1 13l4-8 3 5M9 4h6M9 7h6M9 10h6"/></svg><span class="tl">Fib ext</span></button><button data-act="magnet" class="on" title="Magnet: snap points to candle open/high/low/close (hold Alt while dragging to place freely)"><svg viewBox="0 0 16 16"><path d="M4 2v6a4 4 0 008 0V2M4 5h2M10 5h2"/></svg></button>
+      </div></div>
+    <div class="mc-grid" id="mcGrid" data-layout="1">
+    <div class="chart-area">
+      <div class="quick">
+        <button class="qsell" id="qSell"><small>SELL</small><span id="qBid" class="mono">—</span></button>
+        <div class="qmid"><input id="qLots" type="number" step="0.01" min="0.01" value="1.00" aria-label="Quick lots"><small id="qSpread">—</small></div>
+        <button class="qbuy" id="qBuy"><small>BUY</small><span id="qAsk" class="mono">—</span></button>
+      </div>
+      <div class="legend mono" id="legend"></div>
+      <div class="tool-hint" id="toolHint"></div>
+      <button class="mc-main-max" id="mcMainMax" hidden title="Focus the main chart (Esc to restore)" aria-label="Focus main chart"><svg viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button>
+      <div class="chart-wrap"><div id="chart" class="chart"></div><canvas id="ovl" class="ovl" aria-hidden="true"></canvas><div class="draw-bar" id="drawBar" hidden></div></div>
+      <div id="rsiChart" class="rsi"></div>
+    </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- Right rail: ticket + intelligence -->
+  <aside class="rail" aria-label="Order ticket and market intelligence">
+    <section class="panel ticket">
+      <div class="ph"><h2>Order ticket</h2><span class="muted mono" id="tkSym">EURUSD</span><span class="tk3-spr mono">spread <b id="tkSpr" title="Spread in pips">—</b></span></div>
+      <div class="tk3-mkt" id="tkMkt" role="status" hidden></div>
+      <div class="tk3">
+      <div class="side-seg" id="sideSeg" role="group" aria-label="Direction">
+        <button data-side="sell" class="sell"><small>Sell</small><b id="tkBid" class="mono">—</b></button>
+        <button data-side="buy" class="buy on" id="tkBuyBtn"><small>Buy</small><b id="tkAsk" class="mono">—</b></button>
+      </div>
+      <div class="tk3-blk">
+        <div class="tk3-h">Order type</div>
+        <div class="seg full" id="otSeg" role="group" aria-label="Order type"><button data-ot="market" class="on"><span class="ot-n">Market</span> <small class="ot-p">now</small></button><button data-ot="limit"><span class="ot-n">Limit</span> <small class="ot-p">at a better price</small></button><button data-ot="stop"><span class="ot-n">Stop</span> <small class="ot-p">on a breakout</small></button></div>
+        <div class="tk3-pend" id="tkPend" hidden>
+          <div class="field" id="priceField" hidden><label for="tkPrice" id="tkPriceLbl">Entry price</label><div class="stepper"><button data-step="price:-1" tabindex="-1">−</button><input id="tkPrice" type="number" class="mono"><button data-step="price:1" tabindex="-1">+</button></div></div>
+        </div>
+      </div>
+
+      <div class="tk3-blk" id="tkVolBlk">
+        <div class="lbl-row tk3-h"><label>Volume · fill any one</label><span class="tk3-ctr" id="tkCtr"></span><div class="mini-seg" id="sizeMode" hidden><button data-sm="lots" class="on">Lots</button><button data-sm="risk">Risk %</button></div></div>
+        <div class="tk3-row3">
+          <div class="tk3-c" data-k="lots"><label for="tkLots"><span id="tkLotsLbl">Lots</span><i class="tk3-tag"></i></label><div class="stepper" id="lotsWrap"><button data-step="lots:-1" tabindex="-1">−</button><input id="tkLots" type="number" step="0.01" min="0.01" value="1.00" class="mono"><button data-step="lots:1" tabindex="-1">+</button></div></div>
+          <div class="tk3-c" data-k="pct"><label for="tkRisk"><span>Risk %</span><i class="tk3-tag"></i></label><div class="stepper" id="riskWrap"><button data-step="risk:-1" tabindex="-1">−</button><input id="tkRisk" type="number" step="0.05" min="0.05" value="1.00" class="mono"><button data-step="risk:1" tabindex="-1">+</button></div></div>
+          <div class="tk3-c" data-k="usd"><label for="tkRiskUsd"><span>Risk $</span><i class="tk3-tag"></i></label><input id="tkRiskUsd" type="number" step="10" min="0" class="mono"></div>
+        </div>
+        <div class="tk3-chips" id="tkChips"><span>risk</span><button type="button" data-rk="0.25">0.25%</button><button type="button" data-rk="0.5">0.5%</button><button type="button" data-rk="1">1%</button><button type="button" data-rk="2">2%</button><span class="tk3-lim" id="tkLim"></span></div>
+        <div class="hint mono" id="sizeHint"></div>
+      </div>
+
+      <div class="tk3-blk" id="tkSlBlk">
+        <div class="lbl-row tk3-h"><label><input type="checkbox" id="useSL" checked> Stop loss</label><span class="unit">pips</span><b class="tk3-money mono dn" id="slMoney"></b></div>
+        <div class="tk3-row3">
+          <div class="tk3-c" data-k="price"><label for="tkSlPx"><span>Price</span><i class="tk3-tag"></i></label><input id="tkSlPx" type="number" class="mono"></div>
+          <div class="tk3-c" data-k="pips"><label for="tkSL"><span class="tk3-un">Pips</span><i class="tk3-tag"></i></label><div class="stepper"><button data-step="sl:-1" tabindex="-1">−</button><input id="tkSL" type="number" step="1" value="20" class="mono"><button data-step="sl:1" tabindex="-1">+</button></div></div>
+          <div class="tk3-c" data-k="atr"><label for="tkSlAtr"><span>ATR ×</span><i class="tk3-tag"></i></label><input id="tkSlAtr" type="number" step="0.1" min="0" class="mono"></div>
+        </div>
+        <div class="hint mono tk3-err" id="slPx"></div>
+      </div>
+      <div class="tk3-blk" id="tkTpBlk">
+        <div class="lbl-row tk3-h"><label><input type="checkbox" id="useTP" checked> Take profit</label><span class="unit">pips</span><b class="tk3-money mono up" id="tpMoney"></b></div>
+        <div class="tk3-row3">
+          <div class="tk3-c" data-k="price"><label for="tkTpPx"><span>Price</span><i class="tk3-tag"></i></label><input id="tkTpPx" type="number" class="mono"></div>
+          <div class="tk3-c" data-k="pips"><label for="tkTP"><span class="tk3-un">Pips</span><i class="tk3-tag"></i></label><div class="stepper"><button data-step="tp:-1" tabindex="-1">−</button><input id="tkTP" type="number" step="1" value="40" class="mono"><button data-step="tp:1" tabindex="-1">+</button></div></div>
+          <div class="tk3-c" data-k="r"><label for="tkTpR"><span>R (× stop)</span><i class="tk3-tag"></i></label><input id="tkTpR" type="number" step="0.25" min="0" class="mono"></div>
+        </div>
+        <div class="hint mono tk3-err" id="tpPx"></div>
+      </div>
+      <div class="tk3-tip" id="tkTip">Fill any field · ↑ ↓ step · Shift × 10 · drag the lines on the chart</div>
+
+      <div class="tk3-sum">
+        <div class="tk3-you" id="tkYou"></div>
+        <div class="tk-sum" id="tkSum"></div>
+        <div class="rr" id="rrBar" aria-label="Risk reward"><div class="rr-risk" id="rrRisk"></div><div class="rr-rew" id="rrRew"></div></div>
+        <div class="tk-sum tk3-sum2" id="tkSum2"></div>
+      </div>
+      <div class="warn" id="tkWarn" hidden></div>
+      <button class="cta buy" id="tkSubmit">Buy 1.00 EURUSD</button>
+      <div class="tk3-pm" id="tkPmNote" hidden></div>
+      <div class="foot-note tk3-keys"><kbd>Shift</kbd>+<kbd>B</kbd>/<kbd>S</kbd> <span id="tkKeysNote">fill in the ticket; one-click trading is off.</span></div>
+      </div>
+      <details class="tk-more" id="tkMore"><summary>More — trailing stop, break-even, odds, spread cost</summary>
+      <div class="field"><div class="lbl-row"><label><input type="checkbox" id="useTrail"> Trailing stop</label><span class="unit">pips</span></div>
+        <div class="stepper"><button data-step="trail:-1">−</button><input id="tkTrail" type="number" value="15" class="mono"><button data-step="trail:1">+</button></div></div>
+        <dl class="stats" id="tkStats"></dl>
+      </details>
+    </section>
+
+    <div class="isw" id="isw" role="tablist" aria-label="Market panels"><button role="tab" data-i="iDom">Depth</button><button role="tab" data-i="iExp">Exposure</button><button role="tab" data-i="iStr">Strength</button><button role="tab" data-i="iSes">Sessions</button></div>
+    <section class="panel intel" id="iDom">
+      <div class="ph"><h2>Depth of market</h2><div class="mini-seg" id="domStep"><button data-st="1" class="on">1p</button><button data-st="5">5p</button><button data-st="10">10p</button></div></div>
+      <div class="dom-head"><span>Bid size</span><span>Price</span><span>Ask size</span></div>
+      <div id="dom" class="dom"></div>
+      <div class="foot-note">Click a bid level for a buy limit, an ask level for a sell limit. <kbd>Shift</kbd>+click places a stop order instead.</div>
+    </section>
+
+    <section class="panel intel" id="iStr">
+      <div class="ph"><h2>Currency strength</h2><div class="mini-seg" id="strSeg"><button data-lb="60">1H</button><button data-lb="240" class="on">4H</button><button data-lb="1440">1D</button></div></div>
+      <div id="strength" class="strength"></div>
+      <div class="idea" id="strIdea"></div>
+    </section>
+
+    <section class="panel intel" id="iExp">
+      <div class="ph"><h2>Net exposure</h2><span class="muted small">USD notional by currency</span></div>
+      <div id="exposure" class="exposure"></div>
+    </section>
+
+    <section class="panel intel" id="iSes">
+      <div class="ph"><h2>Sessions</h2><span class="muted small mono" id="sessNow"></span></div>
+      <div id="sessions" class="sessions"></div>
+    </section>
+  </aside>
+
+  <!-- Monitor (quote board) -->
+  <section class="panel monitor" id="monitor" aria-label="Quote monitor">
+    <div class="ph mon-ph"><h2 title="Click a quote to load it · Sell / Buy opens the ticket">Quote monitor</h2>
+      <div class="mini-seg" id="monFilter" role="group" aria-label="Instrument category"><button data-f="all" class="on">All</button><button data-f="fav" title="Favourites" aria-label="Favourites">★</button><button data-f="fx">FX</button><button data-f="index">Indices</button><button data-f="commodity">Commodities</button><button data-f="crypto">Crypto</button><button data-f="stock">Stocks</button></div><div class="mini-seg mon-sub" id="monSub" role="group" aria-label="Subgroup" hidden></div>
+      <label class="sel">Sort<select id="monSort"><option value="name">Default</option><option value="chg">Change</option><option value="abs">Biggest movers</option><option value="vol">Range vs ATR</option><option value="spr">Spread</option></select></label>
+      <div class="mini-seg" id="monDen" role="group" aria-label="Density"><button data-d="compact" class="on">Compact</button><button data-d="comfort">Comfort</button></div>
+      <div class="mon-tgs" role="group" aria-label="Monitor panels"><span class="mon-tgs-l" aria-hidden="true">Panels</span><button class="mon-tg" id="monDockBtn" aria-pressed="false" aria-controls="tabs" title="Show positions, orders and history"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 3h12v10H2zM2 9h12" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Positions</span><b class="mon-tg-n" id="monPosN">0</b><small class="mon-tg-state">Show</small></button><button class="mon-tg" id="monRailBtn" aria-pressed="false" aria-controls="iDom iExp iStr iSes" title="Show market intelligence"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 3h12v10H2zM10 3v10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Market panel</span><small class="mon-tg-state">Show</small></button></div>
+    </div>
+    <div class="mon-board" id="monBoard"></div>
+  </section>
+
+  <!-- Dock -->
+  <section class="panel dock" aria-label="Trading dock">
+    <div class="tabs-wrap"><button class="tabs-arr l" id="tabsL" aria-label="Scroll tabs left" tabindex="-1">‹</button><button class="tabs-arr r" id="tabsR" aria-label="Scroll tabs right" tabindex="-1">›</button>
+    <div class="tabs" id="tabs" role="tablist">
+      <button data-tab="positions" class="on">Positions <span class="count" id="cPos">0</span></button>
+      <button data-tab="orders">Orders <span class="count" id="cOrd">0</span></button>
+      <button data-tab="history">History</button>
+      <button data-tab="alerts">Alerts <span class="count" id="cAl">0</span></button>
+      <button data-tab="journal">Journal</button>
+      <button data-tab="brief">Market Brief</button>
+      <button data-tab="obs">Observatory</button>
+      <button data-tab="corr">Correlation</button>
+      <button data-tab="vol">Volatility</button>
+      <button data-tab="calendar">Calendar</button>
+      <button data-tab="bt">Backtester</button>
+      <button data-tab="lab">Risk Lab</button>
+      <button data-tab="calc">Calculators</button>
+      <button data-tab="behav">Behaviour</button>
+      <div class="tabs-r"><button class="ghost sm" id="dockBtn" title="Give the bottom panel more room">Expand panel</button><button class="ghost sm danger" id="closeAll" title="Close every open position at market (Shift+X)">Close all</button></div>
+    </div></div>
+    <div class="tab-body">
+      <div class="tab on" data-pane="positions"><div class="position-overview" id="positionOverview" hidden><div><span>Open P&amp;L</span><b id="poPnl" class="mono">—</b></div><div><span>Gross exposure</span><b id="poExposure" class="mono">—</b></div><div><span>Protected</span><b id="poProtected" class="mono">—</b></div><div><span>In profit</span><b id="poWinners" class="mono">—</b></div><p id="poRead">Portfolio status</p></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Symbol</th><th>Side</th><th>Lots</th><th>Entry</th><th>Price</th><th>SL</th><th>TP</th><th title="Pips on FX, points on CFDs">Pips / pt</th><th>P&amp;L</th><th></th></tr></thead><tbody id="posBody"></tbody></table><div class="empty" id="posEmpty"><div class="es"><svg class="es-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg><b class="es-t">No open positions</b><p class="es-p">Size a trade by risk in the ticket, use the quick-trade buttons on the chart, or press <kbd>⌘K</kbd> and type <code>buy 1 eurusd sl 20 tp 40</code>.</p><div class="es-act"><button type="button" class="es-b pri" data-es="ticket">Open the order ticket</button><button type="button" class="es-b" data-es="cmd">Command bar</button><button type="button" class="es-b" data-es="tour">Take the 60-second tour</button></div></div></div></div></div>
+      <div class="tab" data-pane="orders"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Symbol</th><th>Type</th><th>Lots</th><th>Price</th><th>Distance</th><th>SL</th><th>TP</th><th></th></tr></thead><tbody id="ordBody"></tbody></table><div class="empty" id="ordEmpty"><div class="es"><svg class="es-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg><b class="es-t">No pending orders</b><p class="es-p">Limit and stop orders wait here until price reaches them. On a phone you can also long-press the chart at a price.</p><div class="es-act"><button type="button" class="es-b pri" data-es="limit">Place a limit order</button><button type="button" class="es-b" data-es="ticket">Open the order ticket</button></div></div></div></div></div>
+      <div class="tab" data-pane="history"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Closed</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Entry</th><th>Exit</th><th title="Pips on FX, points on CFDs">Pips / pt</th><th>R</th><th>P&amp;L</th><th>Reason</th></tr></thead><tbody id="histBody"></tbody></table><div class="empty" id="histEmpty"><div class="es"><svg class="es-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4M12 8v4l3 2"/></svg><b class="es-t">No closed trades yet</b><p class="es-p">Every closed trade lands here with pips, R-multiple and the exit reason, and feeds the Journal and the Behaviour coach.</p><div class="es-act"><button type="button" class="es-b pri" data-es="ticket">Place a practice trade</button><button type="button" class="es-b" data-es="journal">See the Journal</button></div></div></div></div></div>
+      <div class="tab" data-pane="journal"><div class="journal">
+        <div class="jkpis"><div class="jc-head"><h3>Statistics</h3><span class="muted small">closed trades, net of commission</span></div><div class="kpis" id="kpis" tabindex="0" role="region" aria-label="Journal statistics"></div></div>
+        <div class="jchart"><div class="jc-head"><h3>Equity curve</h3><span class="muted small">closed trades</span></div><canvas id="eqCanvas"></canvas></div>
+        <div class="jnotes"><div class="coach" id="coach"></div><h3>Trade notes</h3><div id="jList" class="jlist"></div></div>
+      </div></div>
+      <div class="tab" data-pane="alerts"><div class="alerts">
+        <form id="alertForm" class="inline-form"><select id="alSym"></select><select id="alCond"><option value="above">crosses above</option><option value="below">crosses below</option></select><input id="alPx" type="number" step="any" class="mono" placeholder="Price" required><button class="ghost">Add alert</button></form>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Symbol</th><th>Condition</th><th>Price</th><th>Distance</th><th>Status</th><th></th></tr></thead><tbody id="alBody"></tbody></table><div class="empty" id="alEmpty"><div class="es"><svg class="es-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><b class="es-t">No alerts</b><p class="es-p">Set one with the form above, pick the Alert tool and click the chart, or long-press the chart on a phone.</p><div class="es-act"><button type="button" class="es-b pri" data-es="alpx">Add an alert</button><button type="button" class="es-b" data-es="alerttool">Use the chart Alert tool</button></div></div></div></div>
+      </div></div>
+      <div class="tab" data-pane="calendar"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time (UTC)</th><th>In</th><th>Ccy</th><th class="l">Event</th><th>Impact</th><th>Forecast</th><th>Previous</th><th>Actual</th></tr></thead><tbody id="calBody"></tbody></table></div><div class="foot-note pad">Simulated events. When an event releases, the surprise versus forecast moves its currency — plan stops around high-impact releases.</div></div>
+      <div class="tab" data-pane="corr"><div class="corr-wrap"><div class="corr-ctrl"><div class="mini-seg" id="corrSet" role="group" aria-label="Instruments"><button data-cs="fx" class="on" aria-pressed="true">FX</button><button data-cs="all" aria-pressed="false">All</button></div><span class="muted small">Correlation of returns · window</span><div class="mini-seg" id="corrSeg"><button data-lb="240">4H</button><button data-lb="1440" class="on">1D</button><button data-lb="4320">3D</button></div></div><div id="corr" class="corr"></div></div></div>
+      <div class="tab" data-pane="vol"><div id="volBody" class="volgrid"></div></div>
+      <div class="tab" data-pane="lab"><div class="lab">
+        <form class="lab-form" id="labForm">
+          <h3>Monte Carlo strategy stress test</h3>
+          <label>Win rate %<input id="lWin" type="number" value="45" min="1" max="99"></label>
+          <label>Reward : risk<input id="lRR" type="number" value="2" step="0.1" min="0.1"></label>
+          <label>Risk per trade %<input id="lRisk" type="number" value="1" step="0.25" min="0.05"></label>
+          <label>Trades<input id="lN" type="number" value="200" min="10" max="2000"></label>
+          <div class="lab-btns"><button class="cta buy sm" type="submit">Run 1,000 paths</button><button class="ghost sm" type="button" id="labFromJ">Use my journal</button></div>
+          <div id="labOut" class="lab-out"></div>
+        </form>
+        <canvas id="labCanvas"></canvas>
+      </div></div>
+      <div class="tab" data-pane="brief"><div class="brief"><aside class="br-scan"><div class="scan-head"><span>Trend scanner</span><span class="muted small" id="brScanN">16 FX majors</span></div><div id="brScan"></div></aside><div class="br-main" id="brMain"></div></div></div>
+      <div class="tab" data-pane="bt"><div class="bt"><aside class="bt-cfg" id="btCfg"></aside><div class="bt-out" id="btOut"></div></div></div>
+      <div class="tab" data-pane="obs"><p class="obs-scope muted small">Currency market only (16 FX pairs): the Observatory, Edge check and Baskets are built on currencies; CFDs are not part of them.</p><div class="obs" id="obs"></div></div>
+      <div class="tab" data-pane="behav"><div class="behav" id="behav"></div></div>
+      <div class="tab" data-pane="calc"><div class="calcs">
+        <div class="calc"><h3>Position size</h3>
+          <label>Instrument<select id="cpSym"></select></label><label>Account (USD)<input id="cpAcc" type="number" value="100000"></label><label>Risk %<input id="cpRisk" type="number" value="1" step="0.1"></label><label><span>Stop (<span id="cpUnit">pips</span>)</span><input id="cpSL" type="number" value="25"></label>
+          <div class="calc-out" id="cpOut"></div></div>
+        <div class="calc"><h3>Pip / point value &amp; margin</h3>
+          <label>Instrument<select id="pvSym"></select></label><label>Lots<input id="pvLots" type="number" value="1" step="0.01"></label><label><span>Leverage <span id="pvLevTag" class="calc-tag"></span></span><input id="pvLev" type="number" value="30" min="1" step="1"></label>
+          <div class="calc-out" id="pvOut"></div></div>
+        <div class="calc"><h3>Compounding</h3>
+          <label>Start (USD)<input id="cgStart" type="number" value="10000"></label><label>Monthly return %<input id="cgRet" type="number" value="3" step="0.1"></label><label>Months<input id="cgM" type="number" value="24"></label>
+          <div class="calc-out" id="cgOut"></div></div>
+      </div></div>
+    </div>
+  </section>
+</main>
+
+<footer class="statusbar" id="statusbar" aria-label="Status bar">
+  <span class="pill demo" id="feedPill" title="Starting level: bid 2026-10-20 13:19 UTC from the broker platform (live / last 1H close); simulated since, zero drift; volatility calibrated on 30 days of 1H bars">SIM · platform snapshot</span>
+  <span id="demoPill" class="pill demo-flag" title="Demo account: the trade history is synthetic, generated on the 16 FX pairs of the simulated market (no CFDs)">DEMO · synthetic trades</span>
+  <span class="sb-i mono" id="sbSess" title="Sessions open now"></span>
+  <div class="clock" id="simClock" title="Simulated market time (UTC)">--:--:-- UTC</div>
+  <span class="sb-sp"></span>
+  <div class="m sb-m"><label>Used margin</label><b id="mMargin">—</b></div>
+  <div class="m sb-m"><label>Drawdown</label><b id="mDD">—</b></div>
+  <label class="sel" title="Simulation speed — compress time to test strategies faster"><span>Speed</span>
+      <select id="speedSel"><option value="1">1×</option><option value="10">10×</option><option value="60">60×</option><option value="300">300×</option></select></label>
+  <label class="sel" title="Account leverage"><span>Lev</span>
+      <select id="levSel"><option value="30">1:30</option><option value="50">1:50</option><option value="100" selected>1:100</option><option value="200">1:200</option><option value="500">1:500</option></select></label>
+  <span class="sel" id="sbLayout"><span>Layout</span></span>
+</footer>
+
+<!-- Command palette -->
+<div class="overlay" id="cmd" hidden>
+  <div class="cmd-box" role="dialog" aria-label="Command bar">
+    <input id="cmdInput" class="mono" placeholder="buy 0.5 gbpjpy sl 30 tp 60 · sell eurusd · close all · alert eurusd above 1.13 · tf 60 · speed 60" autocomplete="off">
+    <div id="cmdList" class="cmd-list"></div>
+  </div>
+</div>
+
+<!-- Help -->
+<div class="overlay" id="help" hidden>
+  <div class="modal" role="dialog" aria-label="Guide">
+    <div class="ph"><h2>trade.Berry — quick guide</h2><button class="icon-btn" data-close>✕</button></div>
+    <div class="help-grid">
+      <div><h3>Keyboard</h3><ul class="keys">
+        <li><kbd>⌘/Ctrl</kbd><kbd>K</kbd> Command bar</li><li><kbd>Shift</kbd><kbd>B</kbd> Buy (instant only with one-click on)</li><li><kbd>Shift</kbd><kbd>S</kbd> Sell (instant only with one-click on)</li>
+        <li><kbd>1</kbd>–<kbd>5</kbd> Timeframes</li><li><kbd>Alt</kbd><kbd>1</kbd>–<kbd>5</kbd> Workspaces</li><li><kbd>↑</kbd><kbd>↓</kbd> Next / previous pair</li><li><kbd>Shift</kbd><kbd>X</kbd> Close all</li><li><kbd>M</kbd> Measure tool</li><li><kbd>I</kbd> Market brief</li><li><kbd>T</kbd> Backtester</li><li><kbd>L</kbd> Trendline · <kbd>F</kbd> Fibonacci</li><li><kbd>Del</kbd> Delete selected drawing</li><li><kbd>G</kbd> Cycle chart layouts</li><li><kbd>O</kbd> Observatory</li><li><kbd>Y</kbd> Behaviour</li><li><kbd>Shift</kbd><kbd>F</kbd> Full screen</li><li><kbd>Esc</kbd> Cancel tool / close</li></ul></div>
+      <div><h3>What makes it different</h3><ul class="feat">
+        <li>Risk-first ticket: size by % of equity, see $ risk, R:R and margin before you click.</li>
+        <li>Drag SL/TP directly on the chart — for the ticket and for open positions.</li>
+        <li>Correlation guard warns when a new trade stacks exposure you already hold.</li>
+        <li>Net currency exposure decomposes every position into its underlying currencies.</li>
+        <li>Natural-language command bar for execution, alerts and navigation.</li>
+        <li>Risk Lab stress-tests your journal stats with 1,000 Monte Carlo paths.</li>
+        <li>Time compression up to 300× to rehearse a full session in minutes.</li><li>Multi-chart layouts (up to 2 × 2) with synced crosshair, timeframe link, one-click trading in every pane and auto-fill with correlated pairs.</li><li>Drawing tools — trendlines, rays, channels, Fibonacci retracements and extensions — anchored in time so they survive timeframe changes; trendlines can fire alerts.</li><li>Strategy backtester with minute-level fills, out-of-sample check, parameter heatmap and all-pairs robustness test.</li><li>Market Brief: an analyst-style write-up for every pair, with a bias scanner, key levels and a one-click trade plan.</li><li>Observatory: correlation constellation, regime map (Hurst × entropy), intrinsic-time event chart, historical analogues with an honest hit-rate check, recurrence plot, currency drivers, volatility clock and a horizon-chart tapestry of all pairs.</li><li>Behaviour: a pre-mortem before risky trades (with red flags found automatically and tracking of trades you skipped) and a disposition-effect meter (Odean's PGR vs PLR).</li><li>Baskets: build any weighted currency index, chart it, find its closest pair and trade it as one set of legs. Intrinsic-time candles: one candle per δ move.</li><li>Listen to the market: sonified ticks and a portfolio heartbeat; the ticket shows random-walk odds of hitting TP before SL and the typical time to resolve.</li><li>Depth-of-market ladder: one click places a limit or stop order at that exact price.</li><li>Trade coach reads your history and flags revenge trades, loss aversion and your best pairs and sessions.</li></ul></div>
+    </div>
+    <p class="sim-label" id="simLabel"><b>SIM</b> Prices are simulated (a zero-drift random walk starting from a broker platform snapshot of 2026-10-20). Directional edge is zero by construction; analytics here measure risk, behaviour and luck.</p>
+    <p class="muted small">Volatility follows the trading sessions and currencies move together through shared factors. This is a demo environment — no real money is at risk.</p>
+    <p class="muted small" id="chartLicence"><b>Charts:</b> TradingView Lightweight Charts™ v5.2.1, Apache License 2.0. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. <a href="https://www.tradingview.com/" target="_blank" rel="noopener">https://www.tradingview.com/</a></p>
+    <p class="muted small"><b>Where your account is kept:</b> <span id="persistNote">Session only — lasts until reload. Export is the only guarantee: it downloads a copy you keep, and Import brings it back in any browser.</span></p>
+    <div class="help-set"><h3>Settings</h3>
+      <label class="set-row"><input type="checkbox" id="oneClickSet"><span><b>One-click trading</b><small class="muted">Off: the quick-trade buttons, the B/S buttons on chart panes and <kbd>Shift</kbd>+<kbd>B</kbd>/<kbd>S</kbd> only fill in the order ticket, and you send from there. On: they send a market order immediately.</small></span></label>
+    </div>
+    <div class="acct-actions"><button class="ghost sm" id="exportBtn">Export account</button><button class="ghost sm" id="importBtn">Import account</button><input type="file" id="importFile" accept="application/json,.json" hidden><button class="link" id="resetAcct" title="Starts a fresh $100,000 account and erases the one saved in this browser">Reset demo account</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="vendor/lightweight-charts-5.2.1.js"></script>
+<script src="catalog.js"></script>
+<script src="engine.js"></script>
+<script src="livefeed.js"></script>
+<script src="shared.js"></script>
+<script src="app.js"></script>
+<script src="trade.js"></script>
+<script src="chart.js"></script>
+<script src="ticket.js"></script>
+<script src="panels.js"></script>
+<script src="challenge.js"></script>
+<script src="replay.js"></script>
+<script src="persist.js"></script>
+<script src="cloud.js"></script>
+<script src="pro.js"></script>
+<script src="brief.js"></script>
+<script src="draw.js"></script>
+<script src="mc.js"></script>
+<script src="behav.js"></script>
+<script src="mnav.js"></script>
+<script src="pwa.js"></script>
+<script src="gestures.js"></script>
+<script src="ui.js"></script>
+<script src="shell.js"></script>
+<script src="demo.js"></script>
+<script src="fit.js"></script>
+<script src="opening.js"></script>
+</body>
+</html>

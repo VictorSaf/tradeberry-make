@@ -1,0 +1,10 @@
+{
+  "description": "O platformă modernă de tranzacționare a instrumentelor financiare, cu o interfață intuitivă și practică pentru începători și profesioniști.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
