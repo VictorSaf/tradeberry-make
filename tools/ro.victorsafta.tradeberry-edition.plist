@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- tradeBerry Opening Note: every 2 minutes, writes today's edition if there is none yet or an administrator asked
+     for a new one (tools/edition.mjs --if-needed). Install: cp to ~/Library/LaunchAgents, then launchctl load. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>ro.victorsafta.tradeberry-edition</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/victorsafta/Projects/MeridianFX/2-cod-sursa/tools/edition.mjs</string><string>--if-needed</string></array>
+  <key>WorkingDirectory</key><string>/Users/victorsafta/Projects/MeridianFX/2-cod-sursa</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/Users/victorsafta/.local/bin</string></dict>
+  <key>StartInterval</key><integer>120</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/Users/victorsafta/Library/Logs/tradeberry-edition.log</string>
+  <key>StandardErrorPath</key><string>/Users/victorsafta/Library/Logs/tradeberry-edition.log</string>
+</dict></plist>

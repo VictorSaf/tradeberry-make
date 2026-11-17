@@ -1,0 +1,9 @@
+{
+  "name": "tradeberry-host",
+  "private": true,
+  "type": "module",
+  "description": "tradeBerry served from its own machine (Mac mini): node host/server.mjs",
+  "dependencies": {
+    "ws": "8.22.2"
+  }
+}

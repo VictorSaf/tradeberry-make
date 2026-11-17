@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculators guide · tradeBerry</title>
+<meta name="description" content="How the Position size, Pip / point value & margin and Compounding calculators of tradeBerry work, with every formula, worked examples and calculators to try.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* the in-page calculators of this guide: number fields and selects, the account strip, refusal and note lines */
+.calc .cin select,.calc .cin input[type=number],.cset select{font:13px var(--mono);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:5px 7px;width:160px;max-width:100%}
+.calc .cin input[readonly]{color:var(--tx3);cursor:default}
+.calc label.sw[hidden]{display:none}
+.calc>div{min-width:0}.calc .cin label.sw{flex-wrap:wrap}.calc .parts b{overflow-wrap:anywhere}
+.tw{overflow-x:auto;max-width:100%;margin:14px 0 8px}.tw>.g-t{margin:0}
+.calc .cin h5{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+.calc .cin h5+label.sw{padding-top:4px}
+.calc .cin .gap{height:14px}
+.calc .ln{margin-top:10px;font-size:13px;line-height:1.45}
+.calc .ln.err{color:var(--dn)}.calc .ln.err::before{content:'✕ ';font-weight:700}
+.calc .ln.nt{color:var(--tx2)}
+.calc .tot small{font-size:13px;color:var(--tx3)}
+.cset{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin:18px 0 0;padding:12px 16px;border:1px solid var(--line);background:var(--s1);font-size:14px}
+.cset label{display:flex;align-items:center;gap:10px}
+.cset .mut{font-size:12.5px}
+.calc-h{margin:22px 0 -8px;font-size:15px}
+@media (max-width:560px){.calc .cin select,.calc .cin input[type=number]{width:130px}}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Strategy Lab <i>/</i> Calculators</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the calculators are</a>
+  <a href="#minute"><span>02</span>The page in one minute</a>
+  <a href="#map"><span>03</span>Map of the page</a>
+  <span class="p">II · The instrument behind the numbers</span>
+  <a href="#units"><span>04</span>Pips and points</a>
+  <a href="#contract"><span>05</span>Contract size and lots</a>
+  <a href="#convert"><span>06</span>From quote currency to USD</a>
+  <a href="#leverage"><span>07</span>Leverage and jurisdiction</a>
+  <span class="p">III · The three calculators</span>
+  <a href="#psize"><span>08</span>Position size</a>
+  <a href="#refuse"><span>09</span>When the size cannot be traded</a>
+  <a href="#pvalue"><span>10</span>Pip / point value &amp; margin</a>
+  <a href="#compound"><span>11</span>Compounding</a>
+  <span class="p">IV · Examples and comparisons</span>
+  <a href="#same"><span>12</span>Same risk, different instruments</a>
+  <a href="#ptstops"><span>13</span>Stops in points on CFDs</a>
+  <a href="#jur"><span>14</span>Margin under each jurisdiction</a>
+  <a href="#try"><span>15</span>Try it</a>
+  <a href="#uses"><span>16</span>Using them in practice</a>
+  <span class="p">V · Reference</span>
+  <a href="#limits"><span>17</span>Limits and caveats</a>
+  <a href="#ref"><span>18</span>All formulas and rules</a>
+  <a href="#glossary"><span>19</span>Glossary</a>
+  <a href="#more"><span>20</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Strategy Lab</span>
+  <h1>Calculators</h1>
+  <p class="g-lede">Three small calculators that turn a plan into numbers before you trade: how many lots a stop and a risk allow, what one pip or point of a position is worth and how much margin it ties up, and where a steady monthly return leads. They use the same instrument sheet, the same live conversion rates and the same leverage rules as the order ticket.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Strategy Lab › Calculators</b></div>
+    <div><label>Calculators</label><b>Position size · Pip / point value &amp; margin · Compounding</b></div>
+    <div><label>Refresh</label><b>On every change, and every 2 s while open</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What each calculator answers and where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the calculators are</h3></div>
+  <p class="lead">The Calculators tab holds three cards side by side. Each one answers a single question with the account rules of tradeBerry, so the numbers match what the ticket and the account would show for the same trade.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 20V10M12 20V4M17 20v-7"/></svg></div><h5>Position size</h5><p>“How big can I trade if I risk this share of my account and my stop is this far away?” It gives the lots, the money really at risk, the pip value and the margin.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5h4.5a1.5 1.5 0 010 3H10"/></svg></div><h5>Pip / point value &amp; margin</h5><p>“What is one pip (or point) of this size worth, and what does it cost to hold?” It gives the pip value, the units, the margin, the notional and the spread cost.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18c5 0 9-3 16-12"/><path d="M15 6h5v5"/></svg></div><h5>Compounding</h5><p>“Where does a fixed monthly return lead after so many months?” It gives the final balance, the gain, the total return and the annualised rate.</p></div>
+  </div>
+  <div class="call key"><b class="t">Nothing is sent</b><p>The calculators never place, change or check an order. They read the instrument sheet, the live quotes and your leverage profile, and only display results. The Account field is whatever you type: it is not linked to your balance.</p></div>
+  <p class="mut">Strategy Lab is opened per user: the administrator ticks it in Administration. If you do not see the Strategy Lab page, it is not enabled for your login.</p>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The page in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Pick the instrument</h5><p>Each card has its own list: every instrument you can trade, or close only, under your profile.</p></div>
+    <div><h5>Set the stop first</h5><p>Position size: account, risk % and stop in pips (FX) or pt (everything else).</p></div>
+    <div><h5>Read the size</h5><p>The lots, rounded <b>down</b> to the sheet’s step, and the money really at risk.</p></div>
+    <div><h5>Check the cost</h5><p>Pip / point value &amp; margin: margin, notional and the spread you pay on entry.</p></div>
+    <div><h5>Heed the red lines</h5><p>A size below the minimum, above the maximum or above 25× equity is flagged: the ticket would refuse it.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the page</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 318" role="img" aria-label="The three calculator cards with their inputs and outputs">
+      <g>
+        <rect x="1" y="4" width="246" height="308" class="s-box"/>
+        <text x="14" y="26" class="b s-tx">Position size</text>
+        <text x="14" y="50" class="s s-tx3">Instrument</text><rect x="104" y="38" width="130" height="18" class="s-box2"/><text x="112" y="51" class="s m s-tx">EUR/USD ▾</text>
+        <text x="14" y="74" class="s s-tx3">Account (USD)</text><rect x="104" y="62" width="130" height="18" class="s-box2"/><text x="112" y="75" class="s m s-tx">100000</text>
+        <text x="14" y="98" class="s s-tx3">Risk %</text><rect x="104" y="86" width="130" height="18" class="s-box2"/><text x="112" y="99" class="s m s-tx">1</text>
+        <text x="14" y="122" class="s s-tx3">Stop (pips)</text><rect x="104" y="110" width="130" height="18" class="s-box2"/><text x="112" y="123" class="s m s-tx">12</text>
+        <path d="M10 140 H238" class="s-ln"/>
+        <text x="14" y="164" class="s s-tx2">Position size</text><text x="234" y="166" text-anchor="end" class="l m b s-tx">8.33 lots</text>
+        <text x="14" y="188" class="s s-tx2">Units</text><text x="234" y="188" text-anchor="end" class="s m s-tx">833,000 EUR</text>
+        <text x="14" y="208" class="s s-tx2">Amount at risk</text><text x="234" y="208" text-anchor="end" class="s m s-tx">$999.60</text>
+        <text x="14" y="228" class="s s-tx2">Pip value</text><text x="234" y="228" text-anchor="end" class="s m s-tx">$83.30</text>
+        <text x="14" y="248" class="s s-tx2">Margin at profile</text><text x="234" y="248" text-anchor="end" class="s m s-tx">$1,869.80 (Sheet 1:500)</text>
+        <text x="14" y="276" class="s s-dn">warnings in red, when there are any</text>
+      </g>
+      <g>
+        <rect x="257" y="4" width="246" height="308" class="s-box"/>
+        <text x="270" y="26" class="b s-tx">Pip / point value &amp; margin</text>
+        <text x="270" y="50" class="s s-tx3">Instrument</text><rect x="360" y="38" width="130" height="18" class="s-box2"/><text x="368" y="51" class="s m s-tx">EUR/USD ▾</text>
+        <text x="270" y="74" class="s s-tx3">Lots</text><rect x="360" y="62" width="130" height="18" class="s-box2"/><text x="368" y="75" class="s m s-tx">1</text>
+        <text x="270" y="98" class="s s-tx3">Leverage</text><rect x="360" y="86" width="130" height="18" class="s-box2"/><text x="368" y="99" class="s m s-tx">500</text>
+        <text x="270" y="122" class="s m s-tx3">Sheet 1:500 · maximum 1:500</text>
+        <path d="M266 140 H494" class="s-ln"/>
+        <text x="270" y="164" class="s s-tx2">Pip value</text><text x="490" y="166" text-anchor="end" class="l m b s-tx">$10.00</text>
+        <text x="270" y="188" class="s s-tx2">Units</text><text x="490" y="188" text-anchor="end" class="s m s-tx">100,000 EUR</text>
+        <text x="270" y="208" class="s s-tx2">Margin</text><text x="490" y="208" text-anchor="end" class="s m s-tx">$224.47</text>
+        <text x="270" y="228" class="s s-tx2">Notional</text><text x="490" y="228" text-anchor="end" class="s m s-tx">$112,233.00</text>
+        <text x="270" y="248" class="s s-tx2">Spread cost</text><text x="490" y="248" text-anchor="end" class="s m s-tx">$12.00</text>
+        <text x="270" y="276" class="s s-tx3">a what-if note when the leverage</text><text x="270" y="290" class="s s-tx3">differs from your account’s</text>
+      </g>
+      <g>
+        <rect x="513" y="4" width="246" height="308" class="s-box"/>
+        <text x="526" y="26" class="b s-tx">Compounding</text>
+        <text x="526" y="50" class="s s-tx3">Start (USD)</text><rect x="616" y="38" width="130" height="18" class="s-box2"/><text x="624" y="51" class="s m s-tx">10000</text>
+        <text x="526" y="74" class="s s-tx3">Monthly return %</text><rect x="616" y="62" width="130" height="18" class="s-box2"/><text x="624" y="75" class="s m s-tx">3</text>
+        <text x="526" y="98" class="s s-tx3">Months</text><rect x="616" y="86" width="130" height="18" class="s-box2"/><text x="624" y="99" class="s m s-tx">24</text>
+        <path d="M522 140 H750" class="s-ln"/>
+        <text x="526" y="164" class="s s-tx2">Final balance</text><text x="746" y="166" text-anchor="end" class="l m b s-tx">$20,327.94</text>
+        <text x="526" y="188" class="s s-tx2">Total gain</text><text x="746" y="188" text-anchor="end" class="s m s-tx">+$10,327.94</text>
+        <text x="526" y="208" class="s s-tx2">Total return</text><text x="746" y="208" text-anchor="end" class="s m s-tx">+103.3%</text>
+        <text x="526" y="228" class="s s-tx2">Annualised</text><text x="746" y="228" text-anchor="end" class="s m s-tx">+42.6%</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The three cards with their default inputs. The stop of 12 pips is New order’s default for EUR/USD at the sheet’s snapshot (bid 1.12233); results are examples with no jurisdiction cap. Your figures follow the live price, the live default stop and your profile.</figcaption></figure>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Field</th><th>Default</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td>Instrument</td><td class="n">first in the list</td><td>Every instrument offered (or close only) under your leverage profile, grouped as in the watchlist. Each card keeps its own choice.</td></tr>
+      <tr><td>Account (USD)</td><td class="n">100000</td><td>The equity you size from, typed by you.</td></tr>
+      <tr><td>Risk %</td><td class="n">1</td><td>The share of the account you accept to lose if the stop is hit.</td></tr>
+      <tr><td>Stop (pips) / Stop (pt)</td><td class="n">New order’s default</td><td>The distance from entry to stop. Each time you pick an instrument it is filled with the default stop New order uses for it, in that instrument’s unit: <b>pips</b> on FX, <b>pt</b> on every other instrument (chapter 04). Type over it with your own stop.</td></tr>
+      <tr><td>Lots</td><td class="n">1</td><td>The size for the pip value card. On a stock the unit is shares.</td></tr>
+      <tr><td>Leverage</td><td class="n">your account’s</td><td>Filled with the leverage your account uses on the instrument; editable only when no jurisdiction cap is set (chapter 10). The tag next to the label states it.</td></tr>
+      <tr><td>Start (USD) · Monthly return % · Months</td><td class="n">10000 · 3 · 24</td><td>The compounding inputs.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>The instrument behind the numbers</h2><p>The four facts every result is built from: the unit of a move, the contract size, the conversion into dollars and the leverage.</p></div></div>
+
+<section class="ch" id="units">
+  <div class="ch-h"><span class="n">04</span><h3>Pips and points</h3></div>
+  <p>Stops, targets, spreads and pip values are counted in one <b>displayed unit</b> per instrument:</p>
+  <ul>
+    <li><b>FX: the pip.</b> The pip is one step of the second-to-last digit when the price has an odd number of decimals (5 on EUR/USD, 3 on USD/JPY), else the last digit. So 0.0001 on EUR/USD, 0.01 on USD/JPY and EUR/HUF.</li>
+    <li><b>Everything else: the point (pt)</b>, the platform’s smallest price step, 10<sup>−digits</sup>. That is 0.01 on US.500, GOLD, BTCUSD and stocks, 0.1 on DE.30, 1 on JAP225. It is <b>not</b> the “index point” of everyday speech.</li>
+  </ul>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 280" role="img" aria-label="Where the pip or the point sits in five prices">
+      <text x="14" y="24" class="s b s-tx3">INSTRUMENT</text><text x="170" y="24" class="s b s-tx3">PRICE (digit marked = one unit)</text><text x="420" y="24" class="s b s-tx3">ONE UNIT IS</text>
+      <g class="m">
+        <text x="14" y="62" class="b s-tx">EUR/USD</text>
+        <rect x="240" y="44" width="16" height="26" class="s-inbg" style="stroke:var(--info)"/>
+        <text x="170" y="64" class="l s-tx" style="font-size:20px"><tspan x="172">1</tspan><tspan x="186">.</tspan><tspan x="200">1</tspan><tspan x="214">2</tspan><tspan x="228">2</tspan><tspan x="242">3</tspan><tspan x="256">3</tspan></text>
+        <text x="420" y="56" class="s-tx">1 pip = 0.0001</text><text x="420" y="72" class="s s-tx3">the last digit (0.00001) is a tenth of a pip</text>
+        <text x="14" y="112" class="b s-tx">USD/JPY</text>
+        <rect x="240" y="94" width="16" height="26" class="s-inbg" style="stroke:var(--info)"/>
+        <text x="170" y="114" class="l s-tx" style="font-size:20px"><tspan x="172">1</tspan><tspan x="186">5</tspan><tspan x="200">8</tspan><tspan x="214">.</tspan><tspan x="228">0</tspan><tspan x="242">0</tspan><tspan x="256">0</tspan></text>
+        <text x="420" y="106" class="s-tx">1 pip = 0.01</text><text x="420" y="122" class="s s-tx3">JPY pairs: two decimals to the pip</text>
+        <text x="14" y="162" class="b s-tx">US.500</text>
+        <rect x="254" y="144" width="16" height="26" style="fill:var(--ind1);fill-opacity:.14;stroke:var(--ind1)"/>
+        <text x="170" y="164" class="l s-tx" style="font-size:20px"><tspan x="172">7</tspan><tspan x="186">4</tspan><tspan x="200">9</tspan><tspan x="214">1</tspan><tspan x="228">.</tspan><tspan x="242">2</tspan><tspan x="256">5</tspan></text>
+        <text x="420" y="156" class="s-tx">1 pt = 0.01</text><text x="420" y="172" class="s s-tx3">one index point (1.00) = 100 pt</text>
+        <text x="14" y="212" class="b s-tx">DE.30</text>
+        <rect x="254" y="194" width="16" height="26" style="fill:var(--ind1);fill-opacity:.14;stroke:var(--ind1)"/>
+        <text x="170" y="214" class="l s-tx" style="font-size:20px"><tspan x="172">2</tspan><tspan x="186">4</tspan><tspan x="200">5</tspan><tspan x="214">7</tspan><tspan x="228">2</tspan><tspan x="242">.</tspan><tspan x="256">0</tspan></text>
+        <text x="420" y="206" class="s-tx">1 pt = 0.1</text><text x="420" y="222" class="s s-tx3">one index point (1.0) = 10 pt</text>
+        <text x="14" y="258" class="b s-tx">JAP225</text>
+        <rect x="226" y="240" width="16" height="26" style="fill:var(--ind1);fill-opacity:.14;stroke:var(--ind1)"/>
+        <text x="170" y="260" class="l s-tx" style="font-size:20px"><tspan x="172">6</tspan><tspan x="186">4</tspan><tspan x="200">2</tspan><tspan x="214">8</tspan><tspan x="228">0</tspan></text>
+        <text x="420" y="252" class="s-tx">1 pt = 1</text><text x="420" y="268" class="s s-tx3">no decimals: here a pt is an index point</text>
+      </g>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>Blue: the pip of an FX pair. Purple: the point (pt) of a CFD, its last digit. Prices are example bids from the instrument snapshot.</figcaption></figure>
+  <div class="call key"><b class="t">The stop starts in the right unit</b><p>When you pick an instrument, the Stop field is filled with New order’s default stop for it: the larger of 3 × the spread (never below the sheet’s default spread) and a volatility distance (2 × the instrument’s typical one-hour move, or half the 1-hour ATR(14)), rounded up, in pips or pt. At the sheet’s snapshot that is about 12 pips on EUR/USD, 1,835 pt (18.35 index points) on US.500 and 1,749 pt ($17.49) on GOLD. It is a starting point, not your stop: put the stop where your idea is wrong. Remember that a CFD pt is the last digit of the price, so 25 pt on US.500 would be only 0.25 index points.</p></div>
+</section>
+
+<section class="ch" id="contract">
+  <div class="ch-h"><span class="n">05</span><h3>Contract size and lots</h3></div>
+  <p>Every size is in <b>lots</b> (shares on a stock). The instrument sheet says how much of the asset one lot is (the contract size) and which sizes an order may have: <b>[minimum, maximum, step]</b>.</p>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Type</th><th>Example</th><th>1 lot is</th><th>Unit of a move</th><th>Sizes (min · max · step)</th></tr></thead>
+    <tbody>
+      <tr><td>FX pair</td><td>EUR/USD</td><td class="n">100,000 EUR</td><td class="n">pip 0.0001</td><td class="n">0.01 · 400 · 0.01 lots</td></tr>
+      <tr><td>FX, JPY quote</td><td>USD/JPY</td><td class="n">100,000 USD</td><td class="n">pip 0.01</td><td class="n">0.01 · 400 · 0.01 lots</td></tr>
+      <tr><td>Gold</td><td>GOLD</td><td class="n">100 Ounces</td><td class="n">pt 0.01</td><td class="n">0.01 · 100 · 0.01 lots</td></tr>
+      <tr><td>Energy</td><td>OIL</td><td class="n">1,000 Barrels</td><td class="n">pt 0.01</td><td class="n">0.01 · 100 · 0.01 lots</td></tr>
+      <tr><td>Index</td><td>US.500</td><td class="n">$50 per 1.00 move</td><td class="n">pt 0.01</td><td class="n">0.01 · 100 · 0.01 lots</td></tr>
+      <tr><td>Index, EUR</td><td>DE.30</td><td class="n">€25 per 1.0 move</td><td class="n">pt 0.1</td><td class="n">0.01 · 100 · 0.01 lots</td></tr>
+      <tr><td>Index, whole points</td><td>JAP225</td><td class="n">$5 per point</td><td class="n">pt 1</td><td class="n">0.01 · 100 · 0.01 lots</td></tr>
+      <tr><td>Crypto</td><td>BTCUSD</td><td class="n">$1 per 1.00 move</td><td class="n">pt 0.01</td><td class="n">0.01 · 10 · 0.01 lots</td></tr>
+      <tr><td>Crypto, big steps</td><td>XRPUSD</td><td class="n">$1 per 1.00000 move</td><td class="n">pt 0.00001</td><td class="n">100 · 1,000 · 100 lots</td></tr>
+      <tr><td>Stock</td><td>AAPL.US</td><td class="n">1 share</td><td class="n">pt 0.01</td><td class="n">1 · 10,000 · 1 shares</td></tr>
+    </tbody>
+  </table></div>
+  <p>The <b>Units</b> line of both calculators restates the size in the asset, from the same sheet:</p>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Instrument kind</th><th>Units shows</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>FX</td><td>lots × contract size, in the base currency</td><td class="n">0.40 lots EUR/USD → 40,000 EUR</td></tr>
+      <tr><td>Stock</td><td>the number of shares</td><td class="n">33 shares</td></tr>
+      <tr><td>Index or crypto whose pt is 1</td><td>money per point, in the quote currency</td><td class="n">1 lot JAP225 → $5.00 per point</td></tr>
+      <tr><td>Index or crypto whose pt is a fraction</td><td>what one pt is worth for this size, in the quote currency</td><td class="n">1 lot US.500 → 1 pt (0.01) = $0.50</td></tr>
+      <tr><td>Commodity</td><td>lots × contract size, in the sheet’s unit</td><td class="n">0.20 lots GOLD → 20.00 Ounces</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">The currency sign is $, €, £ or ¥; any other currency is written out (“AUD 25.00 per point” on AUS200).</p>
+</section>
+
+<section class="ch" id="convert">
+  <div class="ch-h"><span class="n">06</span><h3>From quote currency to USD</h3></div>
+  <p>Profit and loss on any instrument is paid in its <b>quote currency</b>: JPY on USD/JPY, GBP on EUR/GBP, EUR on DE.30. The account is in USD, so every money figure goes through one conversion: the value of one unit of that currency in USD, read from the live quotes.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 262" role="img" aria-label="Flowchart: how the value of a currency in USD is found">
+      <rect x="10" y="20" width="165" height="54" class="s-box2"/><text x="22" y="42" class="b s-tx">Currency C</text><text x="22" y="60" class="s s-tx2">is it USD?</text>
+      <rect x="200" y="20" width="165" height="54" class="s-box2"/><text x="212" y="42" class="b s-tx">C + USD quoted?</text><text x="212" y="60" class="s s-tx2">e.g. GBPUSD, AUDUSD</text>
+      <rect x="390" y="20" width="165" height="54" class="s-box2"/><text x="402" y="42" class="b s-tx">USD + C quoted?</text><text x="402" y="60" class="s s-tx2">e.g. USDJPY, USDCAD</text>
+      <rect x="580" y="20" width="165" height="54" class="s-box2"/><text x="592" y="42" class="b s-tx">EUR + C quoted?</text><text x="592" y="60" class="s s-tx2">with EURUSD, e.g. EURHUF</text>
+      <path d="M175 47 H198" class="s-arrow" marker-end="url(#ah)"/><text x="178" y="40" class="s s-tx3">no</text>
+      <path d="M365 47 H388" class="s-arrow" marker-end="url(#ah)"/><text x="368" y="40" class="s s-tx3">no</text>
+      <path d="M555 47 H578" class="s-arrow" marker-end="url(#ah)"/><text x="558" y="40" class="s s-tx3">no</text>
+      <path d="M92 74 V116" class="s-arrow" marker-end="url(#ah)"/><text x="98" y="100" class="s s-tx3">yes</text>
+      <path d="M282 74 V116" class="s-arrow" marker-end="url(#ah)"/><text x="288" y="100" class="s s-tx3">yes</text>
+      <path d="M472 74 V116" class="s-arrow" marker-end="url(#ah)"/><text x="478" y="100" class="s s-tx3">yes</text>
+      <path d="M662 74 V116" class="s-arrow" marker-end="url(#ah)"/><text x="668" y="100" class="s s-tx3">yes</text>
+      <rect x="10" y="118" width="165" height="64" class="s-box"/><text x="22" y="140" class="b m s-tx">1</text><text x="22" y="158" class="s s-tx2">USD is the account</text><text x="22" y="172" class="s s-tx2">currency</text>
+      <rect x="200" y="118" width="165" height="64" class="s-box"/><text x="212" y="140" class="b m s-tx">bid of CUSD</text><text x="212" y="158" class="s m s-tx2">GBP: 1.3377</text>
+      <rect x="390" y="118" width="165" height="64" class="s-box"/><text x="402" y="140" class="b m s-tx">1 ÷ bid of USDC</text><text x="402" y="158" class="s m s-tx2">JPY: 1 ÷ 158.000</text><text x="402" y="172" class="s m s-tx2">= 0.0063291</text>
+      <rect x="580" y="118" width="165" height="64" class="s-box"/><text x="592" y="140" class="b m s-tx">EURUSD ÷ EURC</text><text x="592" y="158" class="s m s-tx2">HUF: 1.12233 ÷ 364.31</text><text x="592" y="172" class="s m s-tx2">= 0.0030807</text>
+      <path d="M745 47 H752 V226 H747" class="s-arrow" marker-end="url(#ah)"/><text x="700" y="200" class="s s-tx3">no</text>
+      <rect x="580" y="206" width="165" height="44" class="s-dnbg" style="stroke:var(--dn)"/><text x="592" y="224" class="b s-tx">✕ no value</text><text x="592" y="240" class="s s-tx2">the figure shows —</text>
+      <text x="10" y="222" class="s s-tx3">Rates are the bids of the live quotes. Example values: the</text>
+      <text x="10" y="238" class="s s-tx3">snapshot bids of the instrument sheet (EURUSD 1.12233, GBPUSD</text>
+      <text x="10" y="254" class="s s-tx3">1.3377, USDJPY 158.000, EURHUF 364.31).</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>How the value of one unit of a currency in USD is found, in this order. The same rule serves the ticket, the account and the server.</figcaption></figure>
+  <p>Two values are converted:</p>
+  <ul>
+    <li><b>The quote currency</b>, for the pip value, P/L and the spread cost of every instrument.</li>
+    <li><b>The base currency</b>, for the notional of an FX position (100,000 EUR in USD on EUR/USD). A CFD’s notional uses its price times the quote currency instead.</li>
+  </ul>
+  <div class="call ex"><b class="t">Example</b><p>EUR/GBP: one pip on one lot is 100,000 × 0.0001 = 10 GBP. GBP in USD is the GBPUSD bid, 1.3377, so the pip value is <b>$13.38</b>. Its notional is 100,000 EUR × 1.12233 (the EURUSD bid) = <b>$112,233.00</b>.</p></div>
+  <p class="mut">Because these are live bids, the pip value of a non-USD quote currency moves a little all day. The calculators re-read them every 2 seconds while open.</p>
+</section>
+
+<section class="ch" id="leverage">
+  <div class="ch-h"><span class="n">07</span><h3>Leverage and jurisdiction</h3></div>
+  <p>Margin is the notional divided by the <b>effective leverage</b> of the instrument on your account. That leverage is built in three steps:</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 236" role="img" aria-label="Effective leverage is the lower of the sheet leverage for your choice and the jurisdiction cap">
+      <rect x="8" y="16" width="200" height="74" class="s-box2"/><text x="20" y="38" class="b s-tx">Instrument sheet</text><text x="20" y="56" class="s s-tx2">a default and a maximum</text><text x="20" y="72" class="s m s-tx2">FX 1:500 · GOLD 1:50</text>
+      <rect x="244" y="16" width="220" height="74" class="s-box2"/><text x="256" y="38" class="b s-tx">Your choice (status bar Lev)</text><text x="256" y="56" class="s s-tx2">Sheet default, or 1:30 … 1:500,</text><text x="256" y="72" class="s s-tx2">never above the sheet maximum</text>
+      <rect x="500" y="16" width="252" height="74" class="s-box2"/><text x="512" y="38" class="b s-tx">Jurisdiction cap (Settings)</text><text x="512" y="56" class="s s-tx2">optional, per margin class:</text><text x="512" y="72" class="s s-tx2">None · EU · UK · AU · US</text>
+      <path d="M208 53 H242" class="s-arrow" marker-end="url(#ah)"/><path d="M464 53 H498" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M626 90 V118" class="s-arrow" marker-end="url(#ah)"/><path d="M354 90 V104 H600" class="s-ln3"/>
+      <rect x="400" y="120" width="352" height="40" class="s-box" style="stroke:var(--tx2)"/><text x="414" y="145" class="b m s-tx">effective = min(sheet for your choice, cap)</text>
+      <text x="8" y="186" class="s b s-tx3">EXAMPLES</text>
+      <text x="8" y="206" class="s m s-tx2">GOLD, no cap, choice 1:100 → min(100, sheet max 50) = 1:50</text>
+      <text x="8" y="224" class="s m s-tx2">GOLD, EU retail → choice set to 1:30 → min(30, 50) = 30, gold cap 20 → 1:20</text>
+    </svg>
+  </div><figcaption><b>Fig. 4</b>Effective leverage. Under a retail jurisdiction the choice is set to that regime’s cap for major pairs, so the class cap decides.</figcaption></figure>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Margin class (sheet)</th><th>Sheet examples</th><th>EU · ESMA / AU · ASIC</th><th>UK · FCA</th><th>US · NFA</th></tr></thead>
+    <tbody>
+      <tr><td>Major pair (fx-major)</td><td>EUR/USD, USD/JPY, EUR/GBP</td><td class="n">1:30</td><td class="n">1:30</td><td>1:50 if both currencies are NFA majors, else 1:20</td></tr>
+      <tr><td>Minor pair (fx-minor)</td><td>AUD/USD, EUR/HUF, USD/CZK</td><td class="n">1:20</td><td class="n">1:20</td><td class="n">same NFA rule</td></tr>
+      <tr><td>Gold</td><td>GOLD</td><td class="n">1:20</td><td class="n">1:20</td><td class="mut">not offered</td></tr>
+      <tr><td>Major index</td><td>US.500, DE.30, FTSE.100, JAP225</td><td class="n">1:20</td><td class="n">1:20</td><td class="mut">not offered</td></tr>
+      <tr><td>Minor index</td><td>IBEX35.SP, MIB40.IT</td><td class="n">1:10</td><td class="n">1:10</td><td class="mut">not offered</td></tr>
+      <tr><td>Commodity</td><td>OIL, SILVER, COPPER</td><td class="n">1:10</td><td class="n">1:10</td><td class="mut">not offered</td></tr>
+      <tr><td>Equity</td><td>AAPL.US, and the bond futures BUNDDE.10, SCHATZDE.2</td><td class="n">1:5</td><td class="n">1:5</td><td class="mut">not offered</td></tr>
+      <tr><td>Crypto</td><td>BTCUSD, ETHUSD, XRPUSD</td><td class="n">1:2</td><td class="mut">not offered</td><td class="mut">not offered</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">NFA major currencies: USD, EUR, JPY, GBP, CHF, CAD, AUD, NZD, SEK, NOK, DKK. Under US rules a pair’s class comes from this list, so AUD/USD (a minor pair on the sheet) is margined at 1:50. With <b>None</b> (the default) every instrument uses its sheet leverage. An instrument a jurisdiction does not offer is not listed in the calculators.</p>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>The three calculators</h2><p>Every input, every output and the arithmetic exactly as the app runs it.</p></div></div>
+
+<section class="ch" id="psize">
+  <div class="ch-h"><span class="n">08</span><h3>Position size</h3></div>
+  <p class="lead">You choose how much you are willing to lose and where the idea is wrong; the calculator gives the largest size that keeps the loss at the stop within that amount.</p>
+  <div class="fml">
+    <div>risk money = Account × Risk % ÷ 100</div>
+    <div>pip value per lot = contract size × pip (or pt) × (1 quote currency in USD)</div>
+    <div>lots = ⌊ risk money ÷ (Stop × pip value per lot) ÷ step ⌋ × step</div>
+    <div>Amount at risk = lots × Stop × pip value per lot</div>
+    <div>Pip value = pip value per lot × lots</div>
+    <div>Margin at profile = notional(lots) ÷ effective leverage</div>
+    <div class="c">⌊ ⌋ rounds down to the sheet’s volume step (0.01 lots on FX, 1 share, 100 on XRPUSD). Every line below the size is computed from the size shown, not from the exact quotient.</div>
+  </div>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Output</th><th>What it says</th><th>How to read it</th></tr></thead>
+    <tbody>
+      <tr><td>Position size</td><td>The lots (or shares), large.</td><td>The size to type in the ticket for this stop.</td></tr>
+      <tr><td>Units</td><td>The same size in the asset (chapter 05).</td><td>A sense check: 833,000 EUR is a big position on a $100,000 account.</td></tr>
+      <tr><td>Amount at risk</td><td>The loss at the stop for the size shown.</td><td>Never more than Account × Risk %; usually a little less, because of the rounding down.</td></tr>
+      <tr><td>Pip value / Point value</td><td>What one pip (FX) or one pt (others) of this size is worth in USD.</td><td>Each pip or pt of adverse move costs this much.</td></tr>
+      <tr><td>Margin at profile</td><td>Margin for this size at your account’s effective leverage, with the profile in brackets: “(Sheet 1:500)” without a cap, “(EU retail 1:30)” with one.</td><td>Must fit in your free margin, or the ticket refuses with “Insufficient margin”.</td></tr>
+    </tbody>
+  </table></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 150" role="img" aria-label="Rounding the exact size down to the volume step">
+      <path d="M60 70 H700" class="s-ln3"/>
+      <g class="m s">
+        <path d="M100 62 V78" class="s-ln3"/><text x="100" y="98" text-anchor="middle" class="s-tx3">0.28</text>
+        <path d="M300 62 V78" class="s-ln3"/><text x="300" y="98" text-anchor="middle" class="s-tx">0.29</text>
+        <path d="M500 62 V78" class="s-ln3"/><text x="500" y="98" text-anchor="middle" class="s-tx3">0.30</text>
+        <path d="M700 62 V78" class="s-ln3"/><text x="700" y="98" text-anchor="middle" class="s-tx3">0.31</text>
+      </g>
+      <circle cx="480.6" cy="70" r="6" class="s-in"/><text x="480" y="44" text-anchor="middle" class="s m s-tx">exact 0.2990</text>
+      <path d="M474 76 C 440 120, 340 120, 306 78" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="292" y="62" width="16" height="16" class="s-box" style="stroke:var(--tx)"/>
+      <text x="390" y="134" text-anchor="middle" class="s s-tx2">down to 0.29 lots: $96.98 at risk instead of $100.00</text>
+      <text x="60" y="24" class="s s-tx3">EUR/GBP, Account 10000, Risk 1%, Stop 25 pips, pip value per lot $13.377</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The exact size is rounded down, never to the nearest step: the risk you set is a ceiling.</figcaption></figure>
+  <h4>Worked examples</h4>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Inputs</th><th>Pip value / lot</th><th>Position size</th><th>Units</th><th>Amount at risk</th><th>Pip / point value</th><th>Margin at profile</th></tr></thead>
+    <tbody>
+      <tr><td>EUR/USD · 100000 · 1% · 25 pips</td><td class="n">$10.00</td><td class="n">4 lots</td><td class="n">400,000 EUR</td><td class="n">$1,000.00</td><td class="n">$40.00</td><td class="n">$897.86 (Sheet 1:500)</td></tr>
+      <tr><td>USD/JPY · 100000 · 1% · 25 pips</td><td class="n">$6.33</td><td class="n">6.32 lots</td><td class="n">632,000 USD</td><td class="n">$1,000.00</td><td class="n">$40.00</td><td class="n">$1,264.00 (Sheet 1:500)</td></tr>
+      <tr><td>EUR/GBP · 10000 · 1% · 25 pips</td><td class="n">$13.38</td><td class="n">0.29 lots</td><td class="n">29,000 EUR</td><td class="n">$96.98</td><td class="n">$3.88</td><td class="n">$65.10 (Sheet 1:500)</td></tr>
+      <tr><td>GOLD · 10000 · 1% · 500 pt</td><td class="n">$1.00</td><td class="n">0.20 lots</td><td class="n">20.00 Ounces</td><td class="n">$100.00</td><td class="n">$0.20</td><td class="n">$1,647.04 (Sheet 1:50)</td></tr>
+      <tr><td>US.500 · 10000 · 1% · 1000 pt</td><td class="n">$0.50</td><td class="n">0.20 lots</td><td class="n">1 pt (0.01) = $0.10</td><td class="n">$100.00</td><td class="n">$0.10</td><td class="n">$749.13 (Sheet 1:100)</td></tr>
+      <tr><td>AAPL.US · 10000 · 1% · 300 pt</td><td class="n">$0.01</td><td class="n">33 shares</td><td class="n">33 shares</td><td class="n">$99.00</td><td class="n">$0.33</td><td class="n">$282.85 (Sheet 1:40)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">Prices: the instrument sheet’s snapshot bids (EURUSD 1.12233, GBPUSD 1.3377, USDJPY 158.000, GOLD 4117.60, US.500 7491.25, AAPL.US 342.85), no jurisdiction cap. Live results differ with the price.</p>
+  <div class="call ex"><b class="t">Step by step: USD/JPY</b><p>Risk money = 100,000 × 1 ÷ 100 = $1,000. Pip value per lot = 100,000 × 0.01 × (1 ÷ 158.000) = $6.3291. Exact size = 1,000 ÷ (25 × 6.3291) = 6.32 lots, already on the 0.01 step. Amount at risk = 6.32 × 25 × 6.3291 = $1,000.00. Notional = 632,000 USD = $632,000, so margin at 1:500 = $1,264.00.</p></div>
+  <p>The stop field is checked first. Messages, in red: “Account must be above 0.”, “Risk % must be above 0.”, “Stop must be above 0 pips.” (or “0 pt.”).</p>
+</section>
+
+<section class="ch" id="refuse">
+  <div class="ch-h"><span class="n">09</span><h3>When the size cannot be traded</h3></div>
+  <p>The size is shown even when the ticket would refuse it, with a red line saying why. Three checks, the same as the order limits of the account:</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 236" role="img" aria-label="Flowchart of the three size checks">
+      <rect x="8" y="88" width="138" height="56" class="s-box2"/><text x="20" y="112" class="b s-tx">Size from</text><text x="20" y="130" class="s s-tx2">risk and stop</text>
+      <rect x="182" y="12" width="176" height="56" class="s-box2"/><text x="194" y="36" class="b s-tx">Below the minimum?</text><text x="194" y="54" class="s s-tx2">sheet min, e.g. 0.01 lots</text>
+      <rect x="182" y="88" width="176" height="56" class="s-box2"/><text x="194" y="112" class="b s-tx">Above the maximum?</text><text x="194" y="130" class="s s-tx2">sheet max, e.g. 10 on BTCUSD</text>
+      <rect x="182" y="164" width="176" height="56" class="s-box2"/><text x="194" y="188" class="b s-tx">Notional &gt; 25 × Account?</text><text x="194" y="206" class="s s-tx2">checked as well</text>
+      <path d="M146 116 H164 V40 H180" class="s-arrow" marker-end="url(#ah)"/><path d="M164 116 H180" class="s-arrow" marker-end="url(#ah)"/><path d="M164 116 V192 H180" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="396" y="12" width="356" height="56" class="s-dnbg" style="stroke:var(--dn)"/><text x="408" y="34" class="s s-tx">✕ Below the sheet's minimum: Minimum size is 0.01 lots</text><text x="408" y="52" class="s s-tx">— this risk and stop allow no position.</text>
+      <rect x="396" y="88" width="356" height="56" class="s-dnbg" style="stroke:var(--dn)"/><text x="408" y="110" class="s s-tx">✕ Maximum size is 10 lots per order: an order</text><text x="408" y="128" class="s s-tx">this size is refused.</text>
+      <rect x="396" y="164" width="356" height="56" class="s-dnbg" style="stroke:var(--dn)"/><text x="408" y="186" class="s s-tx">✕ Notional $… is above the per-order cap of 25× equity</text><text x="408" y="204" class="s s-tx">($…): an order this size is refused.</text>
+      <path d="M358 40 H394" class="s-arrow" marker-end="url(#ah)"/><text x="364" y="34" class="s s-tx3">yes</text>
+      <path d="M358 116 H394" class="s-arrow" marker-end="url(#ah)"/><text x="364" y="110" class="s s-tx3">yes</text>
+      <path d="M358 192 H394" class="s-arrow" marker-end="url(#ah)"/><text x="364" y="186" class="s s-tx3">yes</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>The minimum and maximum exclude each other; the notional check runs in every case. In the calculator, “equity” is the Account you typed.</figcaption></figure>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Case</th><th>Inputs</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Below the minimum</td><td>GOLD · 1000 · 0.5% · 2000 pt ($20 move)</td><td>Exact 0.0025 lots → <b>0 lots</b>, $0.00 at risk, and “Below the sheet's minimum: Minimum size is 0.01 lots — this risk and stop allow no position.”</td></tr>
+      <tr><td>Above the maximum</td><td>BTCUSD · 10000 · 1% · 25 pt (a stop typed as if it were pips)</td><td><b>400 lots</b>; “Maximum size is 10 lots per order: an order this size is refused.”, and the notional line: $32,547,640.00 above $250,000.00.</td></tr>
+      <tr><td>Notional cap</td><td>US.500 · 10000 · 1% · 25 pt (0.25 index points)</td><td><b>8 lots</b>, within the maximum of 100, but a notional of $2,996,500.00: “Notional $2,996,500.00 is above the per-order cap of 25× equity ($250,000.00): an order this size is refused.”</td></tr>
+    </tbody>
+  </table></div>
+  <div class="call tip"><b class="t">What a red line means</b><p>The stop is too tight or the risk too large for that instrument (a size above the limits), or too small (below the minimum). Widen or tighten the stop where the idea really is, change the risk, or trade something else; do not just shrink the stop to make a number fit.</p></div>
+  <p class="mut">The margin check against your free margin is not part of this card: the ticket does it when you send the order.</p>
+</section>
+
+<section class="ch" id="pvalue">
+  <div class="ch-h"><span class="n">10</span><h3>Pip / point value &amp; margin</h3></div>
+  <p class="lead">For a size you already have in mind: what one pip or pt is worth, how much of the asset it is, what it costs in margin and in spread.</p>
+  <div class="fml">
+    <div>Pip value = Lots × contract size × pip (or pt) × (1 quote currency in USD)</div>
+    <div>Notional = Lots × contract size × (1 base currency in USD)      <span class="c">FX</span></div>
+    <div>Notional = Lots × contract size × bid × (1 quote currency in USD)      <span class="c">every other instrument</span></div>
+    <div>Margin = Notional ÷ Leverage</div>
+    <div>Spread cost = live spread (in pips or pt) × Pip value</div>
+    <div class="c">The label reads “Point value” instead of “Pip value” on instruments counted in pt.</div>
+  </div>
+  <h4>The Leverage field</h4>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Your profile</th><th>Field</th><th>Tag beside the label</th></tr></thead>
+    <tbody>
+      <tr><td>No jurisdiction cap (None)</td><td>Filled with your account’s leverage on the instrument; you may type any what-if from 1 to the sheet maximum. It refills when you change instrument or profile.</td><td class="n">Sheet 1:500 · maximum 1:500 (Your choice 1:X once picked)</td></tr>
+      <tr><td>A jurisdiction cap</td><td>Fixed to the capped leverage (read only).</td><td class="n">EU retail 1:30</td></tr>
+    </tbody>
+  </table></div>
+  <p>Messages: “Lots must be above 0.”, “Leverage must be at least 1:1.”, and above the ceiling “Above the 1:500 ceiling for EUR/USD: the instrument sheet maximum.” When the leverage typed differs from the account’s, a grey note follows: “Your account uses 1:500 on EUR/USD (no jurisdiction cap); this figure is a what-if.”</p>
+  <p>The Lots are checked against the sheet’s sizes too, in red: below the minimum “Below the sheet's minimum: Minimum size is 100 lots — an order this size is refused.” (1 lot of XRPUSD), above the maximum “Maximum size is 10 lots per order: an order this size is refused.” (20 lots of BTCUSD). The figures are still shown, so you can read what such a size would be worth.</p>
+  <p>Amounts under one cent keep two significant digits instead of rounding to $0.00: 1 lot of XRPUSD has a point value of <b>$0.00001</b>, 1.1 lots of it $0.000011. This applies to the pip / point value, margin, notional and spread cost of this card.</p>
+  <h4>Worked examples, 1 lot</h4>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Instrument</th><th>Leverage</th><th>Pip / point value</th><th>Units</th><th>Margin</th><th>Notional</th><th>Spread cost at</th></tr></thead>
+    <tbody>
+      <tr><td>EUR/USD</td><td class="n">1:500</td><td class="n">$10.00</td><td class="n">100,000 EUR</td><td class="n">$224.47</td><td class="n">$112,233.00</td><td class="n">1.2 pips → $12.00</td></tr>
+      <tr><td>EUR/USD, what-if</td><td class="n">1:30</td><td class="n">$10.00</td><td class="n">100,000 EUR</td><td class="n">$3,741.10</td><td class="n">$112,233.00</td><td class="n">1.2 pips → $12.00</td></tr>
+      <tr><td>USD/JPY</td><td class="n">1:500</td><td class="n">$6.33</td><td class="n">100,000 USD</td><td class="n">$200.00</td><td class="n">$100,000.00</td><td class="n">3.0 pips → $18.99</td></tr>
+      <tr><td>EUR/GBP</td><td class="n">1:500</td><td class="n">$13.38</td><td class="n">100,000 EUR</td><td class="n">$224.47</td><td class="n">$112,233.00</td><td class="n">2.0 pips → $26.75</td></tr>
+      <tr><td>US.500</td><td class="n">1:100</td><td class="n">$0.50</td><td class="n">1 pt (0.01) = $0.50</td><td class="n">$3,745.63</td><td class="n">$374,562.50</td><td class="n">300 pt → $150.00</td></tr>
+      <tr><td>DE.30</td><td class="n">1:100</td><td class="n">$2.81</td><td class="n">1 pt (0.1) = €2.50</td><td class="n">$6,894.47</td><td class="n">$689,447.32</td><td class="n">75 pt → $210.44</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">Spreads here are the sheet’s default spreads, converted to pips or pt; the app uses the live spread of the quote at that moment, which changes at night, around news and with the market.</p>
+  <div class="call key"><b class="t">Why DE.30 shows euros and dollars</b><p>Units is in the instrument’s own currency (€2.50 per pt for a lot). Point value is in USD: €2.50 × 1.12233 = $2.81.</p></div>
+</section>
+
+<section class="ch" id="compound">
+  <div class="ch-h"><span class="n">11</span><h3>Compounding</h3></div>
+  <p>The same monthly return applied to a growing balance:</p>
+  <div class="fml">
+    <div>Final balance = Start × (1 + r)<sup>Months</sup>, r = Monthly return % ÷ 100</div>
+    <div>Total gain = Final balance − Start</div>
+    <div>Total return = (Final balance ÷ Start − 1) × 100</div>
+    <div>Annualised = ((1 + r)<sup>12</sup> − 1) × 100</div>
+    <div class="c">Annualised depends on the monthly return only, not on Months. Gains show a + sign, losses a − sign; percentages have one decimal.</div>
+  </div>
+  <p>Inputs are checked first, in red: “Start must be above 0.”, “Monthly return must be above −100%.”, “Months must be a whole number, 1 or more.”</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="Balance over 24 months at 3% a month, compounded and simple">
+      <g class="m s">
+        <path d="M60 230 H720" class="s-ln"/><path d="M60 193.6 H720" class="s-ln" style="stroke-dasharray:2 4"/><path d="M60 157.3 H720" class="s-ln" style="stroke-dasharray:2 4"/><path d="M60 120.9 H720" class="s-ln" style="stroke-dasharray:2 4"/><path d="M60 84.5 H720" class="s-ln" style="stroke-dasharray:2 4"/><path d="M60 48.2 H720" class="s-ln" style="stroke-dasharray:2 4"/>
+        <text x="52" y="234" text-anchor="end" class="s-tx3">10k</text><text x="52" y="197" text-anchor="end" class="s-tx3">12k</text><text x="52" y="161" text-anchor="end" class="s-tx3">14k</text><text x="52" y="125" text-anchor="end" class="s-tx3">16k</text><text x="52" y="88" text-anchor="end" class="s-tx3">18k</text><text x="52" y="52" text-anchor="end" class="s-tx3">20k</text>
+        <text x="60" y="250" text-anchor="middle" class="s-tx3">0</text><text x="225" y="250" text-anchor="middle" class="s-tx3">6</text><text x="390" y="250" text-anchor="middle" class="s-tx3">12</text><text x="555" y="250" text-anchor="middle" class="s-tx3">18</text><text x="720" y="250" text-anchor="middle" class="s-tx3">24</text>
+        <text x="390" y="266" text-anchor="middle" class="s-tx3">months</text>
+      </g>
+      <polyline points="60.0,230.0 87.5,224.5 115.0,219.1 142.5,213.6 170.0,208.2 197.5,202.7 225.0,197.3 252.5,191.8 280.0,186.4 307.5,180.9 335.0,175.5 362.5,170.0 390.0,164.5 417.5,159.1 445.0,153.6 472.5,148.2 500.0,142.7 527.5,137.3 555.0,131.8 582.5,126.4 610.0,120.9 637.5,115.5 665.0,110.0 692.5,104.5 720.0,99.1" class="s-ln3" style="stroke-width:2;stroke-dasharray:6 4"/>
+      <polyline points="60.0,230.0 87.5,224.5 115.0,218.9 142.5,213.1 170.0,207.2 197.5,201.0 225.0,194.7 252.5,188.2 280.0,181.5 307.5,174.6 335.0,167.5 362.5,160.1 390.0,152.6 417.5,144.8 445.0,136.8 472.5,128.6 500.0,120.1 527.5,111.3 555.0,102.3 582.5,93.0 610.0,83.4 637.5,73.6 665.0,63.4 692.5,53.0 720.0,42.2" class="s-px" style="stroke-width:2.2"/>
+      <circle cx="720" cy="42.2" r="4" class="s-tx"/><text x="712" y="30" text-anchor="end" class="s m b s-tx">compounded $20,327.94</text>
+      <circle cx="720" cy="99.1" r="4" class="s-tx3"/><text x="712" y="90" text-anchor="end" class="s m s-tx3">simple (3% of the start each month) $17,200</text>
+      <text x="390" y="140" text-anchor="end" class="s m s-tx2">month 12: $14,257.61</text><circle cx="390" cy="152.6" r="3" class="s-tx"/>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>10,000 at 3% a month. The gap between the lines is the return earned on earlier returns; it widens every month.</figcaption></figure>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Start · monthly · months</th><th>Final balance</th><th>Total gain</th><th>Total return</th><th>Annualised</th></tr></thead>
+    <tbody>
+      <tr><td>10000 · 1% · 12</td><td class="n">$11,268.25</td><td class="n">▲ +$1,268.25</td><td class="n">▲ +12.7%</td><td class="n">▲ +12.7%</td></tr>
+      <tr class="hl"><td>10000 · 3% · 24 (default)</td><td class="n">$20,327.94</td><td class="n">▲ +$10,327.94</td><td class="n">▲ +103.3%</td><td class="n">▲ +42.6%</td></tr>
+      <tr><td>10000 · 5% · 36</td><td class="n">$57,918.16</td><td class="n">▲ +$47,918.16</td><td class="n">▲ +479.2%</td><td class="n">▲ +79.6%</td></tr>
+      <tr><td>10000 · −3% · 24</td><td class="n">$4,814.17</td><td class="n">▼ −$5,185.83</td><td class="n">▼ −51.9%</td><td class="n">▼ −30.6%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">The ▲ / ▼ marks are this guide’s; the card shows the + or − sign.</p>
+  <div class="call warn"><b class="t">Read it as arithmetic, not as a plan</b><p>Real monthly results vary, and losses compound too: −3% a month halves an account in two years. A steady figure above a few percent a month is rare for long; the Risk Lab’s Monte Carlo test shows the spread of outcomes a strategy can really have.</p></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Examples and comparisons</h2><p>The same risk on different instruments, stops in points, margin under each regime, and calculators to try.</p></div></div>
+
+<section class="ch" id="same">
+  <div class="ch-h"><span class="n">12</span><h3>Same risk, different instruments</h3></div>
+  <p>One rule — risk $100 on a $10,000 account (Risk 1%) — with a stop that is ordinary for each instrument. The size adapts so that the loss at the stop stays the same:</p>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Instrument</th><th>Stop typed</th><th>As a price move</th><th>Pip / pt value per lot</th><th>Position size</th><th>Amount at risk</th><th>Notional</th><th>Margin (sheet)</th></tr></thead>
+    <tbody>
+      <tr><td>EUR/USD</td><td class="n">25 pips</td><td class="n">0.0025</td><td class="n">$10.00</td><td class="n">0.40 lots</td><td class="n">$100.00</td><td class="n">$44,893.20</td><td class="n">$89.79 · 1:500</td></tr>
+      <tr><td>USD/JPY</td><td class="n">25 pips</td><td class="n">0.25</td><td class="n">$6.33</td><td class="n">0.63 lots</td><td class="n">$99.68</td><td class="n">$63,000.00</td><td class="n">$126.00 · 1:500</td></tr>
+      <tr><td>EUR/GBP</td><td class="n">25 pips</td><td class="n">0.0025</td><td class="n">$13.38</td><td class="n">0.29 lots</td><td class="n">$96.98</td><td class="n">$32,547.57</td><td class="n">$65.10 · 1:500</td></tr>
+      <tr><td>EUR/HUF</td><td class="n">25 pips</td><td class="n">0.25</td><td class="n">$3.08</td><td class="n">1.29 lots</td><td class="n">$99.35</td><td class="n">$144,780.57</td><td class="n">$289.56 · 1:500</td></tr>
+      <tr><td>GOLD</td><td class="n">500 pt</td><td class="n">$5.00</td><td class="n">$1.00</td><td class="n">0.20 lots</td><td class="n">$100.00</td><td class="n">$82,352.00</td><td class="n">$1,647.04 · 1:50</td></tr>
+      <tr><td>OIL</td><td class="n">50 pt</td><td class="n">$0.50</td><td class="n">$10.00</td><td class="n">0.20 lots</td><td class="n">$100.00</td><td class="n">$21,922.00</td><td class="n">$548.05 · 1:40</td></tr>
+      <tr><td>US.500</td><td class="n">1000 pt</td><td class="n">10 index points</td><td class="n">$0.50</td><td class="n">0.20 lots</td><td class="n">$100.00</td><td class="n">$74,912.50</td><td class="n">$749.13 · 1:100</td></tr>
+      <tr><td>DE.30</td><td class="n">300 pt</td><td class="n">30 index points</td><td class="n">$2.81</td><td class="n">0.11 lots</td><td class="n">$92.59</td><td class="n">$75,839.21</td><td class="n">$758.39 · 1:100</td></tr>
+      <tr><td>JAP225</td><td class="n">100 pt</td><td class="n">100 index points</td><td class="n">$5.00</td><td class="n">0.20 lots</td><td class="n">$100.00</td><td class="n">$64,280.00</td><td class="n">$642.80 · 1:100</td></tr>
+      <tr><td>BTCUSD</td><td class="n">50000 pt</td><td class="n">$500</td><td class="n">$0.01</td><td class="n">0.20 lots</td><td class="n">$100.00</td><td class="n">$16,273.82</td><td class="n">$1,627.38 · 1:10</td></tr>
+      <tr><td>AAPL.US</td><td class="n">300 pt</td><td class="n">$3.00</td><td class="n">$0.01</td><td class="n">33 shares</td><td class="n">$99.00</td><td class="n">$11,314.05</td><td class="n">$282.85 · 1:40</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">Prices: the sheet’s snapshot bids (USDJPY 158.000, EURHUF 364.31, OIL 109.61, DE.30 24572.0, JAP225 64280, BTCUSD 81369.10 …), no jurisdiction cap. The stops are examples, not recommendations. On BTCUSD the card shows a point value of $0.00: 0.20 lots × $0.01 is a fifth of a cent.</p>
+  <div class="cards">
+    <div class="card"><h5>Same risk, very different notional</h5><p>$100 at risk is $11,000 of Apple shares, $45,000 of EUR/USD or $145,000 of EUR/HUF. The notional depends on how far the stop is in money, not on the risk.</p></div>
+    <div class="card"><h5>Non-USD quotes change the pip value</h5><p>USD/JPY pays $6.33 a pip per lot, EUR/GBP $13.38. The same 25-pip stop gives 0.63 and 0.29 lots for the same $100.</p></div>
+    <div class="card"><h5>Rounding bites on small sizes</h5><p>On DE.30 the exact 0.1188 lots rounds down to 0.11: $92.59 at risk instead of $100. The smaller the account, the larger the share lost to the step.</p></div>
+  </div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 236" role="img" aria-label="Lots for a 100 dollar risk on EUR/USD as the stop widens">
+      <g class="m s">
+        <path d="M60 200 H700" class="s-ln"/><path d="M60 30 V200" class="s-ln"/>
+        <text x="52" y="204" text-anchor="end" class="s-tx3">0</text><text x="52" y="119" text-anchor="end" class="s-tx3">1.00</text><text x="52" y="34" text-anchor="end" class="s-tx3">2.00</text>
+        <text x="60" y="218" text-anchor="middle" class="s-tx3">5</text><text x="161" y="218" text-anchor="middle" class="s-tx3">20</text><text x="363" y="218" text-anchor="middle" class="s-tx3">50</text><text x="700" y="218" text-anchor="middle" class="s-tx3">100</text>
+        <text x="380" y="232" text-anchor="middle" class="s-tx3">stop in pips</text>
+      </g>
+      <polyline points="60.0,30.0 76.8,86.7 93.7,115.0 110.5,132.0 127.4,143.3 144.2,151.4 161.1,157.5 177.9,162.2 194.7,166.0 211.6,169.1 228.4,171.7 245.3,173.8 262.1,175.7 278.9,177.3 295.8,178.8 312.6,180.0 329.5,181.1 346.3,182.1 363.2,183.0 380.0,183.8 396.8,184.5 413.7,185.2 430.5,185.8 447.4,186.4 464.2,186.9 481.1,187.4 497.9,187.9 514.7,188.3 531.6,188.7 548.4,189.0 565.3,189.4 582.1,189.7 598.9,190.0 615.8,190.3 632.6,190.6 649.5,190.8 666.3,191.1 683.2,191.3 700.0,191.5" class="s-px" style="stroke-width:2"/>
+      <g class="m s">
+        <circle cx="60" cy="30" r="3.5" class="s-tx"/><text x="70" y="34" class="s-tx">5 pips → 2.00 lots</text>
+        <circle cx="93.7" cy="115" r="3.5" class="s-tx"/><text x="104" y="112" class="s-tx">10 → 1.00</text>
+        <circle cx="194.7" cy="166" r="3.5" class="s-tx"/><text x="204" y="156" class="s-tx">25 → 0.40</text>
+        <circle cx="363.2" cy="183" r="3.5" class="s-tx"/><text x="372" y="174" class="s-tx">50 → 0.20</text>
+        <circle cx="700" cy="191.5" r="3.5" class="s-tx"/><text x="692" y="180" text-anchor="end" class="s-tx">100 → 0.10</text>
+      </g>
+      <text x="420" y="60" class="s s-tx2">Amount at risk: $100 at every point of the curve.</text>
+      <text x="420" y="78" class="s s-tx2">Double the stop, halve the size.</text>
+    </svg>
+  </div><figcaption><b>Fig. 8</b>EUR/USD, Account 10,000, Risk 1%: the size the calculator gives as the stop widens.</figcaption></figure>
+</section>
+
+<section class="ch" id="ptstops">
+  <div class="ch-h"><span class="n">13</span><h3>Stops in points on CFDs</h3></div>
+  <p>To type a CFD stop, divide the price move you want by the instrument’s pt:</p>
+  <div class="fml"><div>Stop (pt) = price distance ÷ pt</div><div class="c">pt = 10<sup>−digits</sup>: count the decimals of the price on the chart or the watchlist.</div></div>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Instrument</th><th>pt</th><th>Price move you mean</th><th>Type in Stop (pt)</th><th>1 lot loses at that stop</th></tr></thead>
+    <tbody>
+      <tr><td>US.500</td><td class="n">0.01</td><td class="n">10 index points</td><td class="n">1000</td><td class="n">$500.00</td></tr>
+      <tr><td>DE.30</td><td class="n">0.1</td><td class="n">30 index points</td><td class="n">300</td><td class="n">$841.75 (€750)</td></tr>
+      <tr><td>FTSE.100</td><td class="n">0.01</td><td class="n">15 index points</td><td class="n">1500</td><td class="n">$200.65 (£150)</td></tr>
+      <tr><td>JAP225</td><td class="n">1</td><td class="n">100 index points</td><td class="n">100</td><td class="n">$500.00</td></tr>
+      <tr><td>GOLD</td><td class="n">0.01</td><td class="n">$5.00</td><td class="n">500</td><td class="n">$500.00</td></tr>
+      <tr><td>OIL</td><td class="n">0.01</td><td class="n">$0.50</td><td class="n">50</td><td class="n">$500.00</td></tr>
+      <tr><td>BTCUSD</td><td class="n">0.01</td><td class="n">$500</td><td class="n">50000</td><td class="n">$500.00</td></tr>
+      <tr><td>XRPUSD</td><td class="n">0.00001</td><td class="n">$0.02</td><td class="n">2000</td><td class="n">$0.02 per lot (min 100 lots: $2.00)</td></tr>
+      <tr><td>AAPL.US</td><td class="n">0.01</td><td class="n">$3.00</td><td class="n">300</td><td class="n">$3.00 per share</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">Loss at the stop = Stop × point value per lot, at the snapshot rates (EUR 1.12233, GBP 1.3377).</p>
+  <div class="call tip"><b class="t">Cross-check with the ticket</b><p>The order ticket shows the contract in words (“1 lot = $50 per 1.00 move · 1 pt (0.01) = $0.50”). If the Units line of the calculator reads “1 pt (0.01) = …”, a stop of 100 pt is a move of 1.00 in the price.</p></div>
+</section>
+
+<section class="ch" id="jur">
+  <div class="ch-h"><span class="n">14</span><h3>Margin under each jurisdiction</h3></div>
+  <p>The same 1 lot (1 share on AAPL.US), margined at the effective leverage of each profile:</p>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Instrument · notional</th><th>None (sheet)</th><th>EU · ESMA / AU · ASIC</th><th>UK · FCA</th><th>US · NFA</th></tr></thead>
+    <tbody>
+      <tr><td>EUR/USD · $112,233.00</td><td class="n">$224.47 · 1:500</td><td class="n">$3,741.10 · 1:30</td><td class="n">$3,741.10 · 1:30</td><td class="n">$2,244.66 · 1:50</td></tr>
+      <tr><td>USD/JPY · $100,000.00</td><td class="n">$200.00 · 1:500</td><td class="n">$3,333.33 · 1:30</td><td class="n">$3,333.33 · 1:30</td><td class="n">$2,000.00 · 1:50</td></tr>
+      <tr><td>AUD/USD · $69,950.00</td><td class="n">$139.90 · 1:500</td><td class="n">$3,497.50 · 1:20</td><td class="n">$3,497.50 · 1:20</td><td class="n">$1,399.00 · 1:50</td></tr>
+      <tr><td>EUR/HUF · $112,233.00</td><td class="n">$224.47 · 1:500</td><td class="n">$5,611.65 · 1:20</td><td class="n">$5,611.65 · 1:20</td><td class="n">$5,611.65 · 1:20</td></tr>
+      <tr><td>GOLD · $411,760.00</td><td class="n">$8,235.20 · 1:50</td><td class="n">$20,588.00 · 1:20</td><td class="n">$20,588.00 · 1:20</td><td class="mut">not offered</td></tr>
+      <tr><td>US.500 · $374,562.50</td><td class="n">$3,745.63 · 1:100</td><td class="n">$18,728.13 · 1:20</td><td class="n">$18,728.13 · 1:20</td><td class="mut">not offered</td></tr>
+      <tr><td>BTCUSD · $81,369.10</td><td class="n">$8,136.91 · 1:10</td><td class="n">$40,684.55 · 1:2</td><td class="mut">not offered</td><td class="mut">not offered</td></tr>
+      <tr><td>AAPL.US · $342.85</td><td class="n">$8.57 · 1:40</td><td class="n">$68.57 · 1:5</td><td class="n">$68.57 · 1:5</td><td class="mut">not offered</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mut">Snapshot bids, as above. Without a cap, choosing 1:100 in the status bar would make EUR/USD 1:100 ($1,122.33) but leave GOLD at its sheet maximum 1:50.</p>
+  <div class="call key"><b class="t">Margin is not risk</b><p>A lower leverage raises the margin, not the loss at the stop: 0.40 lots of EUR/USD lose $100 over 25 pips at 1:500 and at 1:30 alike. Leverage decides how many positions fit in your free margin, and how close the 50% stop-out is.</p></div>
+</section>
+
+<section class="ch" id="try">
+  <div class="ch-h"><span class="n">15</span><h3>Try it</h3></div>
+  <p>The same arithmetic as the app, on a small table of instruments copied from the instrument sheet. The prices and rates start at the sheet’s snapshot bids (examples, not live prices): change them to today’s to match the terminal. The account strip applies to both cards, as your profile does in the app.</p>
+  <div class="cset" id="tSet">
+    <label>Jurisdiction cap <select id="tJur"><option value="none">None</option><option value="eu">EU · ESMA</option><option value="uk">UK · FCA</option><option value="au">AU · ASIC</option><option value="us">US · NFA</option></select></label>
+    <label>Lev <select id="tLev"><option value="default">Sheet default</option><option value="30">1:30</option><option value="50">1:50</option><option value="100">1:100</option><option value="200">1:200</option><option value="500">1:500</option></select></label>
+    <span class="mut" id="tSetNote">No jurisdiction cap: every instrument at its sheet leverage, or your choice up to its maximum.</span>
+  </div>
+
+  <h4 class="calc-h">Position size</h4>
+  <div class="calc" id="cP">
+    <div class="cin">
+      <label class="sw">Instrument <select id="pSym"></select></label>
+      <label class="sw">Account (USD) <input id="pAcc" type="number" value="100000"></label>
+      <label class="sw">Risk % <input id="pRisk" type="number" value="1" step="0.1"></label>
+      <label class="sw"><span>Stop (<span id="pUnit">pips</span>)</span> <input id="pSL" type="number" value="12"></label>
+      <div class="gap"></div>
+      <h5>Prices (examples, editable)</h5>
+      <label class="sw" id="pBidL">Bid <input id="pBid" type="number" step="any"></label>
+      <label class="sw"><span>1 <span id="pQc">USD</span> in USD</span> <input id="pQ" type="number" step="any"></label>
+      <label class="sw" id="pBL"><span>1 <span id="pBc">EUR</span> in USD</span> <input id="pB" type="number" step="any"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="pLots">8.33 lots</b><small>Position size</small></div>
+      <div class="parts" id="pParts"></div>
+      <div id="pMsg"></div>
+      <p class="sub">lots = ⌊ Account × Risk % ÷ 100 ÷ (Stop × pip value per lot) ÷ step ⌋ × step; every figure from the size shown. Picking an instrument fills the Stop with an example of New order’s default stop, worked out from the sheet’s default spread and snapshot volatility; the app fills the live default (live spread and price, or the 1-hour ATR).</p>
+    </div>
+  </div>
+
+  <h4 class="calc-h">Pip / point value &amp; margin</h4>
+  <div class="calc" id="cV">
+    <div class="cin">
+      <label class="sw">Instrument <select id="vSym"></select></label>
+      <label class="sw">Lots <input id="vLots" type="number" value="1" step="0.01"></label>
+      <label class="sw"><span>Leverage <span class="mono mut" id="vTag"></span></span> <input id="vLev" type="number" value="30" min="1" step="1"></label>
+      <label class="sw"><span>Spread (<span id="vUnit">pips</span>)</span> <input id="vSpr" type="number" step="any"></label>
+      <div class="gap"></div>
+      <h5>Prices (examples, editable)</h5>
+      <label class="sw" id="vBidL">Bid <input id="vBid" type="number" step="any"></label>
+      <label class="sw"><span>1 <span id="vQc">USD</span> in USD</span> <input id="vQ" type="number" step="any"></label>
+      <label class="sw" id="vBL"><span>1 <span id="vBc">EUR</span> in USD</span> <input id="vB" type="number" step="any"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="vMain">$10.00</b><small id="vMainL">Pip value</small></div>
+      <div class="parts" id="vParts"></div>
+      <div id="vMsg"></div>
+      <p class="sub">The spread starts at the sheet’s default spread; the app uses the live spread of the quote.</p>
+    </div>
+  </div>
+
+  <h4 class="calc-h">Compounding</h4>
+  <div class="calc" id="cC">
+    <div class="cin">
+      <label class="sw">Start (USD) <input id="cStart" type="number" value="10000"></label>
+      <label class="sw">Monthly return % <input id="cRet" type="number" value="3" step="0.1"></label>
+      <label class="sw">Months <input id="cM" type="number" value="24"></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="cFin">$20,327.94</b><small>Final balance</small></div>
+      <div class="parts"><span>Total gain</span><b id="cGain">+$10,327.94</b><span>Total return</span><b id="cTot">+103.3%</b><span>Annualised</span><b id="cAnn">+42.6%</b></div>
+      <div id="cMsg"></div>
+      <svg viewBox="0 0 400 90" aria-hidden="true" style="width:100%;height:auto;display:block;margin-top:14px"><path d="M0 86 H400" class="s-ln"/><polyline id="cLine" points="" class="s-px" style="stroke-width:2"/><polyline id="cBase" points="" class="s-ln3" style="stroke-dasharray:4 4"/></svg>
+      <p class="sub">Solid: the compounded balance month by month. Dashed: the start, for scale.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="uses">
+  <div class="ch-h"><span class="n">16</span><h3>Using them in practice</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Stop first, size second</h5><p>Put the stop where the trade idea is wrong, on the chart. Then let Position size give the lots; do not move the stop to reach a size.</p></div>
+    <div class="card"><h5>Type your real equity</h5><p>The Account field is not linked to your balance. Use the equity in the account bar, not the default 100000.</p></div>
+    <div class="card"><h5>Check the stop’s unit on CFDs</h5><p>Convert the price move to pt (chapter 13). A red “Maximum size” or “Notional” line usually means a CFD stop was typed as if it were pips.</p></div>
+    <div class="card"><h5>Check the spread against the stop</h5><p>Spread cost ÷ risk money is the share of your risk paid on entry. A 1.2-pip spread on a 25-pip stop is about 5%; on a 5-pip stop it is 24%.</p></div>
+    <div class="card"><h5>Size correlated trades as one</h5><p>Two positions that move together are one bet: split the risk between them. See the Correlation guide.</p></div>
+    <div class="card"><h5>Compare regimes before you choose one</h5><p>Switch the jurisdiction in Settings and watch Margin at profile: the size stays, the margin changes.</p></div>
+  </div>
+  <h4>A routine before a trade</h4>
+  <ol class="tl">
+    <li><span class="ph">Plan</span><div><b>Entry and stop on the chart</b><span>The distance in pips, or in price for a CFD.</span></div></li>
+    <li><span class="ph">Convert</span><div><b>Stop in the right unit</b><span>Pips on FX; price move ÷ pt on everything else.</span></div></li>
+    <li><span class="ph">Size</span><div><b>Position size card</b><span>Your equity, your risk %, the stop. Read the lots and the amount at risk.</span></div></li>
+    <li><span class="ph">Check</span><div><b>No red lines; margin fits</b><span>Margin at profile against the free margin in the account bar.</span></div></li>
+    <li><span class="ph">Cost</span><div><b>Pip / point value card</b><span>The spread cost for that size, and the value of each pip or pt.</span></div></li>
+    <li><span class="ph">Trade</span><div><b>The ticket</b><span>Type the size and the stop; the ticket runs the same rules again before sending.</span></div></li>
+  </ol>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Caveats, every formula and rule, the terms.</p></div></div>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">17</span><h3>Limits and caveats</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The stop is a price, not a promise</h5><p>Amount at risk assumes the stop fills exactly at its level. Gaps, a weekend or fast news can fill it further away, and the loss is then larger.</p></div>
+    <div class="card"><h5>Costs not included</h5><p>Position size ignores spread, commission and swap. Pip / point value shows the spread cost separately; commission and swap are not in either card.</p></div>
+    <div class="card"><h5>Rates move</h5><p>Pip values on non-USD quotes and every notional follow the live bids; a figure read a minute ago can differ slightly.</p></div>
+    <div class="card"><h5>Margin checked at the ticket</h5><p>The cards do not compare the margin with your free margin; the ticket does, when the order is sent.</p></div>
+    <div class="card"><h5>No prices, no figures</h5><p>Without a live quote for a rate the conversion needs, money figures show —.</p></div>
+    <div class="card"><h5>Compounding is constant</h5><p>One return every month, no costs, no drawdowns. It shows arithmetic, not what a strategy will do.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Not advice</b><p>The calculators size and price a trade you have decided; they do not say whether to take it. Nothing here is financial advice.</p></div>
+</section>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">18</span><h3>All formulas and rules</h3></div>
+  <div class="tw"><table class="g-t">
+    <thead><tr><th>Item</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Pip (FX)</td><td class="n">10^−(digits−1) for an odd number of decimals, else 10^−digits</td></tr>
+      <tr><td>Point (pt, others)</td><td class="n">10^−digits</td></tr>
+      <tr><td>1 currency in USD</td><td class="n">USD = 1 · bid of CUSD · 1 ÷ bid of USDC · EURUSD ÷ EURC · else none (—)</td></tr>
+      <tr><td>Pip value</td><td class="n">lots × size × pip × USD value of the quote currency</td></tr>
+      <tr><td>Notional, FX</td><td class="n">lots × size × USD value of the base currency</td></tr>
+      <tr><td>Notional, others</td><td class="n">lots × size × bid × USD value of the quote currency</td></tr>
+      <tr><td>Position size</td><td class="n">⌊ Account × Risk% ÷ 100 ÷ (Stop × pip value per lot) ÷ step + 10⁻⁹ ⌋ × step</td></tr>
+      <tr><td>Amount at risk</td><td class="n">lots × Stop × pip value per lot</td></tr>
+      <tr><td>Margin</td><td class="n">notional ÷ leverage</td></tr>
+      <tr><td>Spread cost</td><td class="n">live spread (pips / pt) × pip value of the lots</td></tr>
+      <tr><td>Effective leverage</td><td class="n">min(sheet leverage for your choice, jurisdiction cap of the class)</td></tr>
+      <tr><td>Sheet leverage for your choice</td><td class="n">Sheet default, or min(choice, sheet maximum)</td></tr>
+      <tr><td>Per-order limits flagged</td><td class="n">sheet minimum · sheet maximum · notional ≤ 25 × Account</td></tr>
+      <tr><td>Leverage field ceiling</td><td class="n">the sheet maximum (no cap) · fixed at the effective leverage (a cap)</td></tr>
+      <tr><td>Compounding</td><td class="n">Start × (1 + r)^Months · annualised (1 + r)^12 − 1</td></tr>
+      <tr><td>Refresh</td><td class="n">on every input, and every 2 s while the tab is open</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">19</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Pip</dt><dd>The unit of an FX price move: 0.0001 on most pairs, 0.01 on JPY pairs and some exotic pairs.</dd>
+    <dt>Point (pt)</dt><dd>The unit of a move on every non-FX instrument: the smallest price step, 10<sup>−digits</sup>. Not the same as an index point.</dd>
+    <dt>Lot</dt><dd>The unit of size. Its contract size is on the instrument sheet: 100,000 of the base currency on FX, 100 Ounces on GOLD, $50 per 1.00 on US.500, one share on a stock.</dd>
+    <dt>Base / quote currency</dt><dd>In EUR/GBP, EUR is the base (what you buy or sell), GBP the quote (what P/L is paid in).</dd>
+    <dt>Pip value / point value</dt><dd>The USD value of a one-pip (or one-pt) move for a given size.</dd>
+    <dt>Notional</dt><dd>The full USD value of a position, before leverage.</dd>
+    <dt>Margin</dt><dd>The part of the notional the account sets aside while the position is open: notional ÷ leverage.</dd>
+    <dt>Leverage</dt><dd>Notional ÷ margin, written 1:30, 1:500 … Higher leverage needs less margin for the same position.</dd>
+    <dt>Jurisdiction cap</dt><dd>An optional retail leverage limit per margin class (ESMA for EU, UK and AU; NFA for the US), set in Settings.</dd>
+    <dt>Volume step</dt><dd>The increment sizes must follow (0.01 lots, 1 share, 100 on XRPUSD). Position size rounds down to it.</dd>
+    <dt>Amount at risk</dt><dd>The loss if the stop fills at its level, for the size shown.</dd>
+    <dt>Spread cost</dt><dd>What the bid-ask spread costs on entry for a size: spread × pip value.</dd>
+    <dt>Compounding</dt><dd>Earning a return on earlier returns: the balance grows by the same percentage of a larger amount each month.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">20</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Stops from volatility</h5><p>How far to place a stop so ordinary noise does not hit it, and the size that follows: <a href="vol.html#stops">Volatility · Stops and size from ATR</a>.</p></div>
+    <div class="card"><h5>Correlated positions</h5><p>When two sized trades are really one bet, and how their risk combines: <a href="corr.html#risk">Correlation · Correlation and your risk</a>.</p></div>
+    <div class="card"><h5>Before the trade</h5><p>Trend, levels and the trade plan of each instrument: <a href="brief.html">Market Brief guide</a>.</p></div>
+  </div>
+</section>
+
+<p class="g-foot">tradeBerry · Calculators guide. Examples use the instrument sheet’s snapshot prices; the terminal uses live prices. Nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* The guide's calculators: the arithmetic of panels.js renderCalcs and core/account.js (pipValue, notionalUsd,
+   lotDec, volWhy, sheetLev, jurCap, effLev), on a small spec table copied from the instrument sheet (catalog.js).
+   Bids are the sheet's snapshot bids: examples, editable. */
+(function () {
+  const nf2 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+  const usdFmt = (v, sign = false) => v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : sign && v > 0 ? '+' : '') + '$' + nf2.format(Math.abs(v));
+  const pct = (v, d = 2, sign = true) => !isFinite(v) ? '—' : (v < 0 ? '−' : sign && v > 0 ? '+' : '') + Math.abs(v).toFixed(d) + '%';
+  const CCY_SIGN = { USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+  // example USD values of the currencies (from the snapshot bids: EURUSD, GBPUSD, USDJPY, AUDUSD, EURHUF)
+  const USDV = { USD: 1, EUR: 1.12233, GBP: 1.3377, JPY: 1 / 158, AUD: 0.6995, HUF: 1.12233 / 364.31 };
+  // sym: [kind, cls, base, quote, digits, pip, size, sizeUnit, lotName, lev [def, max], vol [min, max, step], default spread (pips / pt), bid, label]
+  const RAW = {
+    EURUSD: ['fx', 'fx-major', 'EUR', 'USD', 5, 0.0001, 100000, 'EUR', 'lots', [500, 500], [0.01, 400, 0.01], 1.2, 1.12233, 'EUR/USD'],
+    GBPUSD: ['fx', 'fx-major', 'GBP', 'USD', 5, 0.0001, 100000, 'GBP', 'lots', [500, 500], [0.01, 400, 0.01], 1.5, 1.3377, 'GBP/USD'],
+    USDJPY: ['fx', 'fx-major', 'USD', 'JPY', 3, 0.01, 100000, 'USD', 'lots', [500, 500], [0.01, 400, 0.01], 3, 158, 'USD/JPY'],
+    EURGBP: ['fx', 'fx-major', 'EUR', 'GBP', 5, 0.0001, 100000, 'EUR', 'lots', [500, 500], [0.01, 400, 0.01], 2, 0.83901, 'EUR/GBP'],
+    EURJPY: ['fx', 'fx-major', 'EUR', 'JPY', 3, 0.01, 100000, 'EUR', 'lots', [500, 500], [0.01, 400, 0.01], 5, 177.338, 'EUR/JPY'],
+    AUDUSD: ['fx', 'fx-minor', 'AUD', 'USD', 4, 0.0001, 100000, 'AUD', 'lots', [500, 500], [0.01, 400, 0.01], 10, 0.6995, 'AUD/USD'],
+    EURHUF: ['fx', 'fx-minor', 'EUR', 'HUF', 2, 0.01, 100000, 'EUR', 'lots', [500, 500], [0.01, 400, 0.01], 60, 364.31, 'EUR/HUF'],
+    GOLD: ['cfd', 'gold', 'USD', 'USD', 2, 0.01, 100, 'Ounces', 'lots', [50, 50], [0.01, 100, 0.01], 225, 4117.6, 'GOLD · GOLD'],
+    OIL: ['cfd', 'commodity', 'USD', 'USD', 2, 0.01, 1000, 'Barrels', 'lots', [40, 40], [0.01, 100, 0.01], 30, 109.61, 'OIL · OIL'],
+    'US.500': ['cfd', 'index-major', 'USD', 'USD', 2, 0.01, 50, 'point', 'lots', [100, 100], [0.01, 100, 0.01], 300, 7491.25, 'US.500 · S&P 500 futures'],
+    'DE.30': ['cfd', 'index-major', 'EUR', 'EUR', 1, 0.1, 25, 'point', 'lots', [100, 100], [0.01, 100, 0.01], 75, 24572, 'DE.30 · DAX 30 futures'],
+    'FTSE.100': ['cfd', 'index-major', 'GBP', 'GBP', 2, 0.01, 10, 'point', 'lots', [100, 100], [0.01, 100, 0.01], 2000, 10600.5, 'FTSE.100 · FTSE 100 Index futures'],
+    JAP225: ['cfd', 'index-major', 'USD', 'USD', 0, 1, 5, 'point', 'lots', [100, 100], [0.01, 100, 0.01], 18, 64280, 'JAP225 · Nikkei 225 Futures Contracts'],
+    BTCUSD: ['cfd', 'crypto', 'USD', 'USD', 2, 0.01, 1, 'point', 'lots', [10, 10], [0.01, 10, 0.01], 32000, 81369.1, 'BTCUSD · BITCOIN / USD'],
+    ETHUSD: ['cfd', 'crypto', 'USD', 'USD', 2, 0.01, 1, 'point', 'lots', [5, 5], [0.01, 10, 0.01], 800, 2392.03, 'ETHUSD · ETHEREUM / USD'],
+    XRPUSD: ['cfd', 'crypto', 'USD', 'USD', 5, 0.00001, 1, 'point', 'lots', [5, 5], [100, 1000, 100], 700, 1.29681, 'XRPUSD · RIPPLE / USD'],
+    'AAPL.US': ['cfd', 'equity', 'USD', 'USD', 2, 0.01, 1, 'Shares', 'shares', [40, 40], [1, 10000, 1], 120, 342.85, 'AAPL.US · Apple Inc']
+  };
+  // example default stops: ceil(max(3 × sheet spread, 2 × snapshot σ per hour × bid ÷ pip)) — ticket.js tkDefaults on the sheet
+  const SL0 = { EURUSD: 12, GBPUSD: 17, USDJPY: 19, EURGBP: 6, EURJPY: 20, AUDUSD: 30, EURHUF: 180, GOLD: 1749, OIL: 101, 'US.500': 1835, 'DE.30': 779, 'FTSE.100': 6000, JAP225: 396, BTCUSD: 96000, ETHUSD: 2400, XRPUSD: 2100, 'AAPL.US': 360 };
+  const SPEC = {};
+  for (const [sym, a] of Object.entries(RAW)) SPEC[sym] = { sym, kind: a[0], cls: a[1], base: a[2], quote: a[3], digits: a[4], pip: a[5], size: a[6], sizeUnit: a[7], lotName: a[8], lev: a[9], vol: a[10], spread: a[11], bid: a[12], label: a[13], unit: a[0] === 'fx' ? 'pip' : 'pt' };
+
+  /* leverage (core/account.js) */
+  const NFA_MAJORS = new Set(['USD', 'EUR', 'JPY', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK']);
+  const ESMA_CAP = { 'fx-major': 30, 'fx-minor': 20, gold: 20, 'index-major': 20, 'index-minor': 10, commodity: 10, equity: 5, crypto: 2 };
+  const NO_CFD = { gold: null, 'index-major': null, 'index-minor': null, commodity: null, equity: null, crypto: null };
+  const JUR = {
+    none: { name: 'No jurisdiction cap', cap: {}, choice: true, none: true },
+    eu: { name: 'EU retail', cap: { ...ESMA_CAP } },
+    uk: { name: 'UK retail', cap: { ...ESMA_CAP, crypto: null } },
+    au: { name: 'AU retail', cap: { ...ESMA_CAP } },
+    us: { name: 'US retail', cap: { 'fx-major': 50, 'fx-minor': 20, ...NO_CFD }, majors: NFA_MAJORS }
+  };
+  const $ = id => document.getElementById(id);
+  const set = () => { const j = $('tJur').value, l = $('tLev').value; const s = { jur: j, lev: l === 'default' ? null : +l }; if (!JUR[j].choice) s.lev = JUR[j].cap['fx-major']; return s; };
+  const jurOf = s => JUR[s.jur] || JUR.none;
+  const levCls = (m, j) => m.kind !== 'cfd' && j.majors ? (j.majors.has(m.base) && j.majors.has(m.quote) ? 'fx-major' : 'fx-minor') : m.cls;
+  const sheetLev = (m, s) => { const [def, max] = m.lev, c = s && s.lev; return c > 0 ? Math.min(c, max) : def; };
+  const jurCap = (m, s) => { const j = jurOf(s); if (j.none) return Infinity; const c = levCls(m, j); return j.cap[c] ?? ESMA_CAP[c] ?? Infinity; };
+  const effLev = (m, s) => Math.min(sheetLev(m, s), jurCap(m, s));
+  const offered = (m, s) => { const j = jurOf(s); return j.none || j.cap[levCls(m, j)] !== null; };
+  const prof = (m, s) => { const j = jurOf(s); return `${j.none ? 'Sheet' : j.name} 1:${effLev(m, s)}`; };
+
+  /* sizes and words (trade.js, core/account.js, panels.js) */
+  const lotDec = m => { const st = m.vol[2]; return st >= 1 ? 0 : Math.min(8, Math.max(0, Math.ceil(-Math.log10(st) - 1e-9))); };
+  const lotsWord = (m, lots) => { const n = Number.isInteger(+lots) ? nf0.format(lots) : (+lots).toFixed(lotDec(m)), u = m.lotName === 'shares' ? 'share' : 'lot'; return `${n} ${u}${+lots === 1 ? '' : 's'}`; };
+  const volWhy = (m, lots) => { const [mn, mx] = m.vol; if (!(lots >= mn - 1e-9)) return `Minimum size is ${lotsWord(m, mn)}`; if (lots > mx + 1e-9) return `Maximum size is ${lotsWord(m, mx)} per order`; return ''; };
+  const unitWord = m => m.unit === 'pt' ? 'pt' : 'pips';
+  const vName = m => m.unit === 'pt' ? 'Point value' : 'Pip value';
+  const pretty = m => m.kind === 'cfd' ? m.sym : m.base + '/' + m.quote;
+  const smallMoney = v => (Math.abs(v) >= .01 || v === 0 ? nf2.format(v) : String(+v.toPrecision(2)));
+  const ptWorth = (m, lots) => { const v = lots * m.size * m.pip, s = CCY_SIGN[m.quote] || m.quote + ' '; return `1 pt (${m.pip.toFixed(m.digits)}) = ${s}${smallMoney(v)}`; };
+  const units = (m, lots) => {
+    const u = lots * m.size;
+    if (m.kind !== 'cfd') return `${nf0.format(u)} ${m.base}`;
+    if (m.lotName === 'shares') return `${nf0.format(u)} share${u === 1 ? '' : 's'}`;
+    if (m.sizeUnit === 'point') return m.pip === 1 ? `${CCY_SIGN[m.quote] || m.quote + ' '}${nf2.format(u)} per point` : ptWorth(m, lots);
+    return `${nf2.format(u)} ${m.sizeUnit || 'units'}`;
+  };
+  const pipValue = (m, lots, q) => lots * m.size * m.pip * q;
+  const notional = (m, lots, bid, q, b) => m.kind === 'cfd' ? lots * m.size * bid * q : lots * m.size * b;
+  const money = v => Math.abs(v) > 0 && Math.abs(v) < .01 ? '$' + v.toLocaleString('en-US', { maximumSignificantDigits: 2 }) : usdFmt(v);
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const parts = rows => rows.map(([a, b]) => `<span>${esc(a)}</span><b>${esc(b)}</b>`).join('');
+  const lines = (list, cls) => list.map(t => `<div class="ln ${cls}">${esc(t)}</div>`).join('');
+  const opts = Object.values(SPEC).map(m => `<option value="${m.sym}">${esc(m.label)}</option>`).join('');
+
+  // the price block of a card: bid (CFDs), 1 quote ccy in USD, 1 base ccy in USD (FX); refilled when the instrument changes
+  function prices(p, m) {
+    const sel = $(p + 'Sym');
+    if (sel.dataset.k !== m.sym) {
+      sel.dataset.k = m.sym;
+      $(p + 'Bid').value = m.bid; $(p + 'Q').value = +USDV[m.quote].toPrecision(8); $(p + 'B').value = +USDV[m.base].toPrecision(8);
+      if ($(p + 'Spr')) $(p + 'Spr').value = m.spread;
+      if (p === 'p') $('pSL').value = SL0[m.sym];
+    }
+    $(p + 'Qc').textContent = m.quote; $(p + 'Bc').textContent = m.base;
+    $(p + 'BidL').hidden = m.kind !== 'cfd'; $(p + 'BL').hidden = m.kind === 'cfd';
+    const v = id => { const x = $(p + id).value.trim(); return x === '' ? NaN : +x; };
+    return { bid: v('Bid'), q: v('Q'), b: v('B') };
+  }
+
+  function drawP(s) {
+    const m = SPEC[$('pSym').value], px = prices('p', m), acc = +$('pAcc').value, r = +$('pRisk').value, sl = +$('pSL').value;
+    $('pUnit').textContent = unitWord(m);
+    if (!offered(m, s)) { $('pLots').textContent = '—'; $('pParts').innerHTML = ''; $('pMsg').innerHTML = lines([`Not listed in the app under ${jurOf(s).name}: this class is not offered there.`], 'nt'); return; }
+    const bad = !(acc > 0) ? 'Account must be above 0.' : !(r > 0) ? 'Risk % must be above 0.' : !(sl > 0) ? `Stop must be above 0 ${unitWord(m)}.` : '';
+    if (bad) { $('pLots').textContent = '—'; $('pParts').innerHTML = ''; $('pMsg').innerHTML = lines([bad], 'err'); return; }
+    const [vMin, vMax, vStep] = m.vol, pv = pipValue(m, 1, px.q), riskUsd = acc * r / 100;
+    const lots = +(Math.floor(riskUsd / (sl * pv) / vStep + 1e-9) * vStep).toFixed(lotDec(m)), atRisk = lots * sl * pv, n1 = notional(m, lots, px.bid, px.q, px.b), warn = [], vw = volWhy(m, lots);
+    if (lots < vMin - 1e-9) warn.push(`Below the sheet's minimum: ${vw} — this risk and stop allow no position.`);
+    else if (lots > vMax + 1e-9) warn.push(`${vw}: an order this size is refused.`);
+    if (n1 > acc * 25) warn.push(`Notional ${usdFmt(n1)} is above the per-order cap of 25× equity (${usdFmt(acc * 25)}): an order this size is refused.`);
+    $('pLots').textContent = isFinite(lots) ? lotsWord(m, lots) : '—';
+    $('pParts').innerHTML = parts([['Units', isFinite(lots) ? units(m, lots) : '—'], ['Amount at risk', usdFmt(atRisk)], [vName(m), usdFmt(pv * lots)], ['Margin at profile', `${usdFmt(n1 / effLev(m, s))} (${prof(m, s)})`], ['Pip value per lot (guide only)', usdFmt(pv)], ['Exact size before rounding (guide only)', isFinite(riskUsd / (sl * pv)) ? (riskUsd / (sl * pv)).toFixed(4) : '—']]);
+    $('pMsg').innerHTML = lines(warn, 'err');
+  }
+
+  function drawV(s) {
+    const m = SPEC[$('vSym').value], px = prices('v', m), l2 = +$('vLots').value, lvEl = $('vLev'), j = jurOf(s);
+    $('vUnit').textContent = unitWord(m); $('vMainL').textContent = vName(m);
+    if (!offered(m, s)) { $('vMain').textContent = '—'; $('vParts').innerHTML = ''; $('vTag').textContent = ''; $('vMsg').innerHTML = lines([`Not listed in the app under ${j.name}: this class is not offered there.`], 'nt'); return; }
+    const free = !!j.none, eff = effLev(m, s), ceil = free ? m.lev[1] : eff, key = `${$('tJur').value}:${$('tLev').value}|${m.sym}`;
+    if (lvEl.dataset.k !== key || !free) { lvEl.dataset.k = key; lvEl.value = eff; }
+    lvEl.readOnly = !free; lvEl.max = ceil;
+    $('vTag').textContent = free ? `Sheet 1:${eff} · maximum 1:${ceil}` : prof(m, s);
+    const lev = lvEl.value.trim() === '' ? NaN : +lvEl.value, spr = +$('vSpr').value;
+    const bad = !(l2 > 0) ? 'Lots must be above 0.' : !(lev >= 1) ? 'Leverage must be at least 1:1.' : lev > ceil ? `Above the 1:${ceil} ceiling for ${pretty(m)}: the instrument sheet maximum.` : '';
+    if (bad) { $('vMain').textContent = '—'; $('vParts').innerHTML = ''; $('vMsg').innerHTML = lines([bad], 'err'); return; }
+    const pv = pipValue(m, l2, px.q), n2 = notional(m, l2, px.bid, px.q, px.b);
+    const [mn2, mx2] = m.vol, vw2 = volWhy(m, l2);
+    const lim = l2 < mn2 - 1e-9 ? [`Below the sheet's minimum: ${vw2} — an order this size is refused.`] : l2 > mx2 + 1e-9 ? [`${vw2}: an order this size is refused.`] : [];
+    $('vMain').textContent = money(pv);
+    $('vParts').innerHTML = parts([['Units', units(m, l2)], ['Margin', money(n2 / lev)], ['Notional', money(n2)], ['Spread cost', money(spr * pv)]]);
+    $('vMsg').innerHTML = lines(lim, 'err') + (lev !== eff ? lines([`Your account uses 1:${eff} on ${pretty(m)} (${free ? 'no jurisdiction cap' : j.name}); this figure is a what-if.`], 'nt') : '');
+  }
+
+  function drawC() {
+    const st = +$('cStart').value, ret = +$('cRet').value / 100, mo = +$('cM').value, fin = st * Math.pow(1 + ret, mo);
+    const bad = !(st > 0) ? 'Start must be above 0.' : !(ret > -1) ? 'Monthly return must be above −100%.' : !(mo >= 1 && Number.isInteger(mo)) ? 'Months must be a whole number, 1 or more.' : '';
+    $('cMsg').innerHTML = bad ? lines([bad], 'err') : '';
+    if (bad) { ['cFin', 'cGain', 'cTot', 'cAnn'].forEach(id => { $(id).textContent = '—'; }); $('cLine').setAttribute('points', ''); $('cBase').setAttribute('points', ''); return; }
+    $('cFin').textContent = usdFmt(fin); $('cGain').textContent = usdFmt(fin - st, true);
+    $('cTot').textContent = pct((fin / st - 1) * 100, 1); $('cAnn').textContent = pct((Math.pow(1 + ret, 12) - 1) * 100, 1);
+    const n = Math.max(1, Math.min(600, Math.round(mo) || 1)), pts = [];
+    for (let k = 0; k <= n; k++) pts.push(st * Math.pow(1 + ret, k));
+    const lo = Math.min(st, ...pts), hi = Math.max(st, ...pts), y = v => hi > lo ? 84 - (v - lo) / (hi - lo) * 78 : 45;
+    $('cLine').setAttribute('points', isFinite(lo) && isFinite(hi) ? pts.map((v, k) => `${(k / n * 400).toFixed(1)},${y(v).toFixed(1)}`).join(' ') : '');
+    $('cBase').setAttribute('points', isFinite(lo) && isFinite(hi) ? `0,${y(st).toFixed(1)} 400,${y(st).toFixed(1)}` : '');
+  }
+
+  function draw() {
+    const s = set(), j = jurOf(s);
+    $('tLev').disabled = !j.choice;
+    $('tSetNote').textContent = j.none ? 'No jurisdiction cap: every instrument at its sheet leverage, or your choice up to its maximum.' : `${j.name}: the leverage choice is set to the major-pair cap (1:${j.cap['fx-major']}); each class is capped.`;
+    drawP(s); drawV(s);
+  }
+  $('pSym').innerHTML = opts; $('vSym').innerHTML = opts;
+  document.querySelectorAll('#tSet select, #cP input, #cP select, #cV input, #cV select').forEach(x => x.addEventListener('input', draw));
+  document.querySelectorAll('#cC input').forEach(x => x.addEventListener('input', drawC));
+  draw(); drawC();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volatility clock guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Volatility clock in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Volatility clock</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Volatility clock</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#what-you-see"><span>02</span>What you see</a>
+  <a href="#controls"><span>03</span>Controls</a>
+  <a href="#how-it-is-computed"><span>04</span>How it is computed</a>
+  <a href="#the-cards"><span>05</span>The cards</a>
+  <a href="#more"><span>06</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Volatility clock</h1>
+  <p class="g-lede">How to read, interpret and use Volatility clock: what it shows, how it is computed and how to act on it.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Volatility clock</b></div>
+    <div><label>Covers</label><b>The open instrument</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“How active the market usually is at each time of day, and how today compares.”</p></div>
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">02</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+<svg viewBox="0 0 760 500" class="wide" role="img" aria-label="Schematic volatility clock: 96 petals for the 15-minute slots of the UTC day, session rings outside">
+<circle cx="250" cy="250" r="82.7" class="s-ln" stroke-dasharray="2 4"/>
+<circle cx="250" cy="250" r="125.3" class="s-ln" stroke-dasharray="2 4"/>
+<circle cx="250" cy="250" r="168" class="s-ln" stroke-dasharray="2 4"/>
+<path d="M250.2 210L250.4 161.4L255.4 161.6L252.5 210.1Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M252.8 210.1L256.3 159.4L261.5 160L255.1 210.3Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M255.4 210.4L262.5 158.1L267.7 159L257.6 210.7Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M258 210.8L268.8 157.5L274.1 158.8L260.2 211.3Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M260.5 211.4L275.1 157.9L280.3 159.4L262.7 212.1Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M263 212.2L281.3 159.1L286.4 161.1L265.2 213Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M265.5 213.1L287.1 161.4L292.2 163.6L267.5 214.1Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M267.8 214.2L292.6 164.5L297.4 167.1L269.9 215.3Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M270.1 215.4L297.5 168.4L302.1 171.3L272.1 216.7Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M272.4 216.8L301.9 173L306.2 176.1L274.2 218.2Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M274.5 218.4L305.7 178L309.7 181.4L276.3 219.8Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M276.5 220L308.9 183.4L312.6 186.9L278.2 221.6Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M278.4 221.8L311.6 188.8L315.1 192.5L280 223.5Z" style="fill:var(--div-neg)"/>
+<path d="M280.2 223.7L314 194.3L317.1 198.1L281.6 225.5Z" style="fill:var(--div-neg)"/>
+<path d="M281.8 225.8L316.2 199.7L318.9 203.5L283.2 227.6Z" style="fill:var(--div-neg)"/>
+<path d="M283.3 227.9L318.2 204.8L320.7 208.8L284.6 229.9Z" style="fill:var(--div-neg)"/>
+<path d="M284.7 230.1L320.2 209.8L322.4 213.9L285.8 232.2Z" style="fill:var(--div-neg)"/>
+<path d="M285.9 232.5L322.4 214.7L324.3 218.9L286.9 234.5Z" style="fill:var(--div-neg)"/>
+<path d="M287 234.8L324.8 219.4L326.4 223.7L287.8 237Z" style="fill:var(--div-neg)"/>
+<path d="M287.9 237.3L327.5 224L328.9 228.5L288.6 239.5Z" style="fill:var(--div-neg)"/>
+<path d="M288.7 239.8L330.7 228.7L331.8 233.4L289.2 242Z" style="fill:var(--div-neg)"/>
+<path d="M289.3 242.4L334.3 233.6L335.1 238.5L289.6 244.6Z" style="fill:var(--div-neg)"/>
+<path d="M289.7 244.9L338.4 238.7L338.9 243.8L289.9 247.2Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M289.9 247.5L342.9 244.3L343.1 249.6L290 249.8Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M290 250.2L347.8 250.4L347.7 256L289.9 252.5Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M289.9 252.8L353.1 257.2L352.5 263.1L289.7 255.1Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M289.6 255.4L358.4 264.7L357.4 270.9L289.3 257.6Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M289.2 258L363.7 273.1L362.2 279.6L288.7 260.2Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M288.6 260.5L368.6 282.3L366.5 289L287.9 262.7Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M287.8 263L372.8 292.2L370.1 299.2L287 265.2Z" style="fill:var(--div-pos)"/>
+<path d="M286.9 265.5L375.9 302.7L372.7 309.9L285.9 267.5Z" style="fill:var(--div-pos)"/>
+<path d="M285.8 267.8L377.7 313.6L373.9 320.9L284.7 269.9Z" style="fill:var(--div-pos)"/>
+<path d="M284.6 270.1L378 324.6L373.5 331.8L283.3 272.1Z" style="fill:var(--div-pos)"/>
+<path d="M283.2 272.4L376.5 335.2L371.4 342.4L281.8 274.2Z" style="fill:var(--div-pos)"/>
+<path d="M281.6 274.5L373.1 345.3L367.5 352.2L280.2 276.3Z" style="fill:var(--div-pos)"/>
+<path d="M280 276.5L368 354.3L361.8 360.9L278.4 278.2Z" style="fill:var(--div-pos)"/>
+<path d="M278.2 278.4L361.2 362.1L354.6 368.3L276.5 280Z" style="fill:var(--div-pos)"/>
+<path d="M276.3 280.2L353 368.4L346 374.1L274.5 281.6Z" style="fill:var(--div-pos)"/>
+<path d="M274.2 281.8L343.7 373.1L336.5 378.3L272.4 283.2Z" style="fill:var(--div-pos)"/>
+<path d="M272.1 283.3L333.7 376.4L326.3 381L270.1 284.6Z" style="fill:var(--div-pos)"/>
+<path d="M269.9 284.7L323.4 378.3L315.9 382.3L267.8 285.8Z" style="fill:var(--div-pos)"/>
+<path d="M267.5 285.9L313.1 379.3L305.6 382.7L265.5 286.9Z" style="fill:var(--div-pos)"/>
+<path d="M265.2 287L303 379.5L295.5 382.3L263 287.8Z" style="fill:var(--div-pos)"/>
+<path d="M262.7 287.9L293.4 379.5L285.9 381.8L260.5 288.6Z" style="fill:var(--div-pos)"/>
+<path d="M260.2 288.7L284.2 379.7L276.7 381.4L258 289.2Z" style="fill:var(--div-pos)"/>
+<path d="M257.6 289.3L275.4 380.3L267.9 381.5L255.4 289.6Z" style="fill:var(--div-pos)"/>
+<path d="M255.1 289.7L266.8 381.7L259.2 382.4L252.8 289.9Z" style="fill:var(--div-pos)"/>
+<path d="M252.5 289.9L258.2 383.9L250.5 384.2L250.2 290Z" style="fill:var(--div-pos)"/>
+<path d="M249.8 290L249.5 387L241.6 386.7L247.5 289.9Z" style="fill:var(--div-pos)"/>
+<path d="M247.2 289.9L240.2 390.5L232.2 389.7L244.9 289.7Z" style="fill:var(--div-pos)"/>
+<path d="M244.6 289.6L230.4 394.3L222.2 393L242.4 289.3Z" style="fill:var(--div-pos)"/>
+<path d="M242 289.2L220 397.9L211.5 395.9L239.8 288.7Z" style="fill:var(--div-pos)"/>
+<path d="M239.5 288.6L209 400.7L200.4 398.1L237.3 287.9Z" style="fill:var(--div-pos)"/>
+<path d="M237 287.8L197.7 402.1L189 398.9L234.8 287Z" style="fill:var(--div-pos)"/>
+<path d="M234.5 286.9L186.4 401.9L177.7 398L232.5 285.9Z" style="fill:var(--tx)"/>
+<path d="M232.2 285.8L175.5 399.6L167 395.1L230.1 284.7Z" style="fill:var(--div-pos)"/>
+<path d="M229.9 284.6L165.4 395.2L157.2 390.1L227.9 283.3Z" style="fill:var(--div-pos)"/>
+<path d="M227.6 283.2L156.6 388.5L148.8 382.9L225.8 281.8Z" style="fill:var(--div-pos)"/>
+<path d="M225.5 281.6L149.5 379.9L142.2 373.9L223.7 280.2Z" style="fill:var(--div-pos)"/>
+<path d="M223.5 280L144.2 369.7L137.5 363.4L221.8 278.4Z" style="fill:var(--div-pos)"/>
+<path d="M221.6 278.2L140.8 358.3L134.8 351.8L220 276.5Z" style="fill:var(--div-pos)"/>
+<path d="M219.8 276.3L139.4 346.2L134 339.7L218.4 274.5Z" style="fill:var(--div-pos)"/>
+<path d="M218.2 274.2L139.6 334L135 327.5L216.8 272.4Z" style="fill:var(--div-pos)"/>
+<path d="M216.7 272.1L141.3 322L137.4 315.6L215.4 270.1Z" style="fill:var(--div-pos)"/>
+<path d="M215.3 269.9L144.1 310.6L140.8 304.4L214.2 267.8Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M214.1 267.5L147.6 300L144.9 294L213.1 265.5Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M213 265.2L151.4 290.4L149.3 284.6L212.2 263Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M212.1 262.7L155.4 281.7L153.7 276.2L211.4 260.5Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M211.3 260.2L159.1 274L157.9 268.7L210.8 258Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M210.7 257.6L162.6 267L161.8 262L210.4 255.4Z" style="fill:var(--tx3);fill-opacity:.55"/>
+<path d="M210.3 255.1L165.7 260.8L165.2 255.9L210.1 252.8Z" style="fill:var(--div-neg)"/>
+<path d="M210.1 252.5L168.5 255L168.3 250.3L210 250.2Z" style="fill:var(--div-neg)"/>
+<path d="M210 249.8L170.9 249.7L171 245.1L210.1 247.5Z" style="fill:var(--div-neg)"/>
+<path d="M210.1 247.2L173 244.6L173.5 240.2L210.3 244.9Z" style="fill:var(--div-neg)"/>
+<path d="M210.4 244.6L175.1 239.8L175.8 235.5L210.7 242.4Z" style="fill:var(--div-neg)"/>
+<path d="M210.8 242L177.1 235.2L178.1 231L211.3 239.8Z" style="fill:var(--div-neg)"/>
+<path d="M211.4 239.5L179.3 230.8L180.6 226.7L212.1 237.3Z" style="fill:var(--div-neg)"/>
+<path d="M212.2 237L181.8 226.5L183.2 222.7L213 234.8Z" style="fill:var(--div-neg)"/>
+<path d="M213.1 234.5L184.5 222.6L186.2 218.9L214.1 232.5Z" style="fill:var(--div-neg)"/>
+<path d="M214.2 232.2L187.7 219L189.6 215.4L215.3 230.1Z" style="fill:var(--div-neg)"/>
+<path d="M215.4 229.9L191.1 215.7L193.2 212.4L216.7 227.9Z" style="fill:var(--div-neg)"/>
+<path d="M216.8 227.6L194.9 212.8L197.1 209.7L218.2 225.8Z" style="fill:var(--div-neg)"/>
+<path d="M218.4 225.5L198.7 210.3L201.1 207.4L219.8 223.7Z" style="fill:var(--div-neg)"/>
+<path d="M220 223.5L202.5 208L205 205.4L221.6 221.8Z" style="fill:var(--div-neg)"/>
+<path d="M221.8 221.6L206.2 205.8L208.8 203.4L223.5 220Z" style="fill:var(--div-neg)"/>
+<path d="M223.7 219.8L209.6 203.5L212.3 201.3L225.5 218.4Z" style="fill:var(--div-neg)"/>
+<path d="M225.8 218.2L212.7 201L215.6 198.9L227.6 216.8Z" style="fill:var(--div-neg)"/>
+<path d="M227.9 216.7L215.6 198.1L218.7 196.2L229.9 215.4Z" style="fill:var(--div-neg)"/>
+<path d="M230.1 215.3L218.6 195L221.8 193.3L232.2 214.2Z" style="fill:var(--div-neg)"/>
+<path d="M232.5 214.1L221.6 191.8L225 190.3L234.5 213.1Z" style="fill:var(--div-neg)"/>
+<path d="M234.8 213L224.9 188.6L228.4 187.2L237 212.2Z" style="fill:var(--div-neg)"/>
+<path d="M237.3 212.1L228.4 185.6L232.2 184.5L239.5 211.4Z" style="fill:var(--div-neg)"/>
+<path d="M239.8 211.3L232.3 183L236.2 182.1L242 210.8Z" style="fill:var(--div-neg)"/>
+<path d="M242.4 210.7L236.5 180.9L240.5 180.2L244.6 210.4Z" style="fill:var(--div-neg)"/>
+<path d="M244.9 210.3L241 179.3L245.1 178.9L247.2 210.1Z" style="fill:var(--div-neg)"/>
+<path d="M247.5 210.1L245.6 178.3L249.7 178.2L249.8 210Z" style="fill:var(--div-neg)"/>
+<circle cx="252.9" cy="160.5" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="266.6" cy="149.5" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="279.1" cy="154.1" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="294.3" cy="152.1" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="306" cy="160" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="305.5" cy="182.3" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="310.2" cy="193.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="328.8" cy="193.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="322.4" cy="211.3" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="326.3" cy="221.3" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="348.1" cy="227.1" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="345.2" cy="240.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="366.2" cy="253.8" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="367.4" cy="269.4" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="385" cy="291" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="372.2" cy="305.4" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="392.7" cy="338.7" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="379.9" cy="356.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="364.8" cy="372.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="347.9" cy="386.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="329.2" cy="398.2" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="296.9" cy="374.6" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="286.4" cy="406.2" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="264.8" cy="400.2" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="245.4" cy="391.8" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="227.7" cy="384.9" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="201.2" cy="410.8" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<circle cx="180.7" cy="403" r="2.6" class="s-tx" style="stroke:var(--bg);stroke-width:1"/>
+<line x1="250" y1="250" x2="178.2" y2="408.5" style="stroke:var(--tx);stroke-width:1.6"/>
+<circle cx="250" cy="250" r="36" class="s-bg" style="stroke:var(--line2)"/><text x="250" y="255" text-anchor="middle" class="m b s-tx">13:35</text>
+<text x="250" y="24" text-anchor="middle" class="m s s-tx3">00</text>
+<text x="412.6" y="91.4" text-anchor="middle" class="m s s-tx3">03</text>
+<text x="480" y="254" text-anchor="middle" class="m s s-tx3">06</text>
+<text x="412.6" y="416.6" text-anchor="middle" class="m s s-tx3">09</text>
+<text x="250" y="484" text-anchor="middle" class="m s s-tx3">12</text>
+<text x="87.4" y="416.6" text-anchor="middle" class="m s s-tx3">15</text>
+<text x="20" y="254" text-anchor="middle" class="m s s-tx3">18</text>
+<text x="87.4" y="91.4" text-anchor="middle" class="m s s-tx3">21</text>
+<path d="M121.3 121.3 A182 182 0 0 1 432 250" style="stroke:var(--tx2);stroke-width:4;fill:none;stroke-opacity:0.35"/>
+<path d="M250 58 A192 192 0 0 1 385.8 385.8" style="stroke:var(--tx2);stroke-width:4;fill:none;stroke-opacity:0.35"/>
+<path d="M424.9 351 A202 202 0 0 1 54.9 302.3" style="stroke:var(--tx2);stroke-width:4;fill:none;stroke-opacity:1"/>
+<path d="M195.1 454.8 A212 212 0 0 1 144 66.4" style="stroke:var(--tx2);stroke-width:4;fill:none;stroke-opacity:1"/>
+<rect x="520" y="60" width="14" height="10" style="fill:var(--div-pos)"/><text x="542" y="69" class="s s-tx2">busier than 1.3× average</text>
+<rect x="520" y="84" width="14" height="10" style="fill:var(--div-neg)"/><text x="542" y="93" class="s s-tx2">quieter than 0.7×</text>
+<rect x="520" y="108" width="14" height="10" style="fill:var(--tx3);fill-opacity:.55"/><text x="542" y="117" class="s s-tx2">around the average</text>
+<rect x="520" y="132" width="14" height="10" class="s-tx"/><circle cx="527" cy="160" r="3" class="s-tx"/><text x="542" y="141" class="s s-tx2">now (current slot and hand)</text><text x="542" y="164" class="s s-tx2">dots: today, slot by slot</text>
+<line x1="520" x2="534" y1="186" y2="186" style="stroke:var(--tx2);stroke-width:4"/><text x="542" y="190" class="s s-tx2">session ring, brighter = open now</text>
+<text x="520" y="232" class="b s s-tx">Rings, inside out</text><text x="520" y="250" class="s s-tx2">Sydney · Tokyo · London · New York</text>
+<text x="520" y="290" class="b s s-tx">Scale circles</text><text x="520" y="308" class="s s-tx2">33 · 66 · 100% of the largest petal,</text><text x="520" y="324" class="s s-tx2">in pips per minute (one pair)</text><text x="520" y="340" class="s s-tx2">or bp (all pairs)</text>
+<text x="520" y="384" class="s s-tx3">Illustration: a winter day; hand at 13:35 UTC,</text><text x="520" y="400" class="s s-tx3">London and New York both open.</text>
+</svg>
+  </div><figcaption><b>Fig. 1</b>Illustration of the clock: petals for the usual activity of each 15-minute slot, dots for today, the hand at now.</figcaption></figure>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">03</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Scope</td><td class="n"><b>This pair</b> · All pairs</td><td>The activity profile of the open instrument (CFDs included, with their own session hours), or the average profile of the 16 pairs. Next-hour figures are given for one pair only.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-it-is-computed">
+  <div class="ch-h"><span class="n">04</span><h3>How it is computed</h3></div>
+
+  <div class="fml">
+    <div>activity  |1-minute log return| in bp, returns across a gap left out</div>
+    <div>petal     median, over the previous UTC days, of each day’s average activity in that 15-minute slot   <span class="c">one agitated day barely moves it</span></div>
+    <div>colour    petal ÷ day average &gt; 1.3 orange · &lt; 0.7 blue · else grey</div>
+    <div>today     from the FX rollover at 17:00 New York (21:00 UTC summer, 22:00 winter); a CFD’s current session</div>
+    <div>now       last 60 minutes ÷ the usual of the same slots   <span class="c">needs ≥ 15 one-minute bars</span></div>
+    <div>next hour σ per minute = petal × √(π/2) · 1σ = √(Σ σ²) over the open minutes · 2σ = 2 × 1σ</div>
+  </div>
+  <div class="call ex"><b class="t">Worked example</b><p>The next hour’s petals average <code>0.40</code> pips per minute. σ per minute = 0.40 × 1.2533 = 0.501; over 60 open minutes, 1σ = 0.501 × √60 = <b>±3.9 pips</b>, about two hours in three; 2σ = <b>±7.8 pips</b>, 95% on a normal curve. A 20-pip ticket stop is 5.2× the next hour’s 1σ.</p></div>
+
+  
+</section>
+
+<section class="ch" id="the-cards">
+  <div class="ch-h"><span class="n">05</span><h3>The cards</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Card</th><th>Says</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td>Now</td><td><code>Now · 13:30–13:45 UTC · London + New York open</code>; “The last 60 minutes are running at 1.4× their usual activity”; “Today so far: 1.1× a usual day.”</td><td>&gt; 1.3 busy, &lt; 0.7 quiet. Under 15 minutes of trading: too few to compare. Closed: nothing to measure.</td></tr>
+      <tr><td>Next hour</td><td>±1σ and ±2σ in pips or points, the busiest and quietest hour’s 1σ, and your ticket stop as a multiple of 1σ (also at the last hour’s pace).</td><td>Tail check over at least 40 past hours: how often moves went beyond ±2σ, against the 5% of a normal curve (under 3% less often, over 7% more often). 1-minute moves have fat tails: ±2σ is not a hard limit.</td></tr>
+      <tr><td>Next two hours</td><td>Eight bars, each the usual activity of a slot against the day’s average (capped at 2.5×), and the busiest coming slot.</td><td>Above 1.2×: “usually wider swings; give stops room.” Below 0.8×: “usually quiet trade.” Closed slots are marked.</td></tr>
+      <tr><td>Busiest and quietest hour</td><td><code>Peak 13:00–14:00 UTC (2.1× average)</code> and the trough.</td><td>By UTC hour (mean of its 4 slots): a single slot is too noisy to name a peak.</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 130" role="img" aria-label="Next two hours: eight bars of usual activity against the day's average">
+      <path d="M40 100 H720" class="s-ln3"/><path d="M40 66 H720" class="s-ln" stroke-dasharray="3 4"/><text x="726" y="70" class="m s s-tx3">1×</text>
+      <g><rect x="50" y="34" width="66" height="66" class="s-pos" style="fill-opacity:.75"/><rect x="134" y="28" width="66" height="72" class="s-pos" style="fill-opacity:.75"/><rect x="218" y="40" width="66" height="60" class="s-pos" style="fill-opacity:.75"/><rect x="302" y="46" width="66" height="54" class="s-pos" style="fill-opacity:.75"/><rect x="386" y="52" width="66" height="48" class="s-pos" style="fill-opacity:.75"/><rect x="470" y="60" width="66" height="40" class="s-tx3" style="fill-opacity:.55"/><rect x="554" y="64" width="66" height="36" class="s-tx3" style="fill-opacity:.55"/><rect x="638" y="70" width="66" height="30" class="s-tx3" style="fill-opacity:.55"/></g>
+      <g class="m s s-tx3"><text x="83" y="116" text-anchor="middle" class="m s s-tx3">13:45</text><text x="167" y="116" text-anchor="middle" class="m s s-tx3">14:00</text><text x="251" y="116" text-anchor="middle" class="m s s-tx3">14:15</text><text x="335" y="116" text-anchor="middle" class="m s s-tx3">14:30</text><text x="419" y="116" text-anchor="middle" class="m s s-tx3">14:45</text><text x="503" y="116" text-anchor="middle" class="m s s-tx3">15:00</text><text x="587" y="116" text-anchor="middle" class="m s s-tx3">15:15</text><text x="671" y="116" text-anchor="middle" class="m s s-tx3">15:30</text></g>
+      <text x="167" y="20" text-anchor="middle" class="b s s-tx">busiest coming slot 14:00 (2.1×)</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>Illustration of the next-two-hours strip: usually 1.5× the daily average — usually wider swings; give stops room.</figcaption></figure>
+  <div class="cards">
+    <div class="card"><h5>Before placing a stop</h5><p>Know whether activity is about to rise or fade. A stop of only 1–2× the next hour’s 1σ is within normal noise.</p></div>
+    <div class="card"><h5>Entries and activity</h5><p>Place entries before activity rises if you need movement; avoid tight stops just before it.</p></div>
+    <div class="card"><h5>Today against usual</h5><p>Much busier than usual: something is moving this market. Much quieter: expect small ranges.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>The profile comes from the week of 1-minute bars kept; with fewer than 3 days in a slot the median is unsteady and the tool says so. The clock measures size, never direction. Release days can make any slot behave unlike its petal.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">06</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Volatility clock guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

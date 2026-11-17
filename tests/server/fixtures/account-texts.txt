@@ -1,0 +1,106 @@
+# Refusal texts of trade.js and ui.js before the account core (commit e15625b): the source lines that build them, kept
+# verbatim so tests/server/account-core.mjs AC8 can compare the core's REJECT templates with them. Do not edit.
+## trade.js
+  if (m.kind !== 'cfd') return `1 lot = ${nf0.format(m.size)} ${m.base}`;
+  return `1 lot = ${nf0.format(m.size)} ${m.sizeUnit || 'units'}`;
+  return `1 pt (${m.pip.toFixed(m.digits)}) = ${s}${smallMoney(v)}`;
+const lotsWord = (sym, lots) => { const n = Number.isInteger(+lots) ? nf0.format(lots) : lotsFmt(sym, lots), u = M(sym).lotName === 'shares' ? 'share' : 'lot'; return `${n} ${u}${+lots === 1 ? '' : 's'}`; };
+function volWhy(sym, lots) {
+  if (!(lots >= mn - 1e-9)) return `Minimum size is ${lotsWord(sym, mn)}`;
+  if (lots > mx + 1e-9) return `Maximum size is ${lotsWord(sym, mx)} per order`;
+  return '';
+  uk: { name: 'UK retail', opt: 'UK · FCA', cap: { ...ESMA_CAP, crypto: null }, why: { crypto: 'FCA ban on crypto derivatives for retail' } },
+  us: { name: 'US retail', opt: 'US · NFA', cap: { 'fx-major': 50, 'fx-minor': 20, ...NO_CFD }, majors: NFA_MAJORS, majorsName: 'NFA major currencies', why: { cfd: 'US retail: no CFDs' } }
+  const m = M(sym); if (!m) return 'off';
+  if (replayOff(sym) || (!j.none && j.cap[levCls(sym, j)] === null)) return 'off';
+function unavailableWhy(sym, profile) {
+  const m = M(sym); if (!m) return 'Unknown instrument';
+  if (replayOff(sym)) return `${m.short} is not offered in a replay (replays cover the 16 G8 FX pairs)`;
+  if (st === 'close') return `${m.short} is close only — new positions and orders are not accepted`;
+  if (st === 'off') return `${m.short} is not offered under ${jurOf(setOf(profile)).name}`;
+  return '';
+  const w = unavailableWhy(sym, profile), j = jurOf(setOf(profile)), m = M(sym);
+  const s = Engine.session(sym, t); if (!s || s.open || !s.opensAt) return '';
+  return `opens ${DOW3[d.getDay()]} ${hm2(d.getHours(), d.getMinutes())} (local) / ${sameDay ? '' : DOW3[d.getUTCDay()] + ' '}${hm2(d.getUTCHours(), d.getUTCMinutes())} UTC`;
+function marketWhy(sym) {
+  const q = Engine.quote(sym); if (!q || q.open) return '';
+  if (q.why === 'off quotes') return 'Off quotes — no fresh price from the feed';
+  if (q.why === 'no feed') return 'No live prices — the broker platform is not answering';
+  const o = opensText(sym); return 'Market closed' + (o ? ' — ' + o : '');
+  if (j.none) return 'no cap: each instrument at its sheet leverage';
+  if (j.cap.gold == null) return `${fx}; CFDs not offered to retail`;
+  return `${fx}; CFDs: 1:${j.cap.gold} gold and major indices, 1:${j.cap.commodity} other commodities and minor indices, 1:${j.cap.equity} stocks, ` + (j.cap.crypto == null ? 'crypto not offered to retail' : `1:${j.cap.crypto} crypto`);
+  toast(`Orders cancelled: ${names}`, `${gone.length} pending order${gone.length > 1 ? 's' : ''} on ${names} cancelled: ${unavailableWhy(gone[0].sym)}.`, 'info');
+let lastReject = '';
+const stopInSpreadWhy = (sym, spread) => `Stop inside the spread (${spread.toFixed(1)} ${unitWord(sym)}) — widen it`;
+const reject = (title, why, last) => { lastReject = last ?? `${title.toLowerCase()} (${why})`; legToast(title, why, 'dn'); legBeep('err'); return null; };
+const closedReject = (sym, w, b = true) => { const [title] = w.split(' — '); lastReject = w[0].toLowerCase() + w.slice(1); legToast(title, `${M(sym).short}: ${w}.`, 'dn'); if (b) legBeep('err'); return null; };
+   order is the sheet's [min, max] (volWhy); MAX_LOTS is only the largest of them (a sanity bound for stored states). */
+  { const w = volWhy(sym, lots); if (w) return w; }
+  if (notional > cap) return `Notional ${usdFmt(notional)} is above the per-order cap of ${MAX_NOTIONAL_X}× equity (${usdFmt(cap)})`;
+  return '';
+  lastReject = 'duplicate order awaiting confirmation';
+const requoteReject = (sym, ex) => { const n = Math.round(ex.devPts); lastReject = `requote — price moved ${n} pts`; legToast('Requote', `${M(sym).short}: the price moved ${n} pts from the quote (maximum deviation ${M(sym).p.maxDev} pts) — not filled. Send again at the new price.`, 'dn'); legBeep('err'); return null; };
+  if (rows.length > TP_MAX) return { err: `At most ${TP_MAX} targets` };
+    if (!rows.every(x => x && x.pips > 0 && x.pct > 0 && x.pct <= 100)) return { err: 'Each target needs pips above 0 and a share between 0 and 100%' };
+    const tot = rows.reduce((s, x) => s + +x.pct, 0); if (tot > 100 + 1e-9) return { err: `Targets add up to ${Math.round(tot)}% — max 100%` };
+    if (!(legs[i].lots >= mn - 1e-9)) return { err: `TP${i + 1} is below the ${lotsFmt(sym, mn)}-${m.lotName === 'shares' ? 'share' : 'lot'} minimum` };
+    if (i && Math.abs(legs[i].price - legs[i - 1].price) < m.pip / 100) return { err: 'Two targets at the same price' };
+  if (legs.reduce((s, x) => s + x.lots, 0) > lots + 1e-9) return { err: 'Targets cover more than the position' };
+  if (at != null && !(at > spread)) return { err: `Break-even trigger must exceed the spread (${spread.toFixed(1)} ${unitWord(sym)})` };
+const tpWhy = (p, ex, name) => (p.side === 'buy' ? ex.px < p.entry : ex.px > p.entry) ? `${name} · limit at a loss` : name; // keeps 'Take profit' so behav.js still sees an automatic exit
+const slWhy = p => p.trail && p.trailed ? 'Trailing stop' : p.beSl != null && p.sl === p.beSl ? 'Stop loss (break-even)' : 'Stop loss';
+  lastReject = '';
+  if (!M(o.sym)) return reject('Order rejected', 'Unknown instrument');
+  { const w = marketWhy(o.sym); if (w) return closedReject(o.sym, w); }
+  if (!(lots >= mn - 1e-9)) return reject('Order rejected', volWhy(sym, lots || 0));
+    if (!ex.ok) return ex.why === 'requote' ? requoteReject(sym, ex) : reject('Order rejected', 'not filled');
+  { const why = unavailableWhy(sym); if (why) return reject('Order rejected', why); }
+  const cap = orderCaps(sym, lots); if (cap) return reject('Order blocked', cap);
+  if (req > a.free) return reject('Insufficient margin', `Needs ${usdFmt(req)} · free ${usdFmt(a.free)}`);
+  if (!ex.ok) return ex.why === 'requote' ? requoteReject(sym, ex) : reject('Order rejected', 'not filled');
+  if (sl != null && (d > 0 ? sl >= q.bid : sl <= q.ask)) return reject('Order rejected', (d > 0 ? sl < entry : sl > entry) ? stopInSpreadWhy(sym, q.spread) : 'Stop loss is on the wrong side of price');
+    if (d > 0 ? sl >= q.bid : sl <= q.ask) return reject('Order rejected', `Trailing stop must be wider than the spread (${q.spread.toFixed(1)} ${unitWord(sym)})`);
+  if (o.tps) { const b = buildTps(sym, o.side, entry, lots, o.tps); if (b.err) return reject('Order rejected', b.err); tps = b.tps; }
+  if (tp != null && (d > 0 ? tp <= q.bid : tp >= q.ask)) return reject('Order rejected', 'Take profit is on the wrong side of price');
+  const bs = beSpec(o.be, q.spread, sym); if (bs.err) return reject('Order rejected', bs.err);
+  if (req > a.free) return reject('Insufficient margin', `Needs ${usdFmt(req)} · free ${usdFmt(a.free)}`);
+  if (!ex.ok) return ex.why === 'requote' ? requoteReject(sym, ex) : reject('Order rejected', 'not filled');
+  lastReject = '';
+  { const w = marketWhy(p.sym); if (w) { closedReject(p.sym, w); return; } }
+  lastReject = '';
+  const no = (title, why, b = true) => { lastReject = `${title.toLowerCase()} (${why})`; toast(title, why, 'dn'); if (b) beep('err'); return null; };
+  if (!M(o.sym)) return no('Order rejected', 'Unknown instrument');
+  { const why = unavailableWhy(o.sym); if (why) return no('Order rejected', why); }
+  { const w = marketWhy(o.sym); if (w) return closedReject(o.sym, w); }
+  if (!(o.price > 0)) return no('Order rejected', 'Enter a valid price', false);
+  if (!ok) return no('Order rejected', `${o.side} ${o.ot} must be ${(o.ot === 'limit') === (d > 0) ? 'below' : 'above'} market`);
+  if (Math.abs(o.price - ref) < m.p.minPend * m.point - 1e-12) return no('Order rejected', `Too close to the market: at least ${m.p.minPend} points (${fp(o.sym, m.p.minPend * m.point)}) from the ${d > 0 ? 'ask' : 'bid'}`);
+  if (!(lots >= m.p.vol[0] - 1e-9)) return no('Order rejected', volWhy(o.sym, lots || 0), false);
+  if (cap) return no('Order blocked', cap);
+  if (S.orders.length >= MAX_WORKING) return no('Order rejected', `Too many working orders (${MAX_WORKING})`);
+    if (o.ot !== 'stop') return no('Order rejected', 'Only a stop order can carry a limit price');
+    if (!(o.limit > 0)) return no('Order rejected', 'Enter a valid limit price');
+    if (d > 0 ? o.limit < o.price : o.limit > o.price) return no('Order rejected', `${d > 0 ? 'Buy' : 'Sell'} stop-limit: the limit must be at or ${d > 0 ? 'above' : 'below'} the stop price`);
+  if (tif === 'GTD' && !(expires >= now + 60)) return no('Order rejected', 'Expiry must be at least one minute ahead');
+  if (o.slPips > 0 && o.slPips <= q.spread) return no('Order rejected', stopInSpreadWhy(o.sym, q.spread));
+  if (!(o.slPips > 0) && o.trail > 0 && o.trail <= q.spread) return no('Order rejected', `Trailing stop must be wider than the spread (${q.spread.toFixed(1)} ${unitWord(o.sym)})`);
+  if (rows) { const b = buildTps(o.sym, o.side, o.price, lots, rows); if (b.err) return no('Order rejected', b.err); }
+  const bs = beSpec(o.be, q.spread, o.sym); if (bs.err) return no('Order rejected', bs.err);
+    if (!peer || peer.sym !== o.sym) return no('Order rejected', 'OCO group not found');
+      closeVia(p.id, slWhy(p), 1, { exec: execFill({ sym: p.sym, side: out, kind: 'stop', ref: p.sl }), refKind: 'stop price', leg: 'SL' });
+        closeVia(p.id, tpWhy(p, ex, `Take profit ${leg.leg.slice(2)}`), frac, { exec: ex, refKind: 'take-profit limit', leg: leg.leg });
+      if (ex.ok) closeVia(p.id, tpWhy(p, ex, 'Take profit'), 1, { exec: ex, refKind: 'take-profit limit', leg: 'TP1' });
+## ui.js
+    if (rule && RULE_K[el.dataset.k]) return `${rule.dataset.side === 'short' ? 'Short' : 'Long'} condition ${+rule.dataset.i + 1}: ${RULE_K[el.dataset.k]}`;
+    if (el.tagName === 'SELECT' && el.options.length) return 'Choose ' + txt(el.options[0]).toLowerCase();
+  if (k === 'up') return 'ok';
+  if (!(typeof price === 'number' && isFinite(price) && price > 0)) return { ok: false, why: 'Enter a valid price' };
+  if (k === 'pos-sl' && !(buy ? price < q.bid : price > q.ask)) return { ok: false, why: buy ? 'Stop loss must be below the bid' : 'Stop loss must be above the ask' };
+  if (k === 'pos-tp' && !(buy ? price > q.bid : price < q.ask)) return { ok: false, why: buy ? 'Take profit must be above the bid' : 'Take profit must be below the ask' };
+    if (!ok) return { ok: false, why: `${buy ? 'Buy' : 'Sell'} ${p.ot} must be ${lim === buy ? 'below' : 'above'} market` };
+    if (Math.abs(pips) < .1) return { ok: false, why: 'Too close to entry' };
+    if (k === 'tk-sl' && pips > 0) return { ok: false, why: `Stop loss must be ${d > 0 ? 'below' : 'above'} entry` };
+    if (k === 'tk-tp' && pips < 0) return { ok: false, why: `Take profit must be ${d > 0 ? 'above' : 'below'} entry` };
+    <div class="lv-in"><button type="button" class="lv-st" data-st="-1" aria-label="Lower by 1 pip">−</button><input type="number" inputmode="decimal" aria-label="Price" aria-describedby="lvDist lvWhy"><button type="button" class="lv-st" data-st="1" aria-label="Raise by 1 pip">+</button></div>
+    <p class="lv-dist mono" id="lvDist"></p><p class="lv-why" id="lvWhy" role="alert"></p>

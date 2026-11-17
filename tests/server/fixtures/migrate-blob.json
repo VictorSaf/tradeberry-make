@@ -1,0 +1,673 @@
+{
+ "blob": {
+  "balance": 100310.5,
+  "peak": 100420,
+  "nextId": 41,
+  "nextFill": 6,
+  "catv": 1,
+  "set": {
+   "sym": "EURUSD",
+   "tf": 15,
+   "type": "candles",
+   "theme": "dark",
+   "jur": "eu",
+   "lev": 30,
+   "slip": "sym",
+   "slipSd": 0.2,
+   "latMs": 120,
+   "comm": 5,
+   "sound": true,
+   "wl": "all",
+   "fav": [
+    "EURUSD"
+   ],
+   "wlOpen": {}
+  },
+  "positions": [
+   {
+    "id": 11,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 1,
+    "entry": 1.0851,
+    "sl": 1.0801,
+    "tp": 1.0901,
+    "trail": 0,
+    "swap": -3.2,
+    "comm": 5,
+    "im": 3617,
+    "open": 1793592800,
+    "risk": 500,
+    "src": null,
+    "tps": [
+     {
+      "price": 1.0901,
+      "lots": 0.5,
+      "leg": "TP1"
+     },
+     {
+      "price": 1.0951,
+      "lots": 0.5,
+      "leg": "TP2"
+     }
+    ],
+    "be": {
+     "at": 10,
+     "off": 1,
+     "onTp": false,
+     "done": false
+    },
+    "fills": [
+     3
+    ],
+    "sl0": 1.0801,
+    "tp0": 1.0901,
+    "ctx": [
+     "trend",
+     "london"
+    ],
+    "news": [
+     "ECB"
+    ],
+    "pm": {
+     "flags": [],
+     "codes": [],
+     "mine": [],
+     "broke": [],
+     "own": "pullback",
+     "kill": "close under 1.08",
+     "conf": 60,
+     "mood": "calm",
+     "timeStop": 0
+    },
+    "mae": -12.5,
+    "mfe": 30
+   },
+   {
+    "id": 12,
+    "sym": "GBPUSD",
+    "side": "sell",
+    "lots": 0.5,
+    "entry": 1.3012,
+    "sl": 1.3027,
+    "tp": null,
+    "trail": 15,
+    "trailNow": true,
+    "trailSl": 1.3027,
+    "trailed": true,
+    "swap": 1.1,
+    "comm": 2.5,
+    "im": 2168.67,
+    "open": 1793594600,
+    "risk": null,
+    "src": 18,
+    "be": {
+     "at": 20,
+     "off": 0,
+     "onTp": false,
+     "done": true
+    },
+    "beSl": 1.3012,
+    "fills": [
+     4
+    ],
+    "sl0": 1.3062,
+    "tp0": null,
+    "ctx": [],
+    "news": [],
+    "mae": -20,
+    "mfe": 41
+   },
+   {
+    "id": 13,
+    "sym": "AUDUSD",
+    "side": "buy",
+    "lots": 0.3,
+    "entry": 0.6601,
+    "sl": 0.6551,
+    "tp": 0.6701,
+    "trail": 0,
+    "swap": 0,
+    "comm": 1.5,
+    "im": 660.1,
+    "open": 1793596400,
+    "risk": null,
+    "src": null,
+    "fills": [
+     5
+    ],
+    "basket": "usd-weak",
+    "bgid": "g1",
+    "sl0": 0.6551,
+    "tp0": 0.6701,
+    "ctx": [],
+    "news": [],
+    "mae": 0,
+    "mfe": 4
+   },
+   {
+    "id": 14,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.3,
+    "entry": 1.0849,
+    "sl": null,
+    "tp": null,
+    "trail": 0,
+    "swap": 0,
+    "comm": 1.5,
+    "im": 1084.9,
+    "open": 1793596400,
+    "risk": null,
+    "src": null,
+    "fills": [
+     5
+    ],
+    "basket": "usd-weak",
+    "bgid": "g1",
+    "sl0": null,
+    "tp0": null,
+    "ctx": [],
+    "news": [],
+    "mae": -3,
+    "mfe": 2
+   }
+  ],
+  "orders": [
+   {
+    "id": 20,
+    "sym": "EURUSD",
+    "side": "buy",
+    "ot": "limit",
+    "price": 1.0801,
+    "limit": null,
+    "lots": 0.5,
+    "slPips": 20,
+    "tpPips": 40,
+    "trail": 0,
+    "tif": "GTC",
+    "expires": null,
+    "oca": "o20",
+    "status": "pending",
+    "created": 1793599400,
+    "ctx": [
+     "range"
+    ]
+   },
+   {
+    "id": 21,
+    "sym": "EURUSD",
+    "side": "buy",
+    "ot": "stop",
+    "price": 1.0951,
+    "limit": null,
+    "lots": 0.5,
+    "slPips": 20,
+    "tpPips": 40,
+    "trail": 0,
+    "tif": "GTC",
+    "expires": null,
+    "oca": "o20",
+    "status": "pending",
+    "created": 1793599400
+   },
+   {
+    "id": 22,
+    "sym": "USDJPY",
+    "side": "sell",
+    "ot": "stop",
+    "price": 149.5,
+    "limit": 149.4,
+    "lots": 0.2,
+    "slPips": 30,
+    "tpPips": 20,
+    "trail": 10,
+    "tps": [
+     {
+      "pips": 20,
+      "pct": 50
+     },
+     {
+      "pips": 40,
+      "pct": 50
+     }
+    ],
+    "be": {
+     "at": 10,
+     "off": 1,
+     "onTp": false
+    },
+    "tif": "GTD",
+    "expires": 1793686400,
+    "oca": null,
+    "status": "pending",
+    "created": 1793599700
+   }
+  ],
+  "history": [
+   {
+    "id": 30,
+    "sym": "EURUSD",
+    "side": "nbp",
+    "lots": 0,
+    "nbp": true,
+    "entry": 1.0801,
+    "exit": 1.0801,
+    "open": 1793513600,
+    "close": 1793513600,
+    "pnl": 120.5,
+    "pips": 0,
+    "r": null,
+    "reason": "Negative balance protection",
+    "note": "",
+    "setup": "",
+    "swap": 0
+   },
+   {
+    "id": 9,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.5,
+    "entry": 1.08,
+    "exit": 1.085,
+    "open": 1793510000,
+    "close": 1793512000,
+    "pnl": 250,
+    "pips": 50,
+    "r": 2,
+    "reason": "TP1",
+    "leg": "TP1",
+    "note": "clean",
+    "setup": "breakout",
+    "swap": 0,
+    "comm": 2.5,
+    "slip": 0,
+    "gap": false,
+    "fills": [
+     1,
+     2
+    ],
+    "sl0": 1.0775,
+    "tp0": 1.085,
+    "mae": -5,
+    "mfe": 52,
+    "riskUsd": 125
+   }
+  ],
+  "fills": [
+   {
+    "fid": 5,
+    "t": 1793596000,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.5,
+    "pos": 15,
+    "order": null,
+    "kind": "open",
+    "reason": "",
+    "bid": 1.085,
+    "ask": 1.0851,
+    "ref": 1.0851,
+    "refKind": "ask",
+    "px": 1.0851,
+    "slip": 0,
+    "slipUsd": 0,
+    "spread": 1,
+    "spreadUsd": 5,
+    "lat": 120,
+    "comm": 2.5,
+    "gap": false,
+    "model": {
+     "on": true,
+     "sd": 0.2,
+     "lat": 120,
+     "live": true
+    }
+   },
+   {
+    "fid": 4,
+    "t": 1793595000,
+    "sym": "GBPUSD",
+    "side": "sell",
+    "lots": 0.5,
+    "pos": 14,
+    "order": null,
+    "kind": "open",
+    "reason": "",
+    "bid": 1.085,
+    "ask": 1.0851,
+    "ref": 1.0851,
+    "refKind": "ask",
+    "px": 1.3012,
+    "slip": 0,
+    "slipUsd": 0,
+    "spread": 1,
+    "spreadUsd": 5,
+    "lat": 120,
+    "comm": 2.5,
+    "gap": false,
+    "model": {
+     "on": true,
+     "sd": 0.2,
+     "lat": 120,
+     "live": true
+    }
+   },
+   {
+    "fid": 3,
+    "t": 1793594000,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.5,
+    "pos": 13,
+    "order": null,
+    "kind": "open",
+    "reason": "",
+    "bid": 1.085,
+    "ask": 1.0851,
+    "ref": 1.0851,
+    "refKind": "ask",
+    "px": 1.0851,
+    "slip": 0,
+    "slipUsd": 0,
+    "spread": 1,
+    "spreadUsd": 5,
+    "lat": 120,
+    "comm": 2.5,
+    "gap": false,
+    "model": {
+     "on": true,
+     "sd": 0.2,
+     "lat": 120,
+     "live": true
+    }
+   },
+   {
+    "fid": 2,
+    "t": 1793593000,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.5,
+    "pos": 12,
+    "order": null,
+    "kind": "close",
+    "reason": "TP1",
+    "bid": 1.085,
+    "ask": 1.0851,
+    "ref": 1.0851,
+    "refKind": "ask",
+    "px": 1.0851,
+    "slip": 0,
+    "slipUsd": 0,
+    "spread": 1,
+    "spreadUsd": 5,
+    "lat": 120,
+    "comm": 2.5,
+    "gap": false,
+    "model": {
+     "on": true,
+     "sd": 0.2,
+     "lat": 120,
+     "live": true
+    }
+   },
+   {
+    "fid": 1,
+    "t": 1793592000,
+    "sym": "EURUSD",
+    "side": "buy",
+    "lots": 0.5,
+    "pos": 11,
+    "order": null,
+    "kind": "open",
+    "reason": "",
+    "bid": 1.085,
+    "ask": 1.0851,
+    "ref": 1.0851,
+    "refKind": "ask",
+    "px": 1.0851,
+    "slip": 0,
+    "slipUsd": 0,
+    "spread": 1,
+    "spreadUsd": 5,
+    "lat": 120,
+    "comm": 2.5,
+    "gap": false,
+    "model": {
+     "on": true,
+     "sd": 0.2,
+     "lat": 120,
+     "live": true
+    }
+   }
+  ],
+  "ordLog": [
+   {
+    "id": 19,
+    "sym": "EURUSD",
+    "side": "sell",
+    "ot": "limit",
+    "price": 1.0901,
+    "limit": null,
+    "lots": 1,
+    "slPips": 0,
+    "tpPips": 0,
+    "trail": 0,
+    "tif": "DAY",
+    "expires": 1793599000,
+    "oca": null,
+    "status": "expired",
+    "created": 1793591000,
+    "end": 1793599000,
+    "why": "end of day"
+   },
+   {
+    "id": 18,
+    "sym": "GBPUSD",
+    "side": "sell",
+    "ot": "stop",
+    "price": 1.3012,
+    "limit": null,
+    "lots": 0.5,
+    "slPips": 50,
+    "tpPips": 0,
+    "trail": 15,
+    "tif": "GTC",
+    "expires": null,
+    "oca": null,
+    "status": "filled",
+    "created": 1793593000,
+    "end": 1793594600,
+    "why": ""
+   }
+  ],
+  "alerts": [
+   {
+    "id": 40,
+    "sym": "EURUSD",
+    "price": 1.1001,
+    "cond": "above",
+    "from": "below",
+    "done": false
+   }
+  ],
+  "bkPos": [
+   {
+    "gid": "g1",
+    "bid": "usd-weak",
+    "name": "USD weakness",
+    "side": "buy",
+    "lots": 1,
+    "v0": 0,
+    "t0": 1793596400,
+    "long": {
+     "AUD": 0.5,
+     "EUR": 0.5
+    },
+    "short": {
+     "USD": 1
+    },
+    "legs": [
+     {
+      "id": 13,
+      "lots": 0.3
+     },
+     {
+      "id": 14,
+      "lots": 0.3
+     }
+    ],
+    "sl": null,
+    "tp": null,
+    "pk": 4,
+    "mae": -3
+   }
+  ],
+  "bkHist": [
+   {
+    "gid": "g0",
+    "name": "JPY strength",
+    "side": "sell",
+    "t0": 1793400000,
+    "t1": 1793410000,
+    "pnl": -40,
+    "reason": "Manual"
+   }
+  ],
+  "bkOrders": [],
+  "bkAlerts": [],
+  "chal": {
+   "v": 1,
+   "custom": null,
+   "sel": "2s-static",
+   "opt": {
+    "risk": "asis",
+    "horizon": 60
+   },
+   "att": {
+    "id": "A1793340800",
+    "rules": {
+     "id": "2s-static",
+     "pv": 1,
+     "label": "2-step · static drawdown",
+     "phases": [
+      {
+       "target": 10
+      },
+      {
+       "target": 5
+      }
+     ],
+     "daily": {
+      "pct": 5,
+      "base": "initial",
+      "anchor": "balance"
+     },
+     "max": {
+      "pct": 10,
+      "mode": "static",
+      "trailOn": "balance",
+      "lock": false
+     },
+     "minDays": 4,
+     "profitDays": null,
+     "consistency": null,
+     "reset": {
+      "tz": "Europe/Prague",
+      "hour": 0
+     },
+     "validFrom": "2026-10-12",
+     "checked": "2026-10-19",
+     "source": "Rules a large prop firm published for its 2-step evaluation (page modified 12.10.2026)",
+     "url": null,
+     "notes": [
+      "The daily limit is measured from the balance at the start of the day — our generic reading.",
+      "The profit target counts closed balance with no open positions; the limits count equity, floating P&L included — our generic reading."
+     ]
+    },
+    "status": "active",
+    "phase": 0,
+    "start": 1793340800,
+    "e0": 100000,
+    "ph0": 1793340800,
+    "hw": 100420,
+    "b0": 100000,
+    "day": {
+     "k": "2026-11-02",
+     "bal0": 100310,
+     "eq0": 100250,
+     "n": 2,
+     "low": -40
+    },
+    "days": [
+     {
+      "k": "2026-10-30",
+      "pnl": 310,
+      "n": 3
+     }
+    ],
+    "warn": {
+     "k": "2026-11-02",
+     "d": 0,
+     "m": 0
+    },
+    "coolUntil": 0,
+    "tgtAt": 0,
+    "phases": [],
+    "end": null,
+    "demoAt": null
+   },
+   "log": []
+  },
+  "tk": {
+   "side": "buy",
+   "ot": "market",
+   "lots": 1
+  }
+ },
+ "market": {
+  "L": {
+   "EUR": 0.08259329830385337,
+   "GBP": 0.262441184585986,
+   "AUD": -0.4138501646426046,
+   "JPY": -5.009301071083119,
+   "CHF": 0.2231435513142097,
+   "CAD": -0.3220834991691133,
+   "NZD": -0.527632742082372
+  },
+  "simTime": 1793600000,
+  "regime": 0,
+  "source": "snapshot",
+  "rateDate": "2026-11-02",
+  "seed": 7
+ },
+ "simple": {
+  "balance": 99500,
+  "peak": 100000,
+  "nextId": 3,
+  "nextFill": 2,
+  "set": {
+   "jur": "none",
+   "lev": null
+  },
+  "positions": [
+   {
+    "id": 2,
+    "sym": "EURUSD",
+    "side": "sell",
+    "lots": 0.1,
+    "entry": 1.0871,
+    "sl": 1.0921,
+    "tp": null,
+    "trail": 0,
+    "swap": 0,
+    "comm": 0,
+    "open": 1793599900
+   }
+  ],
+  "orders": [],
+  "history": [],
+  "fills": [],
+  "ordLog": []
+ }
+}

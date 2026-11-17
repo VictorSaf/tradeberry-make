@@ -1,0 +1,247 @@
+{
+ "about": "Elements that get no hint card and no hover. Self-explanatory action buttons and what Victor removed (16.11.2026). Owned by T0: a zone task adds candidates to its notes, it does not edit this file. 'selector' is what the engine opts out (the element and everything inside it); the audit marks such elements as opted-out, not as misses. HX.optout(selector) does the same at run time.",
+ "optouts": [
+  {
+   "selector": "#brRegen",
+   "what": "Refresh (Market Brief)",
+   "why": "Victor removed it, 16.11.2026: the label says what it does"
+  },
+  {
+   "selector": "#brCopy",
+   "what": "Copy (Market Brief)",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#brTf",
+   "what": "1H / 4H buttons of the Market Brief chart",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#brLayers",
+   "what": "Chart layer buttons (EMA, levels, plan, range, events)",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": ".brx-size",
+   "what": "Lots field of the plan (Market Brief)",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#brLoad",
+   "what": "Load plan into ticket",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#brAlerts",
+   "what": "Alerts at key levels",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": ".brx-lv.now",
+   "what": "Current price row of the key levels",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": ".brx-head > span.muted.small",
+   "what": "Generated ... UTC · from ... (Market Brief)",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#brScanU",
+   "what": "Instrument select of the trend scanner",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": ".obs-src",
+   "what": "Research links of the Observatory tools",
+   "why": "Victor removed it, 16.11.2026"
+  },
+  {
+   "selector": "#guideBtn",
+   "what": "Guide button (header of every page)",
+   "why": "Victor, 16.11.2026: no hover on the Guide; the guides/*.html pages are separate documents and never load the hint scripts"
+  },
+  {
+   "selector": "#tipsTgl",
+   "what": "Hints switch",
+   "why": "Victor removed it, 15.11.2026"
+  },
+  {
+   "selector": "a[href*='guides/']",
+   "what": "Links that open a Guide page",
+   "why": "Victor, 16.11.2026: no hover on the Guide"
+  },
+  {
+   "selector": "aside.watch",
+   "what": "Market watch: the whole panel (header, search, categories, columns, rows, group lines, detail panel)",
+   "why": "Victor, 16.11.2026: no hover on Market watch"
+  },
+  {
+   "selector": "section.chartp",
+   "what": "The price chart of Trade: header, instrument picker, toolbars, chart-type, indicators and layout menus, the canvas and its zones",
+   "why": "Victor, 16.11.2026: no hover on the chart in Trade"
+  },
+  {
+   "selector": "#posBody td.sym > span.muted.small:not(.pos-sub)",
+   "what": "The position number (#287) next to the symbol in Positions",
+   "why": "Victor, 16.11.2026: no hover on the position id"
+  },
+  {
+   "selector": "#posBody td.sym",
+   "what": "The instrument cell of Positions (symbol, id, entry price, pips)",
+   "why": "Victor, 16.11.2026: no hover on the instruments in Positions"
+  },
+  {
+   "selector": "#posBody .tag",
+   "what": "The Buy / Sell tag of a position",
+   "why": "Victor, 16.11.2026: no hover on the side in Positions"
+  },
+  {
+   "selector": "#posBody td:not(.acts-c)",
+   "what": "All data cells of Positions (lots, entry, price, SL, TP, swap, P&L ...)",
+   "why": "Victor, 16.11.2026: no hover on the data of Positions (he removed the id, the instrument, the side, then lots, entry, price and SL one by one)"
+  },
+  {
+   "selector": "#posFoot",
+   "what": "The totals row of Positions",
+   "why": "Victor, 16.11.2026: same as the data cells"
+  },
+  {
+   "selector": "#tabs .tabs-r",
+   "what": "The buttons at the right end of the dock tabs (P&L figure, Panels, Close all, Hide panel)",
+   "why": "Victor, 16.11.2026: no hover on the dock buttons"
+  },
+  {
+   "selector": "#posBody .acts-c",
+   "what": "The row action buttons of Positions (BE, Rev, close ...)",
+   "why": "Victor, 16.11.2026: no hover on the action buttons; the data cells of the same table were opted out the same day"
+  },
+  {
+   "selector": "#tabs",
+   "what": "The dock tab strip (tabs, counts, right-hand buttons, switches)",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "#pane-positions",
+   "what": "Positions pane (header, table, totals, empty state)",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "#pane-orders",
+   "what": "Orders pane",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "#pane-history",
+   "what": "History pane",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "#pane-alerts",
+   "what": "Alerts pane",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "table.tbl",
+   "what": "Every data table of class tbl (dock panes, calendar, instruments of the ticket)",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": "table.tk-on-tbl",
+   "what": "The tables of the order ticket panels",
+   "why": "Victor, 16.11.2026: the whole dock of Trade and the data tables get no hover"
+  },
+  {
+   "selector": ".xp-pop",
+   "what": "The SL/TP window opened from a position",
+   "why": "Victor, 16.11.2026: the dock of Trade has no hover; this window belongs to it"
+  },
+  {
+   "selector": ".split-pop",
+   "what": "The −, Reset and + buttons of the panel splitter",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": ".mon-sortpop",
+   "what": "The four Sort options of the Monitor (the Sort button's card lists them)",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#tab-behav, #tab-chal",
+   "what": "The Behaviour and Challenge page tabs of the Coach",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": ".coach-more",
+   "what": "The Details button of the Coach (Victor removed it on 15.11.2026)",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "table.cd-tbl",
+   "what": "The tables of the Coach Details window (data tables)",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": ".cd-x",
+   "what": "The Close button of the Coach Details window",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#cdT",
+   "what": "The title of the Coach Details window",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#coachDlg .ph > .muted.small",
+   "what": "The subtitle of the Coach Details window",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": ".cd-legend",
+   "what": "The footnote of the Coach Details window",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#jList input, .cd-trades input",
+   "what": "The note fields of the trade lists",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": ".jc-head > .muted.small",
+   "what": "The small captions of the Journal blocks",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#tv-attr-logo",
+   "what": "The charting library attribution logo",
+   "why": "Victor's standing rule 16.11.2026 (tables, self-explanatory buttons, dialog chrome): decided by the orchestrator after the final audit; Victor can reverse any line"
+  },
+  {
+   "selector": "#feedPill, #demoPill, #persistPill, #userKind, #simLabel",
+   "what": "The status pills of the header (price source, account type, preferences) and the account-kind row",
+   "why": "Their native title is the status text that the tests and assistive technology read (the app rewrites it on every status change); a card would have to remove it. Decided by the orchestrator 16.11.2026, can be reversed together with the tests that read .title"
+  },
+  {
+   "selector": "#tipsHdr",
+   "what": "The Hints switch in the header (twin of the one in the tool strip)",
+   "why": "Victor removed the hover on the Hints switch, 15.11.2026"
+  },
+  {
+   "selector": "#tipsMon",
+   "what": "The Hints switch in the Monitor band",
+   "why": "Victor removed the hover on the Hints switch, 15.11.2026"
+  },
+  {
+   "selector": "#jOpenCoach",
+   "what": "The Full journal button of the short Journal on the Trade page",
+   "why": "A self-explanatory navigation button"
+  }
+ ],
+ "canvasReadouts": [
+  {
+   "id": "rgCv",
+   "what": "Regime map: the plain canvas tooltip",
+   "why": "Victor removed it, 16.11.2026; the dots have their own cards (obs.js already mutes it while Hints is on)"
+  }
+ ]
+}

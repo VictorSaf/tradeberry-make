@@ -1,0 +1,20 @@
+{
+  "name": "tradeberry",
+  "version": "16.0.0",
+  "private": true,
+  "description": "tradeBerry \u2014 browser FX trading terminal (simulated market seeded with ECB rates)",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests/run.mjs",
+    "serve": "python3 -m http.server 8765",
+    "dev:server": "npm run release && node host/migrate.mjs .data/tradeberry.db && node --env-file-if-exists=.dev.vars host/server.mjs",
+    "deploy": "zsh host/deploy.sh",
+    "deploy:ui": "zsh host/deploy.sh --ui",
+    "serve:dist": "cd dist && python3 -m http.server 8767",
+    "release": "node build.mjs && rsync -a --delete dist/ ../1-aplicatie-publicabila/"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "^1.64.1"
+  }
+}

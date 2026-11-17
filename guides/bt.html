@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backtester guide · tradeBerry</title>
+<meta name="description" content="How to set up, read, interpret and use the Backtester in tradeBerry's Strategy Lab.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+<style>
+/* small additions for this page only, on the guide.css tokens */
+.calc input[type=number]{font:13px var(--mono);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:4px 6px}
+.calc select{font:13px var(--sans);background:var(--s2);color:var(--tx);border:1px solid var(--line2);padding:4px 6px}
+.calc .verdict{margin-top:14px;padding:10px 12px;border:1px solid var(--line2);background:var(--bg);font-size:13.5px;color:var(--tx2)}
+.calc .g-t{font-size:12.5px}
+.calc .g-t td,.calc .g-t th{padding:5px 8px}
+</style>
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Strategy Lab <i>/</i> Backtester</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the Backtester is</a>
+  <a href="#minute"><span>02</span>A test in one minute</a>
+  <a href="#map"><span>03</span>Map of the page</a>
+  <span class="p">II · Setting up a test</span>
+  <a href="#setup"><span>04</span>Market, timeframe, history</a>
+  <a href="#templates"><span>05</span>The six strategy templates</a>
+  <a href="#rules"><span>06</span>Indicators and entry rules</a>
+  <a href="#exits"><span>07</span>Exits</a>
+  <a href="#sizing"><span>08</span>Sizing and costs</a>
+  <span class="p">III · How the replay runs</span>
+  <a href="#loop"><span>09</span>Fills, stops and gaps</a>
+  <span class="p">IV · Reading the results</span>
+  <a href="#kpis"><span>10</span>The headline figures</a>
+  <a href="#expect"><span>11</span>Expectancy, profit factor, drawdown</a>
+  <a href="#curve"><span>12</span>Equity curve and out-of-sample</a>
+  <a href="#trades"><span>13</span>Trades, exits and actions</a>
+  <a href="#luck"><span>14</span>How much could be luck</a>
+  <a href="#opt"><span>15</span>Optimizer</a>
+  <a href="#wf"><span>16</span>Walk-forward</a>
+  <a href="#all"><span>17</span>All FX pairs</a>
+  <span class="p">V · Using it well</span>
+  <a href="#pitfalls"><span>18</span>Pitfalls and limits</a>
+  <a href="#ref"><span>19</span>All definitions and defaults</a>
+  <a href="#glossary"><span>20</span>Glossary</a>
+  <a href="#more"><span>21</span>Related reading</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Strategy Lab</span>
+  <h1>Backtester</h1>
+  <p class="g-lede">Replay a rule-based strategy over the platform’s own 1-minute price history, with the account’s spread, swap and commission, and see what it would have done: every trade, the equity curve, the drawdown, and an honest estimate of how much of the result could be luck. Then stress it with an optimizer grid, a walk-forward test and a run on every FX pair.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Strategy Lab › Backtester</b></div>
+    <div><label>History</label><b>Live week · 4 · 8 · 12 weeks</b></div>
+    <div><label>Timeframes</label><b>5m · 15m · 30m · 1H</b></div>
+    <div><label>Starting equity</label><b>$100,000 per run</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What a backtest is, what this one does, where everything sits.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the Backtester is, and what it is not</h3></div>
+  <p class="lead">A backtest answers one question: <b>if these exact rules had been followed over this stretch of history, with these costs, what would have happened?</b> It does not say what will happen next.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9"/><path d="M4 21h16"/></svg></div><h5>A replay of history</h5><p>Signals are read on closed bars and filled at the next bar’s open; stops and targets are checked minute by minute on the platform’s 1-minute prices.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5c0-1.4 1.3-2.5 3-2.5s3 1 3 2.2c0 2.8-6 1.6-6 4.4 0 1.3 1.3 2.4 3 2.4s3-1.1 3-2.5"/></svg></div><h5>With real costs</h5><p>By default the costs this account pays live: the instrument sheet’s spread (night spread included), swap at every rollover, and the commission. Plus slippage you set.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><h5>Honest about luck</h5><p>Every setting you try is recorded. PSR, DSR and PBO judge the result against what luck alone produces after that many tries.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why it matters</b><p>Almost any idea can be made to look good on one stretch of history by trying enough settings. The Backtester counts your tries and shows the out-of-sample slice, the walk-forward and the luck figures next to the profit, so a pretty curve is not mistaken for an edge.</p></div>
+  <div class="call warn"><b class="t">What it is not</b><p>Not a forecast and not advice. A strategy that made money on the last eight weeks can lose on the next eight. The Backtester describes the past under stated assumptions; chapter 18 lists what it cannot model.</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>A test in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Pick a template</h5><p>Six buttons under <b>Strategy</b>. A click loads the template and runs it at once.</p></div>
+    <div><h5>Set the market</h5><p>Instrument, Timeframe, Direction and History (default 8 weeks).</p></div>
+    <div><h5>Run backtest</h5><p>Read the <b>Verdict</b> first, then Trades, Expectancy and Max drawdown.</p></div>
+    <div><h5>Check luck</h5><p>Out-of-sample row, PSR and DSR. Fewer than 20 trades: no conclusion.</p></div>
+    <div><h5>Stress it</h5><p>Optimizer for PBO, Walk-forward for unseen windows, All FX pairs for breadth.</p></div>
+  </div>
+  <p>Opening the tab for the first time runs the current settings once, so there is always a result on screen. That run is recorded as a try like any other.</p>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the page</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 420" role="img" aria-label="Layout of the Backtester: settings column on the left, results on the right">
+      <g>
+        <rect x="1" y="6" width="236" height="46" class="s-box"/><rect x="8" y="13" width="18" height="18" class="s-box2"/><text x="17" y="26" text-anchor="middle" class="m s b s-tx">1</text><text x="34" y="26" class="b s-tx">Backtest settings</text><text x="12" y="44" class="s s-tx3">market, bar length, side, history</text>
+        <rect x="1" y="56" width="236" height="46" class="s-box"/><rect x="8" y="63" width="18" height="18" class="s-box2"/><text x="17" y="76" text-anchor="middle" class="m s b s-tx">2</text><text x="34" y="76" class="b s-tx">Strategy</text><text x="12" y="94" class="s s-tx3">six template buttons + description</text>
+        <rect x="1" y="106" width="236" height="40" class="s-box"/><rect x="8" y="113" width="18" height="18" class="s-box2"/><text x="17" y="126" text-anchor="middle" class="m s b s-tx">3</text><text x="34" y="126" class="b s-tx">Indicators</text><text x="12" y="140" class="s s-tx3">EMA · RSI · BB · Donchian lengths</text>
+        <rect x="1" y="150" width="236" height="46" class="s-box"/><rect x="8" y="157" width="18" height="18" class="s-box2"/><text x="17" y="170" text-anchor="middle" class="m s b s-tx">4</text><text x="34" y="170" class="b s-tx">Long entry · Short entry</text><text x="12" y="188" class="s s-tx3">two conditions per side, all true</text>
+        <rect x="1" y="200" width="236" height="46" class="s-box"/><rect x="8" y="207" width="18" height="18" class="s-box2"/><text x="17" y="220" text-anchor="middle" class="m s b s-tx">5</text><text x="34" y="220" class="b s-tx">Exits</text><text x="12" y="238" class="s s-tx3">stop, target, max bars, trailing</text>
+        <rect x="1" y="250" width="236" height="46" class="s-box"/><rect x="8" y="257" width="18" height="18" class="s-box2"/><text x="17" y="270" text-anchor="middle" class="m s b s-tx">6</text><text x="34" y="270" class="b s-tx">Sizing &amp; costs</text><text x="12" y="288" class="s s-tx3">risk, slippage, out-of-sample, costs</text>
+        <rect x="1" y="300" width="236" height="40" class="s-box"/><rect x="8" y="307" width="18" height="18" class="s-box2"/><text x="17" y="320" text-anchor="middle" class="m s b s-tx">7</text><text x="34" y="320" class="b s-tx">Run backtest</text><text x="34" y="334" class="s s-tx3">and Run on all FX pairs</text>
+      </g>
+      <g>
+        <rect x="248" y="6" width="511" height="34" class="s-box"/><rect x="255" y="14" width="18" height="18" class="s-box2"/><text x="264" y="27" text-anchor="middle" class="m s b s-tx">8</text><text x="281" y="21" class="s s-tx">EMA crossover on EUR/USD · 15m · bars · days</text><text x="752" y="35" text-anchor="end" class="s s-tx3">Show on chart · Send to Risk Lab · Export CSV</text>
+        <rect x="248" y="44" width="511" height="26" class="s-box"/><rect x="255" y="48" width="18" height="18" class="s-box2"/><text x="264" y="61" text-anchor="middle" class="m s b s-tx">9</text><text x="281" y="61" class="s s-tx"><tspan class="b">Verdict:</tspan> one plain sentence · then warnings · Costs, sizing and fills</text>
+        <rect x="248" y="74" width="511" height="58" class="s-box"/><rect x="255" y="80" width="18" height="18" class="s-box2"/><text x="264" y="93" text-anchor="middle" class="m s b s-tx">10</text><text x="281" y="93" class="s b s-tx3">NET P&amp;L · RETURN · TRADES · WIN RATE</text><text x="281" y="107" class="s b s-tx3">PROFIT FACTOR · EXPECTANCY · MAX DRAWDOWN</text><text x="281" y="124" class="s s-tx3">Market move · Sharpe per trade · Avg hold · Time in market · Worst streak</text>
+        <rect x="248" y="136" width="320" height="104" class="s-box"/><rect x="255" y="142" width="18" height="18" class="s-box2"/><text x="264" y="155" text-anchor="middle" class="m s b s-tx">11</text><text x="281" y="155" class="b s-tx">Equity curve + drawdown</text>
+        <polyline points="262,214 300,206 340,210 380,194 420,190 460,180 500,186 530,176 560,182" class="s-px"/><rect x="460" y="164" width="104" height="58" class="s-inbg"/><text x="466" y="176" class="s s-tx3">out-of-sample →</text>
+        <rect x="572" y="136" width="187" height="104" class="s-box"/><rect x="579" y="142" width="18" height="18" class="s-box2"/><text x="588" y="155" text-anchor="middle" class="m s b s-tx">12</text><text x="604" y="155" class="b s-tx">In-sample vs</text><text x="604" y="171" class="b s-tx">out-of-sample</text><text x="582" y="194" class="s s-tx3">Trades · Return · Win rate</text><text x="582" y="210" class="s s-tx3">Profit factor · Expectancy</text>
+        <rect x="248" y="244" width="511" height="56" class="s-box"/><rect x="255" y="250" width="18" height="18" class="s-box2"/><text x="264" y="263" text-anchor="middle" class="m s b s-tx">13</text><text x="281" y="263" class="b s-tx">How much of this could be luck</text><text x="281" y="288" class="s s-tx3">PSR · DSR · PBO · N effective · Reset trials</text>
+        <rect x="248" y="304" width="511" height="28" class="s-box2"/><rect x="255" y="309" width="18" height="18" class="s-box"/><text x="264" y="322" text-anchor="middle" class="m s b s-tx">14</text><text x="281" y="322" class="s b s-tx">Trades · Optimizer · Walk-forward · All FX pairs</text>
+        <rect x="248" y="336" width="511" height="62" class="s-box"/><rect x="255" y="342" width="18" height="18" class="s-box2"/><text x="264" y="355" text-anchor="middle" class="m s b s-tx">15</text><text x="281" y="355" class="b s-tx">The chosen view</text><text x="281" y="378" class="s s-tx3">trade table and exit summary · grid · folds · one row per pair</text>
+      </g>
+      <text x="1" y="414" class="s s-tx3">Settings on the left, results on the right. In the app, hover or focus a label of the luck table for its full explanation.</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The Backtester. Numbers match the table below and the chapters that explain each block.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>#</th><th>Block</th><th>Chapter</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>Backtest settings: Instrument, Timeframe, Direction, History</td><td><a href="#setup">04</a></td></tr>
+      <tr><td class="n">2</td><td>Strategy templates</td><td><a href="#templates">05</a></td></tr>
+      <tr><td class="n">3–4</td><td>Indicators, Long entry, Short entry</td><td><a href="#rules">06</a></td></tr>
+      <tr><td class="n">5</td><td>Exits</td><td><a href="#exits">07</a></td></tr>
+      <tr><td class="n">6</td><td>Sizing &amp; costs</td><td><a href="#sizing">08</a></td></tr>
+      <tr><td class="n">7</td><td><b>Run backtest</b>, <b>Run on all FX pairs</b></td><td><a href="#loop">09</a>, <a href="#all">17</a></td></tr>
+      <tr><td class="n">8–10</td><td>Header, Verdict, warnings, the figures</td><td><a href="#kpis">10</a>, <a href="#expect">11</a></td></tr>
+      <tr><td class="n">11–12</td><td>Equity curve, in-sample vs out-of-sample</td><td><a href="#curve">12</a></td></tr>
+      <tr><td class="n">13</td><td>How much of this could be luck</td><td><a href="#luck">14</a></td></tr>
+      <tr><td class="n">14–15</td><td>Trades · Optimizer · Walk-forward · All FX pairs</td><td><a href="#trades">13</a>, <a href="#opt">15</a>, <a href="#wf">16</a>, <a href="#all">17</a></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Setting up a test</h2><p>Every control in the settings column: what it does, its range and its default.</p></div></div>
+
+<section class="ch" id="setup">
+  <div class="ch-h"><span class="n">04</span><h3>Market, timeframe, history</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Choices</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Instrument</td><td>Every instrument of the terminal</td><td>The market to test. Picking one also opens it on the chart, and the units of the form follow it: <b>pips</b> on FX, <b>points</b> on other instruments.</td></tr>
+      <tr><td>Timeframe</td><td class="n">5m · 15m · 30m · 1H</td><td>The bar the rules are read on. The 1-minute prices are grouped into bars of this length. Stops and targets are still checked on the 1-minute prices.</td></tr>
+      <tr><td>Direction</td><td>Long &amp; short · Long only · Short only</td><td>Which side’s signals are taken. The other side’s rules are ignored.</td></tr>
+      <tr><td>History</td><td>Live week · 4 weeks · 8 weeks (default) · 12 weeks</td><td>How far back the replay goes. The live week is what the chart shows; 4, 8 or 12 weeks fetch the weeks before it from the platform when you press <b>Run backtest</b> (about 1 to 5 seconds a week), and are kept for the session.</td></tr>
+    </tbody>
+  </table>
+  <div class="call key"><b class="t">Only the platform’s own prices</b><p>Backtests run on the platform’s 1-minute bars. If an instrument has no live feed, there is no run (“has no live feed right now”). If the platform’s history starts later than asked, the result says so: “The platform has 1-minute prices only from …; this run covers N days”. Missing weeks are never filled in.</p></div>
+  <p>The bar still forming is left out, as in live trading: signals act on closed bars only. Bars exist only while the market is open, so a weekend is not a string of flat bars; the next bar after a close is the reopening.</p>
+  <h4>Bars, trades and the timeframe</h4>
+  <table class="g-t">
+    <thead><tr><th>Timeframe</th><th>Bars per trading day (24 h market)</th><th>Bars in 8 weeks (5 days a week)</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td class="n">5m</td><td class="n">288</td><td class="n">≈ 11,500</td><td>Many signals; costs weigh most per trade.</td></tr>
+      <tr><td class="n">15m</td><td class="n">96</td><td class="n">≈ 3,840</td><td>The default. A balance of sample size and cost.</td></tr>
+      <tr><td class="n">30m</td><td class="n">48</td><td class="n">≈ 1,920</td><td>Fewer, larger trades.</td></tr>
+      <tr><td class="n">1H</td><td class="n">24</td><td class="n">≈ 960</td><td>Few trades on a short history: often under the 20 needed to judge.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">Counts are arithmetic for a market open around the clock on weekdays; markets with sessions have fewer bars. The first bars of every run are a warm-up for the indicators (chapter 06).</p>
+</section>
+
+<section class="ch" id="templates">
+  <div class="ch-h"><span class="n">05</span><h3>The six strategy templates</h3></div>
+  <p>A template fills in the indicator lengths, the entry rules, the stop multiple, the target and <b>Exit on opposite signal</b>, sets the stop type to <b>ATR × multiple</b> and <b>Max bars</b> to 0, and runs at once. Trailing stop and break-even settings are left as they were. Changing any rule afterwards turns the template into <b>Custom rules</b>.</p>
+  <table class="g-t">
+    <thead><tr><th>Template</th><th>Long entry</th><th>Short entry</th><th>Lengths</th><th>Stop</th><th>Target</th><th>Opposite exit</th></tr></thead>
+    <tbody>
+      <tr><td>EMA crossover</td><td>EMA fast crosses ↑ EMA slow</td><td>EMA fast crosses ↓ EMA slow</td><td class="n">EMA 9 / 21</td><td class="n">2 × ATR</td><td class="n">none</td><td>on</td></tr>
+      <tr><td>RSI mean reversion</td><td>RSI crosses ↑ 30</td><td>RSI crosses ↓ 70</td><td class="n">RSI 14</td><td class="n">1.5 × ATR</td><td class="n">1.5R</td><td>off</td></tr>
+      <tr><td>Bollinger reversion</td><td>Price (close) crosses ↑ Bollinger lower</td><td>Price (close) crosses ↓ Bollinger upper</td><td class="n">BB 20, 2</td><td class="n">1.5 × ATR</td><td class="n">1.5R</td><td>off</td></tr>
+      <tr><td>Donchian breakout</td><td>close crosses ↑ Donchian high <b>and</b> close is above EMA slow</td><td>close crosses ↓ Donchian low <b>and</b> close is below EMA slow</td><td class="n">Donchian 20, EMA slow 50</td><td class="n">2 × ATR</td><td class="n">2R</td><td>off</td></tr>
+      <tr><td>Trend pullback</td><td>close is above EMA slow <b>and</b> RSI crosses ↑ 40</td><td>close is below EMA slow <b>and</b> RSI crosses ↓ 60</td><td class="n">EMA slow 50, RSI 14</td><td class="n">1.5 × ATR</td><td class="n">2R</td><td>off</td></tr>
+      <tr><td>Custom rules</td><td colspan="2">Your own: up to two conditions per side, all must be true on the signal bar</td><td colspan="4">keeps whatever is set</td></tr>
+    </tbody>
+  </table>
+  <div class="mx">
+    <div class="c"><div class="s">Trend-following<div class="tags"><span class="tag nt">EMA crossover</span><span class="tag nt">Donchian breakout</span></div></div><div class="m">Many small losses in ranges, a few large wins in trends. Win rate is usually low; the result rests on the size of the winners.</div><div class="u">Judge by Expectancy and Profit factor, not by Win rate.</div></div>
+    <div class="c"><div class="s">Mean reversion<div class="tags"><span class="tag nt">RSI mean reversion</span><span class="tag nt">Bollinger reversion</span></div></div><div class="m">Fixed 1.5R target: more frequent, capped wins; a strong trend produces a run of stop-outs.</div><div class="u">Watch Worst streak and Max drawdown.</div></div>
+    <div class="c"><div class="s">Hybrid<div class="tags"><span class="tag nt">Trend pullback</span></div></div><div class="m">Trades with the slow-EMA trend after RSI pulls back and turns.</div><div class="u">Fewer signals: check that Trades reaches 20.</div></div>
+  </div>
+</section>
+
+<section class="ch" id="rules">
+  <div class="ch-h"><span class="n">06</span><h3>Indicators and entry rules</h3></div>
+  <h4 style="margin-top:0">The Indicators row</h4>
+  <table class="g-t">
+    <thead><tr><th>Field</th><th>Default</th><th>Minimum</th><th>Used by the operands</th></tr></thead>
+    <tbody>
+      <tr><td>EMA fast</td><td class="n">9</td><td class="n">2</td><td>EMA fast</td></tr>
+      <tr><td>EMA slow</td><td class="n">21</td><td class="n">3</td><td>EMA slow</td></tr>
+      <tr><td>RSI period</td><td class="n">14</td><td class="n">2</td><td>RSI</td></tr>
+      <tr><td>BB period</td><td class="n">20</td><td class="n">5</td><td>Bollinger upper, mid, lower</td></tr>
+      <tr><td>BB std dev</td><td class="n">2</td><td class="n">0.5 (step 0.1)</td><td>Bollinger upper, lower</td></tr>
+      <tr><td>Donchian N</td><td class="n">20</td><td class="n">3</td><td>Donchian high, low</td></tr>
+    </tbody>
+  </table>
+  <p>Lengths are whole bars of the chosen timeframe (BB std dev keeps decimals). If EMA fast is not shorter than EMA slow while a rule uses EMA fast, the app warns “Check EMA lengths”.</p>
+  <div class="fml">
+    <div class="c">How each operand is computed, bar by bar on closes (as coded)</div>
+    <div>EMA(k): e₀ = close₀; eᵢ = eᵢ₋₁ + 2/(k+1) × (closeᵢ − eᵢ₋₁)</div>
+    <div>RSI(N): Wilder averages of up-moves and down-moves (simple mean over the first N changes, then (avg × (N−1) + new) ÷ N); RSI = 100 − 100 ÷ (1 + avg up ÷ avg down), 100 when there is no down-move</div>
+    <div>Bollinger(N, K): mid = mean of the last N closes; upper / lower = mid ± K × standard deviation of those closes (divided by N)</div>
+    <div>Donchian(N): high / low = highest high / lowest low of the N bars <b>before</b> this one (the current bar is not included)</div>
+    <div>ATR (for stops and trails): Wilder over 14 bars of the true range; on the first bar after a closed market only that bar’s high − low counts, so a reopening jump does not widen every ATR stop for 14 bars</div>
+    <div class="c">Warm-up: the run starts after max(EMA slow, EMA fast, BB period, Donchian N + 1, RSI period + 1, 15) + 1 bars, so every indicator has data.</div>
+  </div>
+  <h4>A rule: operand · condition · operand</h4>
+  <p>Each side has two rows. The first is always on (its checkbox is locked); the second can be ticked on or off. <b>All active rows must be true on the same closed bar</b> for a signal. The operands are Price (close), EMA fast, EMA slow, RSI, Bollinger upper, Bollinger mid, Bollinger lower, Donchian high, Donchian low and Value; choosing Value on either side shows a number field.</p>
+  <table class="g-t">
+    <thead><tr><th>Condition</th><th>True on bar i when</th><th>Kind</th></tr></thead>
+    <tbody>
+      <tr><td>crosses ↑</td><td class="n">A[i−1] ≤ B[i−1] and A[i] &gt; B[i]</td><td>An event: true on one bar only</td></tr>
+      <tr><td>crosses ↓</td><td class="n">A[i−1] ≥ B[i−1] and A[i] &lt; B[i]</td><td>An event</td></tr>
+      <tr><td>is above</td><td class="n">A[i] &gt; B[i]</td><td>A state: true for as long as it holds</td></tr>
+      <tr><td>is below</td><td class="n">A[i] &lt; B[i]</td><td>A state</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 220" role="img" aria-label="A crosses up B between bar i minus 1 and bar i; the signal is read on the close of bar i and filled at the open of bar i plus 1">
+      <path d="M40 170 H730" class="s-ln3"/>
+      <g class="s-ln" stroke-dasharray="2 4"><path d="M180 30 V170"/><path d="M320 30 V170"/><path d="M460 30 V170"/><path d="M600 30 V170"/></g>
+      <polyline points="40,80 180,96 320,112 460,104 600,98 730,94" class="s-e50"/>
+      <polyline points="40,140 180,132 320,118 460,84 600,66 730,60" class="s-e20"/>
+      <circle cx="320" cy="118" r="4" class="s-tx"/><circle cx="460" cy="84" r="4" class="s-tx"/>
+      <text x="324" y="138" class="s m s-tx2">A ≤ B</text><text x="464" y="76" class="s m s-tx2">A &gt; B</text>
+      <text x="726" y="54" text-anchor="end" class="s b s-tx">A (e.g. EMA fast)</text><text x="726" y="112" text-anchor="end" class="s b s-tx">B (e.g. EMA slow)</text>
+      <g class="s s-tx3"><text x="180" y="186" text-anchor="middle">bar i−2</text><text x="320" y="186" text-anchor="middle">bar i−1</text><text x="460" y="186" text-anchor="middle">bar i</text><text x="600" y="186" text-anchor="middle">bar i+1</text></g>
+      <path d="M460 196 V206 H600 V196" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="460" y="16" text-anchor="middle" class="s b s-tx">signal read at the close of bar i</text>
+      <text x="600" y="29" text-anchor="middle" class="s s-tx2">filled at the open of bar i+1</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>“crosses ↑” compares two consecutive closed bars. The trade is entered on the next bar, never on the bar that produced the signal.</figcaption></figure>
+  <div class="call tip"><b class="t">Event and state together</b><p>The templates combine one event (a cross) with an optional state filter (“close is above EMA slow”). Two events on the same side rarely happen on the same bar, so two crosses give very few trades.</p></div>
+  <div class="call key"><b class="t">One position at a time</b><p>A long signal while already long is ignored (no adding). If both sides’ rules are true on the same bar, neither is taken. With <b>Exit on opposite signal</b> off, an opposite signal while in a trade is ignored too.</p></div>
+</section>
+
+<section class="ch" id="exits">
+  <div class="ch-h"><span class="n">07</span><h3>Exits</h3></div>
+  <p><b>R</b> is the unit of every exit setting: <b>1R is the distance from the entry to the initial stop</b>. A 2R target sits twice as far from the entry as the stop.</p>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Default · range</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Stop type</td><td>ATR × multiple · Fixed pips (Fixed points off FX)</td><td>How 1R is set. ATR uses the ATR of the last closed bar before the entry.</td></tr>
+      <tr><td>Stop (× ATR)</td><td class="n">2 · min 0.2</td><td>Initial stop = entry ∓ multiple × ATR.</td></tr>
+      <tr><td>Stop (pips / points)</td><td class="n">20 pips on FX · min 1</td><td>A fixed distance. Off FX, kept per instrument; the default is 2 × the sheet’s 1-hour volatility at the starting price, at least 4 × the spread, rounded to two significant figures (the field’s tooltip shows it).</td></tr>
+      <tr><td>Target (R, 0 = none)</td><td class="n">0 · step 0.25</td><td>Take profit at entry ± target × 1R. 0: no target.</td></tr>
+      <tr><td>Max bars (0 = off)</td><td class="n">0</td><td>Close at the close of the bar on which the trade reaches this many bars (the entry bar counts as 1): “Time exit”.</td></tr>
+      <tr><td>Exit on opposite signal</td><td>on (EMA crossover)</td><td>An opposite signal closes the trade at the next open and opens the other side.</td></tr>
+      <tr><td>Trailing stop</td><td>Off · ATR × multiple · Fixed pips</td><td>A stop that follows the best price reached.</td></tr>
+      <tr><td>Trail (× ATR) / Trail (pips)</td><td class="n">2 × ATR · 15 pips</td><td>How far the trailing stop stays behind the best price.</td></tr>
+      <tr><td>Trail from (R)</td><td class="n">1 · min 0</td><td>The trail starts only once the trade is this many R in profit (0 = from entry).</td></tr>
+      <tr><td>Break-even at (R)</td><td class="n">0 = off</td><td>Move the stop to the entry price once the trade is this many R in profit.</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="A long trade: initial stop at minus 1R, the trailing stop starts at plus 1R and ratchets up behind the best price, the trade exits on the trailing stop before the 2R target">
+      <g class="s-ln" stroke-dasharray="3 4"><path d="M70 90 H720"/><path d="M70 130 H720"/><path d="M70 170 H720"/><path d="M70 210 H720"/></g>
+      <g class="s m s-tx3"><text x="62" y="94" text-anchor="end">+2R</text><text x="62" y="134" text-anchor="end">+1R</text><text x="62" y="174" text-anchor="end">entry</text><text x="62" y="214" text-anchor="end">−1R</text></g>
+      <path d="M80 90 H720" class="s-lup" stroke-dasharray="6 4"/><text x="716" y="84" text-anchor="end" class="s b s-up">▲ target 2R (not reached)</text>
+      <polyline points="80,170 140,180 200,160 260,140 320,130 380,120 440,106 500,125 550,146" class="s-px"/>
+      <polyline points="80,210 320,210 320,170 380,170 380,160 440,160 440,146 550,146" class="s-ldn" style="stroke-width:2"/>
+      <circle cx="550" cy="146" r="5" class="s-dn"/>
+      <text x="200" y="228" class="s s-dn">▼ initial stop, −1R</text>
+      <text x="326" y="186" class="s s-tx2">+1R reached: trail starts</text>
+      <text x="432" y="101" text-anchor="end" class="s s-tx2">best price +1.6R</text>
+      <text x="560" y="150" class="s b s-tx">exit: Trailing stop at +0.6R</text>
+      <path d="M440 110 V142" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="80" y="252" class="s s-tx3">the stop stays one trail distance (here 1R) behind the best price, and only ever moves up</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>Trail from 1R with a trail distance of 1R. Every new best price lifts the stop for the <i>next</i> minute, never the same one.</figcaption></figure>
+  <div class="fml">
+    <div class="c">Trailing and break-even, checked after every 1-minute bar (long shown; a short mirrors it)</div>
+    <div>MFE = best open profit reached, in price (high on the exit side − entry)</div>
+    <div>break-even: if MFE ≥ Break-even at × 1R and the stop is below the entry → stop = entry</div>
+    <div>trail: if MFE ≥ Trail from × 1R → new stop = entry + MFE − trail distance; it is kept only if higher than the current stop</div>
+    <div class="c">The exit reason says which stop closed the trade: Stop loss, Break-even or Trailing stop.</div>
+  </div>
+  <div class="call warn"><b class="t">Break-even is not free</b><p>The stop moves to the entry price, which already includes the spread and slippage paid on entry. A Break-even exit still pays the exit slippage and the commission, so its R is slightly below zero.</p></div>
+  <div class="call warn"><b class="t">Fixed stops near the spread</b><p>A fixed stop or trail within 2 × the instrument’s spread is flagged in the form and in the result: “most of it is cost, so exits are mostly noise”.</p></div>
+</section>
+
+<section class="ch" id="sizing">
+  <div class="ch-h"><span class="n">08</span><h3>Sizing and costs</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Default · range</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Risk / trade %</td><td class="n">1 · 0.05 – 10</td><td>The share of current equity a full stop-out should cost. Size follows equity as it grows or shrinks.</td></tr>
+      <tr><td>Slippage (pips / points)</td><td class="n">0.2 · min 0</td><td>Added against you on every market fill: entries, stops, opposite-signal and time exits. Take-profit exits fill at the target price, with no slippage.</td></tr>
+      <tr><td>Out-of-sample %</td><td class="n">30 · 0 – 60, step 5</td><td>The last share of history held back as a test slice (chapter 12). 0 turns it off.</td></tr>
+      <tr><td>Costs</td><td>Account costs (default) · Declared costs</td><td>Whose costs the run pays.</td></tr>
+      <tr><td>Spread · Commission $/lot · Swap long $/lot · Swap short $/lot</td><td class="n">1 · 0 · 0 · 0</td><td>Shown with Declared costs. Spread in pips or points at every fill; commission in USD per lot, round turn; swap in USD per lot a night, negative = the position pays, ×3 on the triple day.</td></tr>
+    </tbody>
+  </table>
+  <h4>Account costs</h4>
+  <p>The costs this account pays live: the instrument sheet’s Default spread, or its Night spread between 23:00 and 01:00 server time Monday to Friday, at the moment of each fill; the swap of every 17:00 New York rollover the position is held over (×3 on the triple day); and the sheet’s commission plus the account’s extra commission per lot round turn (Settings). The line under the form spells out the numbers for the chosen instrument. <b>News widening of the spread is live only</b>: the calendar of the past is not kept, so it is not in the backtest, and the app says so.</p>
+  <h4>Where every cost lands</h4>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="A long trade's prices: the bid, the ask one spread above, the entry one slippage above the ask, the stop one R below the entry and the stop fill one slippage below it">
+      <path d="M260 20 V230" class="s-ln3"/>
+      <g>
+        <path d="M240 60 H520" class="s-lup" stroke-dasharray="6 4"/><text x="530" y="64" class="s b s-up">▲ target = entry + target × 1R</text>
+        <path d="M240 110 H520" class="s-px"/><text x="530" y="114" class="s b s-tx">entry = ask + slippage</text>
+        <path d="M240 125 H520" class="s-ln3"/><text x="530" y="129" class="s s-tx2">ask = bid + spread</text>
+        <path d="M240 140 H520" class="s-ln3"/><text x="530" y="146" class="s s-tx2">bid at the open of the fill bar</text>
+        <path d="M240 190 H520" class="s-ldn"/><text x="530" y="194" class="s b s-dn">▼ stop = entry − 1R, on the bid</text>
+        <path d="M240 200 H520" class="s-ldn" stroke-dasharray="2 3"/><text x="530" y="212" class="s s-dn">stop fill = stop − slippage</text>
+      </g>
+      <path d="M200 110 V190" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="192" y="154" text-anchor="end" class="s m s-tx">1R</text>
+      <path d="M300 140 V190" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="306" y="170" class="s s-tx2">the bid needs to fall only 1R − spread − slippage</text>
+      <path d="M380 140 V60" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="386" y="96" class="s s-tx2">but rise target × 1R + spread + slippage</text>
+      <text x="20" y="40" class="s b s-tx3">PRICES ARE BIDS</text><text x="20" y="56" class="s s-tx3">buy at the ask,</text><text x="20" y="70" class="s s-tx3">sell at the bid;</text><text x="20" y="84" class="s s-tx3">longs exit on the bid,</text><text x="20" y="98" class="s s-tx3">shorts on the ask</text>
+      <text x="20" y="240" class="s s-tx3">Commission (per lot, round turn) and swap (per rollover held) come off the P&amp;L at the close.</text>
+    </svg>
+  </div><figcaption><b>Fig. 4</b>The spread and slippage do not appear as a line item in R: they make the stop closer and the target further, measured on the market’s bid.</figcaption></figure>
+  <div class="call ex"><b class="t">Worked example: cost against a stop</b><p>EUR/USD, declared spread 1 pip, slippage 0.2 pip, 15-minute ATR of 6 pips, Stop 2 × ATR = 12 pips (1R). The bid has to fall only 12 − 1 − 0.2 = <b>10.8 pips</b> to stop the trade (and the fill is 0.2 pip worse again), while a 2R target needs the bid to rise 24 + 1.2 = <b>25.2 pips</b>. Spread plus entry and exit slippage, 1.4 pips, is <b>0.117R</b> of every round trip, before commission and swap. On a 5-minute chart with a 4-pip stop the same 1.4 pips would be 0.35R.</p></div>
+  <h4>Position size, as coded</h4>
+  <div class="fml">
+    <div>risk $ = current equity × Risk / trade % ÷ 100</div>
+    <div>wanted steps = max(the sheet’s minimum, floor(risk $ ÷ (1R in price × quote→USD × contract size × volume step)))</div>
+    <div>caps: notional ≤ equity × the profile’s leverage · notional ≤ 25 × equity (the per-order cap) · the sheet’s maximum per order</div>
+    <div>steps = min(wanted, the three caps); lots = steps × volume step</div>
+    <div class="c">If not even the sheet’s minimum fits under the caps, the signal is skipped and counted. A trade’s R is measured on the risk it actually carried, so capped trades still show true R.</div>
+  </div>
+  <div class="call ex"><b class="t">Worked example: size</b><p>$100,000 equity, 1% risk = $1,000. EUR/USD stop 12 pips = 0.0012, quote USD, contract 100,000, step 0.01 lot = 1,000 units: wanted = floor(1,000 ÷ (0.0012 × 1,000)) = 833 steps = <b>8.33 lots</b>. Notional ≈ 8.33 × 100,000 × 1.08 ≈ $900,000, about 9 × equity: under the 25 × cap. Halve the stop to 6 pips and the size doubles to 16.66 lots, ≈ 18 × equity; at 3 pips the 25 × cap would cut it, and the result says “Size capped on N of M entries … those trades risked less than 1% of equity”.</p></div>
+  <div class="call warn"><b class="t">Minimum size</b><p>Size never goes below the sheet’s minimum volume. On a very wide stop or a tiny risk %, that minimum can risk more than the percentage asked for; the R of each trade still shows what it really risked.</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>How the replay runs</h2><p>The exact order of events inside every bar, and why it avoids look-ahead.</p></div></div>
+
+<section class="ch" id="loop">
+  <div class="ch-h"><span class="n">09</span><h3>Fills, stops and gaps</h3></div>
+  <p>The run walks through the bars of the chosen timeframe one by one, from the end of the warm-up to the last closed bar. Inside every bar the same four steps run in the same order.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 380" role="img" aria-label="Flowchart of one bar: execute pending signal at the open, walk the one-minute bars for stops and targets, time exit, read the rules at the close, mark equity, next bar">
+      <rect x="20" y="10" width="330" height="36" class="s-box2"/><text x="185" y="33" text-anchor="middle" class="b s-tx">Bar i opens</text>
+      <path d="M185 46 V62" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="20" y="64" width="330" height="56" class="s-box"/><text x="32" y="83" class="b s-tx">1 · Signal waiting from bar i−1?</text><text x="32" y="100" class="s s-tx2">opposite trade + Exit on opposite → close it</text><text x="32" y="115" class="s s-tx2">flat → enter at the open + costs, sized by risk</text>
+      <path d="M185 120 V136" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="20" y="138" width="330" height="70" class="s-box"/><text x="32" y="158" class="b s-tx">2 · Walk the 1-minute bars of bar i</text><text x="32" y="176" class="s s-tx2">stop touched → exit (checked first)</text><text x="32" y="190" class="s s-tx2">else target touched → exit</text><text x="32" y="204" class="s s-tx2">update MFE / MAE, then move break-even / trail</text>
+      <path d="M185 208 V224" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="20" y="226" width="330" height="36" class="s-box"/><text x="32" y="249" class="b s-tx">3 · Max bars reached → Time exit at close</text>
+      <path d="M185 262 V278" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="20" y="280" width="330" height="56" class="s-box"/><text x="32" y="300" class="b s-tx">4 · Bar i closes: read the rules</text><text x="32" y="316" class="s s-tx2">long or short signal → waits for bar i+1’s open</text><text x="32" y="331" class="s s-tx2">mark equity at the close (curve, drawdown)</text>
+      <path d="M350 308 H380 V28 H352" class="s-arrow" marker-end="url(#ah)"/><text x="386" y="172" class="s s-tx3" transform="rotate(90 386 172)" text-anchor="middle">next bar</text>
+      <g>
+        <text x="420" y="84" class="s b s-tx">No look-ahead</text>
+        <text x="420" y="102" class="s s-tx2">The rules see only closed bars; the fill is the</text><text x="420" y="116" class="s s-tx2">next bar’s open, a price nobody knew at the signal.</text>
+        <text x="420" y="158" class="s b s-tx">ATR from the past</text>
+        <text x="420" y="176" class="s s-tx2">Stops and ATR trails use the ATR of the last</text><text x="420" y="190" class="s s-tx2">closed bar, not of the bar being traded.</text>
+        <text x="420" y="232" class="s b s-tx">Conservative within a minute</text>
+        <text x="420" y="250" class="s s-tx2">Stop before target in the same minute; a new</text><text x="420" y="264" class="s s-tx2">stop level acts from the next minute only.</text>
+        <text x="420" y="300" class="s b s-tx">At the end</text>
+        <text x="420" y="318" class="s s-tx2">A trade still open on the last bar is closed at</text><text x="420" y="332" class="s s-tx2">its close: “End of data”.</text>
+      </g>
+      <text x="20" y="366" class="s s-tx3">A signal on the last bar before a market close fills at the reopening.</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>One bar of the replay. The rules decide at the close; the market decides the fill.</figcaption></figure>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 210" role="img" aria-label="Two cases inside a bar: one minute touching both stop and target counts as a stop; a gap past the stop fills at the reopening price">
+      <text x="20" y="22" class="b s-tx">Both touched in one minute</text>
+      <path d="M30 60 H330" class="s-lup" stroke-dasharray="6 4"/><text x="334" y="64" class="s s-up">▲ target</text>
+      <path d="M30 150 H330" class="s-ldn"/><text x="334" y="154" class="s s-dn">▼ stop</text>
+      <line x1="180" y1="48" x2="180" y2="162" class="s-ln3"/><rect x="170" y="80" width="20" height="50" class="s-box2"/>
+      <text x="180" y="184" text-anchor="middle" class="s s-tx2">order inside the minute is unknown →</text><text x="180" y="198" text-anchor="middle" class="s b s-tx">counted as Stop loss</text>
+      <text x="420" y="22" class="b s-tx">A gap past the stop</text>
+      <path d="M430 110 H730" class="s-ldn"/><text x="734" y="104" text-anchor="end" class="s s-dn">▼ stop</text>
+      <line x1="500" y1="70" x2="500" y2="104" class="s-ln3"/><rect x="492" y="76" width="16" height="22" class="s-box2"/><text x="500" y="62" text-anchor="middle" class="s s-tx3">before the close</text>
+      <path d="M520 90 H600" class="s-ln3" stroke-dasharray="2 3"/><text x="560" y="84" text-anchor="middle" class="s s-tx3">market closed</text>
+      <line x1="640" y1="128" x2="640" y2="168" class="s-ln3"/><rect x="632" y="134" width="16" height="22" class="s-dn" style="fill-opacity:.7"/><circle cx="640" cy="134" r="4" class="s-tx"/>
+      <text x="630" y="190" text-anchor="end" class="s b s-tx">filled at the reopening price</text><text x="630" y="204" text-anchor="end" class="s s-tx2">(worse than the stop), minus slippage</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>Left: the backtest assumes the worse order. Right: a stop is a market order once touched; across a gap it fills where trading resumes. A target gapped through fills at the (better) opening price.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Exit reason</th><th>Fill price (long; a short mirrors it)</th></tr></thead>
+    <tbody>
+      <tr><td>Stop loss · Break-even · Trailing stop</td><td>the stop on the bid, or the minute’s open if it gapped past, minus slippage</td></tr>
+      <tr><td>Take profit</td><td>the target, or the minute’s open if it gapped past; no slippage</td></tr>
+      <tr><td>Opposite signal</td><td>the next bar’s open on the bid, minus slippage</td></tr>
+      <tr><td>Time exit</td><td>the bar’s close on the bid, minus slippage</td></tr>
+      <tr><td>End of data</td><td>the last bar’s close on the bid</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Reading the results</h2><p>Every figure, how it is computed, and how to tell a strong result from a weak or lucky one.</p></div></div>
+
+<section class="ch" id="kpis">
+  <div class="ch-h"><span class="n">10</span><h3>The headline figures</h3></div>
+  <div class="kpis k4" aria-label="Example of the figures strip">
+    <div class="kpi"><label>Net P&amp;L</label><b class="up">+$4,210</b><span>after all costs</span></div>
+    <div class="kpi"><label>Return</label><b class="up">+4.21%</b><span>of $100,000</span></div>
+    <div class="kpi"><label>Trades</label><b>62</b><span>33L / 29S</span></div>
+    <div class="kpi"><label>Win rate</label><b>35.5%</b><span>P&amp;L &gt; 0</span></div>
+    <div class="kpi"><label>Profit factor</label><b class="up">1.12</b><span>≥ 1: wins outweigh losses</span></div>
+    <div class="kpi"><label>Expectancy</label><b class="up">+0.07R</b><span>per trade</span></div>
+    <div class="kpi"><label>Max drawdown</label><b class="dn">−6.80%</b><span>peak to trough</span></div>
+    <div class="kpi"><label>Market move</label><b class="mut">+1.9%</b><span>first open → last close</span></div>
+  </div>
+  <p class="mut" style="margin-top:8px">Illustration with example values. Signs are always shown: + gain, − loss.</p>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Formula as coded</th><th>How to read it</th></tr></thead>
+    <tbody>
+      <tr><td>Net P&amp;L</td><td class="n">Σ (gross − commission + swap) of all trades</td><td>Money after every cost. Positive alone proves little: see chapter 14.</td></tr>
+      <tr><td>Return</td><td class="n">Net P&amp;L ÷ $100,000 × 100</td><td>On the fixed starting equity, so runs compare directly.</td></tr>
+      <tr><td>Trades</td><td class="n">count · longs L / shorts S</td><td><b>Below 20 the Verdict refuses to judge.</b> 100+ makes the other figures much steadier.</td></tr>
+      <tr><td>Win rate</td><td class="n">trades with P&amp;L &gt; 0 ÷ trades</td><td>Meaningless alone: a 35% win rate with 2.5R wins beats a 70% win rate with 0.4R wins. A zero-P&amp;L trade counts as a loss.</td></tr>
+      <tr><td>Profit factor</td><td class="n">Σ winning P&amp;L ÷ |Σ losing P&amp;L|</td><td>Below 1: losses exceed wins. ∞ when nothing lost. Close to 1 after costs = no margin for worse conditions.</td></tr>
+      <tr><td>Expectancy</td><td class="n">mean of R, R = P&amp;L ÷ risk $ of that trade</td><td>The average result per trade in units of risk, costs included. The most portable figure: it does not depend on account size.</td></tr>
+      <tr><td>Max drawdown</td><td class="n">max (peak − equity) ÷ peak, equity marked at every bar close</td><td>The deepest fall from a high. Intrabar dips are not in it, so the real one can be deeper.</td></tr>
+      <tr><td>Market move</td><td class="n">last close ÷ first open − 1</td><td>What the instrument did over the run. A trend strategy “making” the market move on a trending stretch may be riding the trend, not an edge.</td></tr>
+      <tr><td>Sharpe per trade</td><td class="n">mean R ÷ sample sd of R</td><td>Return per unit of variability, per trade: the figure PSR and DSR judge. Its tooltip adds the annualised Sharpe of the per-bar returns, with a 95% interval (Lo 2002); on a few weeks that annual figure is mostly noise.</td></tr>
+      <tr><td>Avg hold</td><td class="n">mean bars per trade</td><td>In bars of the timeframe. Long holds collect more swap.</td></tr>
+      <tr><td>Time in market</td><td class="n">bars with a position ÷ bars of the run</td><td>Exposure. A strategy in the market 90% of the time is close to holding the instrument.</td></tr>
+      <tr><td>Worst streak</td><td class="n">longest run of trades with P&amp;L ≤ 0</td><td>What you would have had to sit through. Expect longer ones in live trading (chapter 11).</td></tr>
+    </tbody>
+  </table>
+  <h4>The Verdict</h4>
+  <p>One sentence at the top, chosen in this order:</p>
+  <table class="g-t">
+    <thead><tr><th>Condition</th><th>Verdict (abridged)</th></tr></thead>
+    <tbody>
+      <tr><td class="n">Trades &lt; 20</td><td>“Too few trades to judge … Below about 20 trades a result, good or bad, is mostly luck.”</td></tr>
+      <tr><td class="n">DSR ≥ 95%</td><td>“Looks better than luck after N tries in this account … check it on new data before trusting it.”</td></tr>
+      <tr><td class="n">Net P&amp;L &gt; 0</td><td>“Made $X after costs, within what luck gives after N tries … no evidence of an edge.”</td></tr>
+      <tr><td class="n">otherwise</td><td>“Lost $X after costs: no evidence of an edge. Costs are what every strategy pays.”</td></tr>
+    </tbody>
+  </table>
+  <h4>Warnings under the Verdict</h4>
+  <ul>
+    <li>History shorter than asked (the platform’s data starts later).</li>
+    <li>“Size capped on N of M entries by …”: the leverage of your profile, the 25 × equity per-order cap or the sheet’s maximum per order. Those trades risked less than the risk % set.</li>
+    <li>“N signals skipped”: not even the sheet’s minimum fit under the leverage cap.</li>
+    <li>A fixed stop or trailing stop within 2 × the spread.</li>
+  </ul>
+  <p><b>Costs, sizing and fills of this run</b> (a fold-out line) lists the exact costs paid, the slippage, the total swap over the run, the sizing rule and its cap.</p>
+</section>
+
+<section class="ch" id="expect">
+  <div class="ch-h"><span class="n">11</span><h3>Expectancy, profit factor, drawdown</h3></div>
+  <p>Three figures carry most of the meaning, and they are linked. With a win rate <b>p</b>, an average win of <b>W</b> R and an average loss of <b>L</b> R:</p>
+  <div class="fml">
+    <div>Expectancy (R per trade) = p × W − (1 − p) × L</div>
+    <div>Profit factor = p × W ÷ ((1 − p) × L) <span class="c">(the same as Σ wins ÷ Σ losses when every trade risks the same money)</span></div>
+    <div>Break-even win rate = L ÷ (W + L)</div>
+    <div>Drawdown from k full losses in a row = 1 − (1 − L × risk%)ᵏ <span class="c">(size follows equity, as in the Backtester)</span></div>
+  </div>
+  <div class="call ex"><b class="t">Worked example: the template trade-off</b><p>40% winners at +2R, losers at −1R: expectancy = 0.4 × 2 − 0.6 × 1 = <b>+0.20R</b>, profit factor = 0.8 ÷ 0.6 = <b>1.33</b>, break-even win rate = 1 ÷ 3 = 33.3%. Take 0.117R of friction off every trade (the 1.4 pips of chapter 08): wins +1.883R, losses −1.117R, expectancy = <b>+0.083R</b>, profit factor <b>1.12</b>, break-even win rate 37.2%. Costs took 58% of the edge. Eight losses in a row at 1% risk: 1 − 0.99⁸ = <b>7.7%</b> drawdown (8.6% with the friction).</p></div>
+  <div class="calc" id="ecalc">
+    <div class="cin">
+      <label class="sw">Win rate <span><input id="eP" type="number" value="40" min="0" max="100" step="1" style="width:72px"> %</span></label>
+      <label class="sw">Average win <span><input id="eW" type="number" value="2" min="0" step="0.1" style="width:72px"> R</span></label>
+      <label class="sw">Average loss <span><input id="eL" type="number" value="1" min="0.01" step="0.1" style="width:72px"> R</span></label>
+      <label class="sw">Friction per trade <span><input id="eC" type="number" value="0.117" min="0" step="0.01" style="width:72px"> R</span></label>
+      <label class="sw">Risk / trade <span><input id="eR" type="number" value="1" min="0.05" max="10" step="0.25" style="width:72px"> %</span></label>
+      <label class="sw">Trades <span><input id="eN" type="number" value="100" min="1" max="2000" step="10" style="width:72px"></span></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="eExp">+0.08R</b><span class="tag nt">expectancy per trade</span></div>
+      <div class="parts">
+        <span>Profit factor</span><b id="ePF">1.12</b>
+        <span>Break-even win rate (with friction)</span><b id="eBE">37.2%</b>
+        <span>Expected result over the trades, before compounding</span><b id="eTot">+8.3%</b>
+        <span>Longest losing streak in at least half of such runs</span><b id="eStk">7 losses</b>
+        <span>Drawdown that streak causes</span><b id="eDD">−7.6%</b>
+      </div>
+      <p class="sub">Same definitions as the Backtester: a win is P&amp;L &gt; 0, profit factor = Σ wins ÷ Σ losses, expectancy = mean R. Friction is taken off every trade (wins W − f, losses L + f). The streak is exact for independent trades with this win rate: the longest run of losses that half or more of runs of this length contain. Expected result = trades × expectancy × risk %.</p>
+    </div>
+  </div>
+  <div class="call tip"><b class="t">Reading the calculator</b><p>Set the Backtester’s own Win rate and the average win and loss in R from the trades table, with friction 0 (the Backtester’s R already include costs). The streak line is why the backtest’s Worst streak should not be taken as the worst you will meet: over 100 trades at 40% winners, half of all runs contain 7 losses in a row or more.</p></div>
+  <p>The <b>Send to Risk Lab</b> button does this hand-over for you: it opens the Risk Lab with the run’s win rate, the ratio of the average winning R to the average losing R, and the risk %, for a longer projection of outcomes. It needs at least 5 trades including losers.</p>
+</section>
+
+<section class="ch" id="curve">
+  <div class="ch-h"><span class="n">12</span><h3>Equity curve and out-of-sample</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="Equity curve from zero percent, rising in-sample then flattening and falling in the shaded out-of-sample slice, with the underwater drawdown band below">
+      <rect x="540" y="30" width="200" height="150" class="s-inbg"/><path d="M540 30 V180" class="s-ln3" stroke-dasharray="3 3"/><text x="546" y="44" class="s s-tx2">out-of-sample →</text>
+      <g class="s-ln"><path d="M60 70 H740"/><path d="M60 95 H740"/><path d="M60 120 H740"/></g>
+      <g class="s m s-tx3"><text x="52" y="74" text-anchor="end">+5%</text><text x="52" y="99" text-anchor="end">+2.5%</text><text x="52" y="124" text-anchor="end">0%</text></g>
+      <polyline points="60,120 90,118 120,124 150,112 180,106 210,110 240,98 270,92 300,100 330,88 360,84 390,90 420,80 450,76 480,82 510,72 540,70 570,78 600,86 630,82 660,92 690,88 720,96 740,94" class="s-lup" style="stroke-width:2"/>
+      <path d="M60 196 L90 196 L120 203.8 L150 196 L180 196 L210 201.2 L240 196 L270 196 L300 206.4 L330 196 L360 196 L390 203.8 L420 196 L450 196 L480 203.8 L510 196 L540 196 L570 206.4 L600 216.8 L630 211.6 L660 224.6 L690 219.4 L720 229.8 L740 227.2 L740 196 Z" class="s-dnbg"/>
+      <path d="M60 196 H740" class="s-ln3"/><text x="52" y="200" text-anchor="end" class="s s-tx3">0</text><text x="52" y="230" text-anchor="end" class="s s-tx3">max</text>
+      <text x="60" y="246" class="s s-tx3">drawdown below its peak, scaled to the run’s deepest (here at the end, in the test slice)</text>
+      <text x="300" y="64" class="s s-tx2">in-sample: settings may be tuned to this</text>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>The curve marks equity at every bar close. Shaded: the out-of-sample slice. Below: the drawdown, the distance from the last peak.</figcaption></figure>
+  <p>With <b>Out-of-sample %</b> above 0, the history is cut at <b>bar = floor(n − n × OOS% ÷ 100)</b> of all its bars. Three runs are made with the same settings: the whole history (the headline figures), the part before the cut (<b>In-sample</b>) and the part after it (<b>Out-of-sample</b>). Each starts at $100,000. A trade still open at the cut is closed there in the in-sample run, so the two halves need not add up exactly to the whole.</p>
+  <table class="g-t">
+    <thead><tr><th>Line under the table</th><th>When</th><th>Means</th></tr></thead>
+    <tbody>
+      <tr><td>“The in-sample result fades out of sample — likely curve-fitted.”</td><td class="n">IS expectancy &gt; 0 and OOS expectancy &lt; 40% of it</td><td>What looked good on the training part kept less than 40% of its edge on the rest.</td></tr>
+      <tr><td>“Out-of-sample expectancy … t = … — not distinguishable from zero.”</td><td class="n">|t| &lt; 2</td><td>The slice’s average R is within noise of zero.</td></tr>
+      <tr><td>“… |t| ≥ 2, but about 1 test in 20 gets there by luck.”</td><td class="n">|t| ≥ 2</td><td>Better, not proof: one test in twenty passes this bar by chance.</td></tr>
+      <tr><td>“Out-of-sample slice has only N trades; too few to test.”</td><td class="n">OOS trades &lt; 5</td><td>Lengthen History or lower the timeframe.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">The t line appears only when the whole run has at least 20 trades. t = mean R ÷ (sd of R ÷ √n) over the out-of-sample trades.</p>
+  <div class="call warn"><b class="t">The slice is out-of-sample once</b><p>If you change settings until the out-of-sample row looks good, the slice has become part of the search: the number is no longer an out-of-sample estimate. The walk-forward (chapter 16) repeats the idea properly.</p></div>
+</section>
+
+<section class="ch" id="trades">
+  <div class="ch-h"><span class="n">13</span><h3>Trades, exits and actions</h3></div>
+  <p>The <b>Trades</b> view lists up to the 400 most recent trades, newest first. Above it, the exit summary counts the trades per exit reason and adds two figures about how much of the move was kept.</p>
+  <table class="g-t">
+    <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>#, Side</td><td>Trade number, buy or sell.</td></tr>
+      <tr><td>Entry time, Entry, Exit time, Exit</td><td>Fill times and prices (cost-adjusted, chapter 09).</td></tr>
+      <tr><td>Lots / Contracts</td><td>Size of the trade.</td></tr>
+      <tr><td>Bars</td><td>Bars held, the entry bar included.</td></tr>
+      <tr><td>Pips / Points</td><td>Exit − entry in the instrument’s unit, signed for the side.</td></tr>
+      <tr><td>MFE</td><td>Max favourable excursion: the best open profit reached, in R.</td></tr>
+      <tr><td>R</td><td>P&amp;L ÷ the trade’s risk $, costs included.</td></tr>
+      <tr><td>P&amp;L</td><td>USD after commission and swap.</td></tr>
+      <tr><td>Exit reason</td><td>Stop loss, Take profit, Trailing stop, Break-even, Opposite signal, Time exit, End of data.</td></tr>
+    </tbody>
+  </table>
+  <div class="fml">
+    <div>avg max favourable move = mean MFE over all trades (R)</div>
+    <div>winners kept = Σ R of winning trades ÷ Σ MFE of winning trades × 100%</div>
+    <div class="c">Low “kept” with high MFE: trades went well in your favour and gave it back. The exits, not the entries, are the place to look.</div>
+  </div>
+  <table class="g-t">
+    <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Click a trade row</td><td>Opens the instrument and timeframe on the Trade chart and zooms to that trade.</td></tr>
+      <tr><td>Show on chart</td><td>Draws “BT” arrows at entries and squares at exits of the last 250 trades on the Trade chart. Off by default.</td></tr>
+      <tr><td>Send to Risk Lab</td><td>Win rate, average win ÷ average loss in R and the risk % into the Risk Lab (chapter 11).</td></tr>
+      <tr><td>Export CSV</td><td>A file <code>tradeberry-backtest-&lt;instrument&gt;-&lt;template&gt;.csv</code>: n, side, entry/exit time (UTC) and price, lots, bars, pips or points, r, mfe_r, pnl_usd, reason.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="luck">
+  <div class="ch-h"><span class="n">14</span><h3>How much of this could be luck</h3></div>
+  <p class="lead">Try twenty random strategies and the best of them will look good. This block measures a result against that effect, using every setting you have tried.</p>
+  <h4 style="margin-top:0">The trial record</h4>
+  <p>Every single run, optimizer cell, walk-forward window and all-pairs run is recorded in the account and kept between sessions (up to 500). A try is a template, instrument and timeframe plus everything that changes the trades: active rules and the lengths they use, exits, risk, slippage, costs, leverage and history. Re-running the same setting replaces its entry, so <b>N counts distinct tries</b>. <b>Reset trials</b> clears the record; the toast reminds you the tries still happened.</p>
+  <table class="g-t">
+    <thead><tr><th>Row</th><th>Formula as coded</th><th>How to read it</th></tr></thead>
+    <tbody>
+      <tr><td>PSR</td><td class="n">Φ( SR × √(n − 1) ÷ √(1 − skew × SR + (kurt − 1) ÷ 4 × SR²) )</td><td>Probability the true per-trade Sharpe is above 0, given n trades and the skew and fat tails of their R (Bailey &amp; López de Prado 2012). Needs ≥ 5 trades.</td></tr>
+      <tr><td>DSR</td><td class="n">the same with SR − SR₀ in place of SR</td><td>Probability the edge is real after N tries: SR₀ is the Sharpe the luckiest of N tries reaches by chance (Bailey &amp; López de Prado 2014). With one try, DSR = PSR.</td></tr>
+      <tr><td>SR₀</td><td class="n">√V × ((1 − γ) Φ⁻¹(1 − 1/N) + γ Φ⁻¹(1 − 1/(N e)))</td><td>V = variance of the per-trade Sharpe across your tries with ≥ 5 trades; γ = 0.5772 (Euler–Mascheroni).</td></tr>
+      <tr><td>PBO</td><td>CSCV over 8 time blocks (below)</td><td>Probability the optimizer’s best cell is a curve fit. ≥ 50% is marked: the optimizer picked noise. Measured only after an Optimizer grid.</td></tr>
+      <tr><td>N effective</td><td class="n">max(⌈N/2⌉, N − (grid cells − correlated groups))</td><td>Grid cells whose returns correlate above 0.7 count once; never fewer than half of all tries.</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="The luck bar SR0 rises with the number of tries: 0 at 1 try, 0.095 at 5, 0.126 at 10, 0.152 at 20, 0.175 at 40, 0.202 at 100, 0.244 at 500, for a spread of 0.08 between tries">
+      <path d="M60 190 H710 M60 190 V20" class="s-ln3"/>
+      <g class="s m s-tx3"><text x="52" y="194" text-anchor="end">0</text><text x="52" y="130" text-anchor="end">0.10</text><text x="52" y="66" text-anchor="end">0.20</text></g>
+      <g class="s-ln" stroke-dasharray="2 4"><path d="M60 126 H710"/><path d="M60 62 H710"/></g>
+      <polyline points="60,190 131.4,163.4 225.7,128.9 297.1,109.4 368.5,92.7 439.9,77.9 534.2,60.4 605.6,48.4 700,33.7" class="s-lwn" style="stroke-width:2"/>
+      <g class="s-wn"><circle cx="60" cy="190" r="3"/><circle cx="225.7" cy="128.9" r="3"/><circle cx="297.1" cy="109.4" r="3"/><circle cx="368.5" cy="92.7" r="3"/><circle cx="439.9" cy="77.9" r="3"/><circle cx="534.2" cy="60.4" r="3"/><circle cx="700" cy="33.7" r="3"/></g>
+      <path d="M60 94 H710" class="s-lin" stroke-dasharray="6 4"/><text x="706" y="110" text-anchor="end" class="s b s-in">this run: per-trade Sharpe 0.15</text>
+      <g class="s m s-tx3"><text x="60" y="206" text-anchor="middle">1</text><text x="225.7" y="206" text-anchor="middle">5</text><text x="297.1" y="206" text-anchor="middle">10</text><text x="368.5" y="206" text-anchor="middle">20</text><text x="439.9" y="206" text-anchor="middle">40</text><text x="534.2" y="206" text-anchor="middle">100</text><text x="700" y="206" text-anchor="middle">500</text></g>
+      <text x="385" y="224" text-anchor="middle" class="s s-tx3">tries in the account (N effective), log scale</text>
+      <text x="120" y="48" class="s s-wn">SR₀: the luckiest of N tries</text>
+      <text x="80" y="82" class="s s-tx2">left of the crossing: above the luck bar</text>
+      <text x="470" y="140" class="s s-tx2">right of it: below the bar, DSR &lt; 50%</text>
+    </svg>
+  </div><figcaption><b>Fig. 8</b>The same result is judged against a higher bar as tries accumulate (spread between tries √V = 0.08). Around 20 tries, a per-trade Sharpe of 0.15 is what luck alone delivers.</figcaption></figure>
+  <div class="call ex"><b class="t">Worked example</b><p>60 trades, per-trade Sharpe 0.15, skew 0.8, kurtosis 3.5. PSR = Φ(0.15 × √59 ÷ √(1 − 0.12 + 0.625 × 0.0225)) = Φ(1.219) = <b>89%</b>. After 40 tries with √V = 0.08: SR₀ = 0.08 × (0.4228 × 1.960 + 0.5772 × 2.358) = <b>0.175</b>, above this run’s 0.15, so DSR = Φ((0.15 − 0.175) × √59 ÷ 0.9456) = <b>42%</b>. The Verdict: within what luck gives after 40 tries, no evidence of an edge.</p></div>
+  <div class="calc" id="dcalc">
+    <div class="cin">
+      <label class="sw">Sharpe per trade <span><input id="dSr" type="number" value="0.15" step="0.01" style="width:80px"></span></label>
+      <label class="sw">Trades <span><input id="dN" type="number" value="60" min="1" step="1" style="width:80px"></span></label>
+      <label class="sw">Skew of R <span><input id="dSk" type="number" value="0.8" step="0.1" style="width:80px"></span></label>
+      <label class="sw">Kurtosis of R <span><input id="dKu" type="number" value="3.5" min="1" step="0.1" style="width:80px"></span></label>
+      <label class="sw">Tries (N effective) <span><input id="dT" type="number" value="40" min="1" step="1" style="width:80px"></span></label>
+      <label class="sw">Spread of tries’ Sharpe (√V) <span><input id="dV" type="number" value="0.08" min="0" step="0.01" style="width:80px"></span></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="dDsr">42%</b><span class="tag nt">DSR</span></div>
+      <div class="parts">
+        <span>PSR (bar at 0)</span><b id="dPsr">89%</b>
+        <span>Luck bar SR₀ per trade</span><b id="dSr0">0.175</b>
+        <span>This run per trade</span><b id="dThis">0.150</b>
+      </div>
+      <div class="verdict" id="dVer"></div>
+      <p class="sub">Φ and Φ⁻¹ are the same approximations as the app (Abramowitz &amp; Stegun 7.1.26, Acklam). Kurtosis is the non-excess kind: 3 for a normal distribution. The verdict follows the app’s order (fewer than 20 trades, DSR ≥ 95%, otherwise no evidence), assuming a profit.</p>
+    </div>
+  </div>
+  <h4>PBO: did the optimizer pick noise?</h4>
+  <p>After an Optimizer grid, each cell’s per-bar returns are aligned on their common tail and cut into <b>8 equal blocks</b> (each at least 10 bars, so at least 80 bars). Every way to choose 4 of the 8 blocks as a training half is tried: 70 splits. In each, the cell with the best Sharpe on the training half is ranked on the other half; its relative rank w = rank ÷ (cells + 1), with ties at mid-rank, gives a logit ln(w ÷ (1 − w)). <b>PBO = the share of splits where the logit is ≤ 0</b>, i.e. the training winner finished at or below the median out of sample. Splits where every cell ties out of sample are left out.</p>
+  <table class="g-t">
+    <thead><tr><th>PBO</th><th>Reads as</th></tr></thead>
+    <tbody>
+      <tr><td class="n">around 50% or more</td><td>Shown in red: picking the best cell is no better than picking at random. The grid’s peak is noise.</td></tr>
+      <tr><td class="n">well below 50%</td><td>The training winner tends to stay in the better half. Necessary, not sufficient: it says nothing about costs ahead or a change of regime.</td></tr>
+      <tr><td class="n">—</td><td>No grid run yet, or too few bars (fewer than 80) or valid cells.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="opt">
+  <div class="ch-h"><span class="n">15</span><h3>Optimizer</h3></div>
+  <p>The <b>Optimizer</b> view re-runs the current settings over a grid of two parameters. Pick the two from <b>Sweep … against …</b>, choose <b>colour by</b>, then <b>Run grid</b>. Nothing runs until you press it: each cell is one more try in the account.</p>
+  <table class="g-t">
+    <thead><tr><th>Parameter</th><th>Values swept</th><th>Offered when</th></tr></thead>
+    <tbody>
+      <tr><td>EMA fast</td><td class="n">3, 5, 8, 9, 12, 15, 20</td><td>an active rule uses EMA fast</td></tr>
+      <tr><td>EMA slow</td><td class="n">15, 21, 30, 40, 50, 75, 100</td><td>an active rule uses EMA slow</td></tr>
+      <tr><td>RSI period</td><td class="n">5, 7, 9, 14, 21, 28</td><td>an active rule uses RSI</td></tr>
+      <tr><td>BB period · BB std dev</td><td class="n">10, 14, 20, 26, 34, 50 · 1.5, 1.75, 2, 2.25, 2.5, 3</td><td>a rule uses a Bollinger band</td></tr>
+      <tr><td>Donchian N</td><td class="n">10, 15, 20, 30, 40, 55</td><td>a rule uses a Donchian line</td></tr>
+      <tr><td>Stop × ATR</td><td class="n">0.75, 1, 1.5, 2, 2.5, 3, 4</td><td>Stop type is ATR × multiple</td></tr>
+      <tr><td>Target R</td><td class="n">0, 1, 1.5, 2, 2.5, 3, 4</td><td>always</td></tr>
+      <tr><td>Trail × ATR</td><td class="n">0.5, 1, 1.5, 2, 2.5, 3, 4</td><td>Trailing stop is ATR × multiple</td></tr>
+      <tr><td>Trail starts (R)</td><td class="n">0, 0.5, 1, 1.5, 2, 3</td><td>a trailing stop is on</td></tr>
+    </tbody>
+  </table>
+  <table class="g-t">
+    <thead><tr><th>Colour by</th><th>Cell value</th><th>Green above, red below</th></tr></thead>
+    <tbody>
+      <tr><td>Return</td><td>Return of the full run</td><td class="n">0%</td></tr>
+      <tr><td>Profit factor</td><td>Profit factor, capped at 5</td><td class="n">1</td></tr>
+      <tr><td>Sharpe</td><td>Annualised Sharpe of the per-bar returns</td><td class="n">0</td></tr>
+      <tr><td>Test-slice return</td><td>Return on the out-of-sample slice, after a run on the training part (tooltip)</td><td class="n">0%</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 300" role="img" aria-label="A seven by seven optimizer grid of returns: a broad green plateau in the middle and a single bright cell in the top right corner surrounded by red">
+      <text x="150" y="20" class="s b s-tx3">Stop × ATR ↓ / Target R →</text>
+<text x="176" y="38" text-anchor="middle" class="m s s-tx3">0</text><text x="228" y="38" text-anchor="middle" class="m s s-tx3">1</text><text x="280" y="38" text-anchor="middle" class="m s s-tx3">1.5</text><text x="332" y="38" text-anchor="middle" class="m s s-tx3">2</text><text x="384" y="38" text-anchor="middle" class="m s s-tx3">2.5</text><text x="436" y="38" text-anchor="middle" class="m s s-tx3">3</text><text x="488" y="38" text-anchor="middle" class="m s s-tx3">4</text><text x="140" y="65" text-anchor="end" class="m s s-tx3">0.75</text><rect x="150" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.23"/><text x="175" y="64" text-anchor="middle" class="m s s-tx">-0.8</text><rect x="202" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.19"/><text x="227" y="64" text-anchor="middle" class="m s s-tx">-0.5</text><rect x="254" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.15"/><text x="279" y="64" text-anchor="middle" class="m s s-tx">-0.2</text><rect x="306" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.18"/><text x="331" y="64" text-anchor="middle" class="m s s-tx">-0.4</text><rect x="358" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.24"/><text x="383" y="64" text-anchor="middle" class="m s s-tx">-0.9</text><rect x="410" y="46" width="50" height="28" class="s-dn" style="fill-opacity:0.20"/><text x="435" y="64" text-anchor="middle" class="m s s-tx">-0.6</text><rect x="462" y="46" width="50" height="28" class="s-up" style="fill-opacity:0.55"/><text x="487" y="64" text-anchor="middle" class="m s s-tx">+3.1</text><text x="140" y="95" text-anchor="end" class="m s s-tx3">1</text><rect x="150" y="76" width="50" height="28" class="s-dn" style="fill-opacity:0.20"/><text x="175" y="94" text-anchor="middle" class="m s s-tx">-0.6</text><rect x="202" y="76" width="50" height="28" class="s-up" style="fill-opacity:0.15"/><text x="227" y="94" text-anchor="middle" class="m s s-tx">+0.2</text><rect x="254" y="76" width="50" height="28" class="s-up" style="fill-opacity:0.20"/><text x="279" y="94" text-anchor="middle" class="m s s-tx">+0.6</text><rect x="306" y="76" width="50" height="28" class="s-up" style="fill-opacity:0.19"/><text x="331" y="94" text-anchor="middle" class="m s s-tx">+0.5</text><rect x="358" y="76" width="50" height="28" class="s-up" style="fill-opacity:0.13"/><text x="383" y="94" text-anchor="middle" class="m s s-tx">+0.1</text><rect x="410" y="76" width="50" height="28" class="s-dn" style="fill-opacity:0.22"/><text x="435" y="94" text-anchor="middle" class="m s s-tx">-0.7</text><rect x="462" y="76" width="50" height="28" class="s-dn" style="fill-opacity:0.27"/><text x="487" y="94" text-anchor="middle" class="m s s-tx">-1.1</text><text x="140" y="125" text-anchor="end" class="m s s-tx3">1.5</text><rect x="150" y="106" width="50" height="28" class="s-dn" style="fill-opacity:0.16"/><text x="175" y="124" text-anchor="middle" class="m s s-tx">-0.3</text><rect x="202" y="106" width="50" height="28" class="s-up" style="fill-opacity:0.22"/><text x="227" y="124" text-anchor="middle" class="m s s-tx">+0.7</text><rect x="254" y="106" width="50" height="28" class="s-up" style="fill-opacity:0.29"/><text x="279" y="124" text-anchor="middle" class="m s s-tx">+1.2</text><rect x="306" y="106" width="50" height="28" class="s-up" style="fill-opacity:0.31"/><text x="331" y="124" text-anchor="middle" class="m s s-tx">+1.4</text><rect x="358" y="106" width="50" height="28" class="s-up" style="fill-opacity:0.24"/><text x="383" y="124" text-anchor="middle" class="m s s-tx">+0.9</text><rect x="410" y="106" width="50" height="28" class="s-dn" style="fill-opacity:0.15"/><text x="435" y="124" text-anchor="middle" class="m s s-tx">-0.2</text><rect x="462" y="106" width="50" height="28" class="s-dn" style="fill-opacity:0.24"/><text x="487" y="124" text-anchor="middle" class="m s s-tx">-0.9</text><text x="140" y="155" text-anchor="end" class="m s s-tx3">2</text><rect x="150" y="136" width="50" height="28" class="s-dn" style="fill-opacity:0.13"/><text x="175" y="154" text-anchor="middle" class="m s s-tx">-0.1</text><rect x="202" y="136" width="50" height="28" class="s-up" style="fill-opacity:0.23"/><text x="227" y="154" text-anchor="middle" class="m s s-tx">+0.8</text><rect x="254" y="136" width="50" height="28" class="s-up" style="fill-opacity:0.30"/><text x="279" y="154" text-anchor="middle" class="m s s-tx">+1.3</text><rect x="306" y="136" width="50" height="28" class="s-up" style="fill-opacity:0.33"/><text x="331" y="154" text-anchor="middle" class="m s s-tx">+1.5</text><rect x="358" y="136" width="50" height="28" class="s-up" style="fill-opacity:0.27"/><text x="383" y="154" text-anchor="middle" class="m s s-tx">+1.1</text><rect x="410" y="136" width="50" height="28" class="s-up" style="fill-opacity:0.13"/><text x="435" y="154" text-anchor="middle" class="m s s-tx">+0.1</text><rect x="462" y="136" width="50" height="28" class="s-dn" style="fill-opacity:0.20"/><text x="487" y="154" text-anchor="middle" class="m s s-tx">-0.6</text><text x="140" y="185" text-anchor="end" class="m s s-tx3">2.5</text><rect x="150" y="166" width="50" height="28" class="s-dn" style="fill-opacity:0.18"/><text x="175" y="184" text-anchor="middle" class="m s s-tx">-0.4</text><rect x="202" y="166" width="50" height="28" class="s-up" style="fill-opacity:0.19"/><text x="227" y="184" text-anchor="middle" class="m s s-tx">+0.5</text><rect x="254" y="166" width="50" height="28" class="s-up" style="fill-opacity:0.26"/><text x="279" y="184" text-anchor="middle" class="m s s-tx">+1.0</text><rect x="306" y="166" width="50" height="28" class="s-up" style="fill-opacity:0.27"/><text x="331" y="184" text-anchor="middle" class="m s s-tx">+1.1</text><rect x="358" y="166" width="50" height="28" class="s-up" style="fill-opacity:0.23"/><text x="383" y="184" text-anchor="middle" class="m s s-tx">+0.8</text><rect x="410" y="166" width="50" height="28" class="s-dn" style="fill-opacity:0.13"/><text x="435" y="184" text-anchor="middle" class="m s s-tx">-0.1</text><rect x="462" y="166" width="50" height="28" class="s-dn" style="fill-opacity:0.23"/><text x="487" y="184" text-anchor="middle" class="m s s-tx">-0.8</text><text x="140" y="215" text-anchor="end" class="m s s-tx3">3</text><rect x="150" y="196" width="50" height="28" class="s-dn" style="fill-opacity:0.22"/><text x="175" y="214" text-anchor="middle" class="m s s-tx">-0.7</text><rect x="202" y="196" width="50" height="28" class="s-dn" style="fill-opacity:0.13"/><text x="227" y="214" text-anchor="middle" class="m s s-tx">-0.1</text><rect x="254" y="196" width="50" height="28" class="s-up" style="fill-opacity:0.16"/><text x="279" y="214" text-anchor="middle" class="m s s-tx">+0.3</text><rect x="306" y="196" width="50" height="28" class="s-up" style="fill-opacity:0.18"/><text x="331" y="214" text-anchor="middle" class="m s s-tx">+0.4</text><rect x="358" y="196" width="50" height="28" class="s-up" style="fill-opacity:0.15"/><text x="383" y="214" text-anchor="middle" class="m s s-tx">+0.2</text><rect x="410" y="196" width="50" height="28" class="s-dn" style="fill-opacity:0.19"/><text x="435" y="214" text-anchor="middle" class="m s s-tx">-0.5</text><rect x="462" y="196" width="50" height="28" class="s-dn" style="fill-opacity:0.26"/><text x="487" y="214" text-anchor="middle" class="m s s-tx">-1.0</text><text x="140" y="245" text-anchor="end" class="m s s-tx3">4</text><rect x="150" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.26"/><text x="175" y="244" text-anchor="middle" class="m s s-tx">-1.0</text><rect x="202" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.20"/><text x="227" y="244" text-anchor="middle" class="m s s-tx">-0.6</text><rect x="254" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.16"/><text x="279" y="244" text-anchor="middle" class="m s s-tx">-0.3</text><rect x="306" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.15"/><text x="331" y="244" text-anchor="middle" class="m s s-tx">-0.2</text><rect x="358" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.19"/><text x="383" y="244" text-anchor="middle" class="m s s-tx">-0.5</text><rect x="410" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.24"/><text x="435" y="244" text-anchor="middle" class="m s s-tx">-0.9</text><rect x="462" y="226" width="50" height="28" class="s-dn" style="fill-opacity:0.30"/><text x="487" y="244" text-anchor="middle" class="m s s-tx">-1.3</text>
+      <rect x="461" y="45" width="52" height="30" class="s-ln3" style="fill:none;stroke-width:2"/>
+      <rect x="305" y="135" width="52" height="30" class="s-ln3" style="fill:none;stroke-width:2;stroke-dasharray:4 3"/>
+      <text x="540" y="64" class="s b s-tx">★ best cell +3.1%</text><text x="540" y="80" class="s s-tx2">its neighbours lose: a lone</text><text x="540" y="94" class="s s-tx2">peak, plateau score +0.47%</text>
+      <text x="540" y="148" class="s b s-tx">plateau centre +1.5%</text><text x="540" y="164" class="s s-tx2">with its 4 neighbours averages</text><text x="540" y="178" class="s s-tx2">+1.28%: what Plateau picks</text>
+      <text x="150" y="282" class="s s-tx3">Illustration. In the app each cell also shows its trade count, e.g. 41t.</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>A peak and a plateau. The app marks the best cell with a ring and ★, and the current settings with an amber outline; it advises: “Prefer a broad green plateau over a single bright cell — isolated peaks rarely survive out of sample.”</figcaption></figure>
+  <p>Colour strength is relative to the largest distance from the base in the grid (tint 12% to 55%). Click any cell to apply its two values to the settings: the backtest re-runs with them and the same grid (same two parameters, same colour) is run again around the new settings. Under the grid, the PBO line of chapter 14 and the number of correlated groups.</p>
+  <div class="call warn"><b class="t">Colour by Test-slice return</b><p>No best cell is marked, on purpose: “Choosing settings by this colour makes that slice in-sample: the number stops being an out-of-sample estimate.” It needs Out-of-sample % above 0.</p></div>
+</section>
+
+<section class="ch" id="wf">
+  <div class="ch-h"><span class="n">16</span><h3>Walk-forward</h3></div>
+  <p class="lead">The honest version of optimisation: tune on a window, trade the next unseen window with the winners, move on. Only the unseen windows count.</p>
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Choices (default)</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Re-optimise … and …</td><td>the Optimizer’s parameters</td><td>The two parameters tuned in every training window.</td></tr>
+      <tr><td>by</td><td>Return (default) · Profit factor · Sharpe · Expectancy (R)</td><td>The objective. A cell with fewer than 3 training trades never wins; profit factor is capped at 5.</td></tr>
+      <tr><td>pick</td><td>Plateau centre (default) · Best cell</td><td>Plateau: each cell’s score is averaged with its valid up, down, left and right neighbours, so isolated spikes lose.</td></tr>
+      <tr><td>folds</td><td class="n">3 · 4 · 5 (default) · 6 · 8</td><td>The number of train-then-test steps.</td></tr>
+      <tr><td>train : test</td><td class="n">2 : 1 · 3 : 1 (default) · 4 : 1 · 5 : 1</td><td>How much longer each training window is than its test window.</td></tr>
+      <tr><td>Window mode</td><td>Rolling window (default) · Anchored (expanding)</td><td>Rolling: the training window slides. Anchored: it always starts at the beginning and grows.</td></tr>
+    </tbody>
+  </table>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 300" role="img" aria-label="Five folds, rolling and anchored: training windows followed by unseen test windows that tile the end of the history">
+      <text x="20" y="20" class="b s-tx">Rolling window, 5 folds, 3 : 1</text>
+      <g>
+        <text x="40" y="47" class="m s s-tx3">F1</text><rect x="80" y="36" width="240" height="16" class="s-box2"/><rect x="320" y="36" width="80" height="16" class="s-upbg" style="stroke:var(--up)"/><text x="360" y="48" text-anchor="middle" class="s b s-up">▲</text>
+        <text x="40" y="69" class="m s s-tx3">F2</text><rect x="160" y="58" width="240" height="16" class="s-box2"/><rect x="400" y="58" width="80" height="16" class="s-dnbg" style="stroke:var(--dn)"/><text x="440" y="70" text-anchor="middle" class="s b s-dn">▼</text>
+        <text x="40" y="91" class="m s s-tx3">F3</text><rect x="240" y="80" width="240" height="16" class="s-box2"/><rect x="480" y="80" width="80" height="16" class="s-upbg" style="stroke:var(--up)"/><text x="520" y="92" text-anchor="middle" class="s b s-up">▲</text>
+        <text x="40" y="113" class="m s s-tx3">F4</text><rect x="320" y="102" width="240" height="16" class="s-box2"/><rect x="560" y="102" width="80" height="16" class="s-upbg" style="stroke:var(--up)"/><text x="600" y="114" text-anchor="middle" class="s b s-up">▲</text>
+        <text x="40" y="135" class="m s s-tx3">F5</text><rect x="400" y="124" width="240" height="16" class="s-box2"/><rect x="640" y="124" width="80" height="16" class="s-dnbg" style="stroke:var(--dn)"/><text x="680" y="136" text-anchor="middle" class="s b s-dn">▼</text>
+      </g>
+      <text x="20" y="172" class="b s-tx">Anchored (expanding), 5 folds, 3 : 1</text>
+      <g>
+        <text x="40" y="199" class="m s s-tx3">F1</text><rect x="80" y="188" width="240" height="16" class="s-box2"/><rect x="320" y="188" width="80" height="16" class="s-box"/>
+        <text x="40" y="221" class="m s s-tx3">F2</text><rect x="80" y="210" width="320" height="16" class="s-box2"/><rect x="400" y="210" width="80" height="16" class="s-box"/>
+        <text x="40" y="243" class="m s s-tx3">F3</text><rect x="80" y="232" width="400" height="16" class="s-box2"/><rect x="480" y="232" width="80" height="16" class="s-box"/>
+        <text x="40" y="265" class="m s s-tx3">F4</text><rect x="80" y="254" width="480" height="16" class="s-box2"/><rect x="560" y="254" width="80" height="16" class="s-box"/>
+        <text x="40" y="287" class="m s s-tx3">F5</text><rect x="80" y="276" width="560" height="16" class="s-box2"/><rect x="640" y="276" width="80" height="16" class="s-box"/>
+      </g>
+      <text x="730" y="20" text-anchor="end" class="s s-tx3">grey = train (optimise) · outlined = test on unseen data</text>
+      <text x="730" y="160" text-anchor="end" class="s s-tx3">the test windows tile the end of the history and are stitched into one curve</text>
+    </svg>
+  </div><figcaption><b>Fig. 10</b>The fold timeline. In the app each test window is green (profitable) or red (not); the table under it repeats each fold with its signed return.</figcaption></figure>
+  <div class="fml">
+    <div class="c">Window arithmetic, as coded (n bars, W warm-up bars for the largest lengths in the grid, K folds, ratio R)</div>
+    <div>T = floor((n − W) ÷ (R + K)) bars per test window; fewer than 15 → “Not enough history”</div>
+    <div>fold k (0-based): train from W + k × T (Rolling) or W (Anchored) to W + (R + k) × T; test the next T bars, the last fold to the end</div>
+    <div>WF efficiency = (unseen return ÷ unseen bars) ÷ (mean of training return ÷ training bars) × 100%; shown only when the training rate is positive</div>
+    <div>coin-flip baseline = P(X ≥ windows profitable), X ~ Binomial(profitable windows, ½)</div>
+  </div>
+  <div class="call ex"><b class="t">Worked example</b><p>8 weeks of EUR/USD 15m ≈ 3,840 bars; sweeping EMA fast × EMA slow, the warm-up is set by EMA slow 100: W = 101. T = floor(3,739 ÷ 8) = <b>467 bars</b> per test window. Fold 1 trains on bars 101–1,501 and tests 1,502–1,968; fold 5 tests 3,370 to the end (470 bars). If 4 of the 5 test windows are profitable, a coin would do as well 18.8% of the time.</p></div>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Unseen return</td><td>Return of all test-window trades together (the stitched result).</td></tr>
+      <tr><td>Fixed settings</td><td>The current settings, never re-tuned, over the same unseen span: the benchmark. If it beats Unseen return, re-optimising did not help.</td></tr>
+      <tr><td>WF efficiency</td><td>Share of the training-period performance per bar kept on unseen data. ≥ 50% is a common bar.</td></tr>
+      <tr><td>Windows profitable</td><td>Test windows with a positive return, of those run.</td></tr>
+      <tr><td>Profit factor, Trades, Max drawdown</td><td>Of the unseen windows’ trades only.</td></tr>
+      <tr><td>Settings changed</td><td>How often the chosen pair changed from one fold to the next. Changing every time: the optimum is unstable.</td></tr>
+    </tbody>
+  </table>
+  <h4>The walk-forward verdict</h4>
+  <table class="g-t">
+    <thead><tr><th>Verdict</th><th>All of these</th></tr></thead>
+    <tbody>
+      <tr><td class="up">▲ Above the coin-flip baseline</td><td>Unseen return &gt; 0 · profitable windows ≥ 60% (rounded up) · WF efficiency ≥ 50% · coin-flip baseline ≤ 10%</td></tr>
+      <tr><td>Not distinguishable from luck</td><td>Unseen return &gt; 0, but not all of the above</td></tr>
+      <tr><td class="dn">▼ Not robust</td><td>Unseen return ≤ 0: “The optimiser is mostly fitting noise.”</td></tr>
+    </tbody>
+  </table>
+  <p>Under 15 unseen trades, the verdict adds “too few to conclude much”. A fold whose every cell had fewer than 3 training trades is skipped and shown as such. <b>Use latest fold’s settings</b> applies the pair the last training window chose and re-runs the backtest. Each unseen window is recorded as a try.</p>
+  <div class="calc" id="wcalc">
+    <div class="cin">
+      <label class="sw">Bars in the history <span><input id="wN" type="number" value="3840" min="50" step="10" style="width:90px"></span></label>
+      <label class="sw">Warm-up bars <span><input id="wW" type="number" value="101" min="1" step="1" style="width:90px"></span></label>
+      <label class="sw">Folds <span><select id="wK"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>8</option></select></span></label>
+      <label class="sw">Train : test <span><select id="wR"><option value="2">2 : 1</option><option value="3" selected>3 : 1</option><option value="4">4 : 1</option><option value="5">5 : 1</option></select></span></label>
+      <label class="sw">Window mode <span><select id="wM"><option value="rolling" selected>Rolling window</option><option value="anchored">Anchored (expanding)</option></select></span></label>
+      <label class="sw">Windows profitable <span><input id="wP" type="number" value="4" min="0" step="1" style="width:90px"></span></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="wNull">18.8%</b><span class="tag nt">coin-flip baseline</span></div>
+      <div class="parts">
+        <span>Bars per test window (T)</span><b id="wT">467</b>
+        <span>Profitable windows the ▲ verdict needs</span><b id="wNeed">5 of 5</b>
+      </div>
+      <div class="verdict" id="wVer"></div>
+      <table class="g-t" id="wTbl"><thead><tr><th>Fold</th><th>Train bars</th><th>Test bars</th></tr></thead><tbody></tbody></table>
+      <p class="sub">Same arithmetic as the app. The ▲ verdict also needs a positive unseen return and an efficiency of at least 50%, which this calculator does not know.</p>
+    </div>
+  </div>
+  <div class="call key"><b class="t">Folds and the baseline</b><p>With 3 folds even 3 of 3 profitable windows happen 12.5% of the time on a coin flip, above the 10% bar, so the ▲ verdict cannot appear. With 4, 5 or 6 folds every window must win; with 8 folds, 7 of 8 (3.5%). More folds give the baseline more to work with, at the price of shorter windows.</p></div>
+</section>
+
+<section class="ch" id="all">
+  <div class="ch-h"><span class="n">17</span><h3>All FX pairs</h3></div>
+  <p>The same strategy and settings, over the full period, on every FX pair with a live feed. Start it with <b>Run on all FX pairs</b> under the settings or <b>Run all FX pairs</b> in its view. With 4, 8 or 12 weeks of history, each pair’s prices are fetched one after another (“Loading … pair 3/…”). Pairs without a feed or whose history failed are left out and counted.</p>
+  <table class="g-t">
+    <thead><tr><th>Part</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Caption</td><td>“N of M pairs profitable” and a reminder that the pairs share currencies (how many trade against USD).</td></tr>
+      <tr><td>Columns</td><td>Pair (with “from date” when its history starts later), Trades, Win rate, Profit factor, Expectancy, Max DD, Sharpe (annualised, per bar), Return. Sorted by Return.</td></tr>
+      <tr><td>Click a row</td><td>Switches the Backtester and the chart to that pair and runs it.</td></tr>
+    </tbody>
+  </table>
+  <div class="call warn"><b class="t">Not independent tests</b><p>EUR/USD, GBP/USD and AUD/USD all contain the US dollar; on a strong-dollar stretch they move together. “9 of 16 profitable” is not nine confirmations: it may be one dollar move counted several times. Each pair is still one more try for DSR. See the Correlation guide for how alike pairs move.</p></div>
+  <div class="mx">
+    <div class="c"><div class="s">Works on most pairs<div class="tags"><span class="tag nt">12 of 16 profitable</span></div></div><div class="m">Breadth across currencies is better evidence than one pair, if the winners are not all one currency.</div><div class="u">Check which currency the profitable pairs share.</div></div>
+    <div class="c"><div class="s">Works on one pair<div class="tags"><span class="tag nt">1 of 16 profitable</span></div></div><div class="m">The best of 16 tries, picked after the fact.</div><div class="u">Treat it as a lucky draw until a walk-forward on that pair says otherwise.</div></div>
+  </div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Using it well</h2><p>The traps every backtest sets, what this one cannot model, and the reference tables.</p></div></div>
+
+<section class="ch" id="pitfalls">
+  <div class="ch-h"><span class="n">18</span><h3>Pitfalls and limits</h3></div>
+  <div class="mx">
+    <div class="c"><div class="s">Overfitting<div class="tags"><span class="tag dn">PBO ≥ 50%</span><span class="tag nt">IS fades OOS</span></div></div><div class="m">Settings tuned until the curve looks good fit the noise of that stretch.</div><div class="u">Prefer plateaus, run the walk-forward, and let DSR count every try.</div></div>
+    <div class="c"><div class="s">Too few trades<div class="tags"><span class="tag nt">&lt; 20 trades</span></div></div><div class="m">With 20 trades a per-trade Sharpe of 0.15 has a PSR of only about 75%.</div><div class="u">Longer History, lower timeframe, looser rules.</div></div>
+    <div class="c"><div class="s">Costs<div class="tags"><span class="tag nt">5m, tight stops</span></div></div><div class="m">Spread and slippage are fixed in pips; the shorter the stop, the larger the share of R they take.</div><div class="u">Keep Account costs; compare Expectancy before and after doubling slippage.</div></div>
+    <div class="c"><div class="s">Look-ahead<div class="tags"><span class="tag nt">avoided by design</span></div></div><div class="m">Rules on closed bars, fills at the next open, ATR of the last closed bar, stops moved for the next minute, stop before target.</div><div class="u">Your own choices can still look ahead: picking a template after seeing this week’s chart.</div></div>
+    <div class="c"><div class="s">One regime<div class="tags"><span class="tag nt">Market move ±</span></div></div><div class="m">A few weeks may hold one trend or one range. A trend strategy on a trending stretch looks brilliant.</div><div class="u">Compare with Market move; test 12 weeks and several pairs.</div></div>
+    <div class="c"><div class="s">The best of many<div class="tags"><span class="tag nt">N tries</span></div></div><div class="m">Templates, instruments and timeframes searched are part of the selection.</div><div class="u">Do not reset trials to make DSR look better: it only hides the search.</div></div>
+  </div>
+  <h4>What the replay cannot model</h4>
+  <div class="cards">
+    <div class="card"><h5>News spreads</h5><p>Spread widening at releases is live only; the backtest uses the Default and Night spreads.</p></div>
+    <div class="card"><h5>Inside a minute</h5><p>The order of the high and low within one minute is unknown; the stop is assumed first. Real fills can be better or worse.</p></div>
+    <div class="card"><h5>Depth and partial fills</h5><p>Every order fills in full at the modelled price plus slippage, whatever its size.</p></div>
+    <div class="card"><h5>One position</h5><p>One trade at a time per run: no adding, no hedging, no portfolio of instruments.</p></div>
+    <div class="card"><h5>Intrabar drawdown</h5><p>Equity is marked at bar closes; a deeper dip inside a bar does not show in Max drawdown.</p></div>
+    <div class="card"><h5>A short past</h5><p>At most 12 weeks of 1-minute history. That is a sample of a few market conditions, not a cycle.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">19</span><h3>All definitions and defaults</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Value or definition</th></tr></thead>
+    <tbody>
+      <tr><td>Defaults</td><td>EMA crossover · EUR/USD · 15m · Long &amp; short · 8 weeks · stop 2 × ATR · no target · exit on opposite · risk 1% · slippage 0.2 · out-of-sample 30% · Account costs</td></tr>
+      <tr><td>Starting equity</td><td class="n">$100,000 for every run, slice, cell and window</td></tr>
+      <tr><td>History</td><td class="n">Live week · 4 · 8 · 12 weeks of the platform’s 1-minute prices</td></tr>
+      <tr><td>Warm-up</td><td class="n">max(EMA slow, EMA fast, BB period, Donchian N + 1, RSI period + 1, 15) + 1 bars</td></tr>
+      <tr><td>ATR</td><td class="n">Wilder, 14 bars; reopening bar: its own range only (gap &gt; one bar + 5 min)</td></tr>
+      <tr><td>Fills</td><td>Next bar’s open; buy at ask + slippage, sell at bid − slippage; take profit without slippage</td></tr>
+      <tr><td>Stops and targets</td><td>On 1-minute prices; stop first in the same minute; gaps fill at the minute’s open</td></tr>
+      <tr><td>Sizing caps</td><td class="n">profile leverage · 25 × equity per order · sheet maximum; minimum = sheet minimum</td></tr>
+      <tr><td>Verdict: too few</td><td class="n">&lt; 20 trades</td></tr>
+      <tr><td>PSR / DSR need</td><td class="n">≥ 5 trades; DSR ≥ 95% = “Looks better than luck”</td></tr>
+      <tr><td>Cross-try variance</td><td class="n">tries with ≥ 5 trades only</td></tr>
+      <tr><td>Trial record</td><td class="n">up to 500 distinct tries, kept between sessions</td></tr>
+      <tr><td>PBO</td><td class="n">8 blocks, 70 splits, ≥ 10 bars per block; ≥ 50% shown red</td></tr>
+      <tr><td>Correlated groups</td><td class="n">returns correlated &gt; 0.7 count as one try</td></tr>
+      <tr><td>IS → OOS fade</td><td class="n">OOS expectancy &lt; 40% of a positive IS expectancy</td></tr>
+      <tr><td>OOS t-test</td><td class="n">|t| ≥ 2; needs ≥ 5 OOS trades and ≥ 20 trades in the run</td></tr>
+      <tr><td>Walk-forward</td><td class="n">T ≥ 15 bars; cell needs ≥ 3 training trades; ▲ needs ≥ 60% windows, WFE ≥ 50%, baseline ≤ 10%</td></tr>
+      <tr><td>Trades table · chart markers</td><td class="n">400 most recent · last 250</td></tr>
+      <tr><td>Risk Lab hand-over</td><td class="n">≥ 5 trades including losers</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">20</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>Backtest</dt><dd>A replay of fixed rules over past prices, with stated costs and fill rules.</dd>
+    <dt>R</dt><dd>The distance from entry to the initial stop, and the money that distance risks. Results in R compare across sizes and instruments.</dd>
+    <dt>Expectancy</dt><dd>The average R per trade, costs included.</dd>
+    <dt>Profit factor</dt><dd>Gross profit of the winners ÷ gross loss of the losers.</dd>
+    <dt>Drawdown</dt><dd>The fall of equity from its last peak, in % of that peak.</dd>
+    <dt>MFE / MAE</dt><dd>Max favourable / adverse excursion: the best and worst open result a trade reached.</dd>
+    <dt>Slippage</dt><dd>The difference between the price you aim for and the price you get; here a fixed amount against you per market fill.</dd>
+    <dt>In-sample / out-of-sample</dt><dd>The history used to choose the settings / history held back to test them.</dd>
+    <dt>Curve fitting</dt><dd>Settings shaped by the noise of one stretch of history; they fail on the next.</dd>
+    <dt>Sharpe ratio</dt><dd>Mean return ÷ its standard deviation. Here per trade (on R) or annualised (on per-bar returns).</dd>
+    <dt>PSR</dt><dd>Probabilistic Sharpe ratio: probability the true Sharpe is above a bar, given the sample size, skew and kurtosis.</dd>
+    <dt>DSR</dt><dd>Deflated Sharpe ratio: the PSR with the bar raised to what the best of N tries reaches by luck.</dd>
+    <dt>PBO</dt><dd>Probability of backtest overfitting, by combinatorially symmetric cross-validation (CSCV).</dd>
+    <dt>Skew, kurtosis</dt><dd>Lopsidedness and tail weight of the R distribution; kurtosis 3 = normal tails.</dd>
+    <dt>Walk-forward</dt><dd>Repeated tune-then-test on consecutive windows, keeping only the test windows.</dd>
+    <dt>WF efficiency</dt><dd>Unseen return per bar as a share of training return per bar.</dd>
+    <dt>Warm-up</dt><dd>The first bars, used only to give the indicators enough data.</dd>
+  </dl>
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">21</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>ATR and stops</h5><p>How far an instrument moves in an hour, the true range and stop sizing from ATR: <a href="vol.html#atr">Volatility guide</a>.</p></div>
+    <div class="card"><h5>Pairs that move together</h5><p>Why the All FX pairs table is not independent tests: <a href="corr.html">Correlation guide</a>.</p></div>
+    <div class="card"><h5>Statistics in one page</h5><p>Standard errors, noise bands and multiple testing, in plain words: <a href="obs.html#stats">Observatory overview</a>.</p></div>
+    <div class="card"><h5>Testing an edge, testing exits</h5><p>The Observatory’s own checks: <a href="obs-scan.html">Edge check</a> and <a href="obs-exit.html">Exit lab</a>.</p></div>
+  </div>
+</section>
+
+<p class="g-foot">tradeBerry · Backtester guide. Illustrations and examples use example values; every formula is the one the Backtester uses. A backtest replays history under stated assumptions; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id), v = id => { const x = +$(id).value; return isFinite(x) ? x : 0; };
+  const sg = (x, d) => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(d);
+
+  /* 1 · Expectancy, profit factor, streak, drawdown (Backtester definitions: win = P&L > 0, PF = Σ wins ÷ Σ losses) */
+  // P(longest run of losses ≥ k in n independent trades, loss probability q)
+  function pRun(n, q, k) {
+    if (k <= 0) return 1; if (k > n) return 0;
+    let s = new Array(k).fill(0); s[0] = 1; // s[j] = P(no run ≥ k so far, current run = j)
+    for (let t = 0; t < n; t++) { const ns = new Array(k).fill(0); let tot = 0; for (let j = 0; j < k; j++) tot += s[j]; ns[0] = tot * (1 - q); for (let j = 0; j < k - 1; j++) ns[j + 1] = s[j] * q; s = ns; }
+    return 1 - s.reduce((a, b) => a + b, 0);
+  }
+  function eDraw() {
+    const p = Math.min(100, Math.max(0, v('eP'))) / 100, W = Math.max(0, v('eW')), L = Math.max(0, v('eL')), f = Math.max(0, v('eC')), r = Math.min(10, Math.max(0, v('eR'))), n = Math.min(2000, Math.max(1, Math.round(v('eN'))));
+    const w = W - f, l = L + f;
+    // a "win" net of friction that is no longer above 0 counts as a loss, as in the app
+    const gw = w > 0 ? p * w : 0, gl = (1 - p) * l + (w > 0 ? 0 : p * -w);
+    const exp = p * w - (1 - p) * l, pf = gl > 0 ? gw / gl : gw > 0 ? Infinity : 0, be = W + L > 0 ? l / (W + L) : 0;
+    const q = w > 0 ? 1 - p : 1; let k = 0; while (k < n && pRun(n, q, k + 1) >= .5) k++;
+    const dd = 1 - Math.pow(Math.max(0, 1 - l * r / 100), k);
+    $('eExp').textContent = sg(exp, 2) + 'R'; $('eExp').className = exp > 0 ? 'up' : exp < 0 ? 'dn' : '';
+    $('ePF').textContent = isFinite(pf) ? pf.toFixed(2) : '∞';
+    $('eBE').textContent = (Math.min(1, be) * 100).toFixed(1) + '%';
+    const tot = n * exp * r; $('eTot').textContent = sg(tot, 1) + '%'; $('eTot').className = tot > 0 ? 'up' : tot < 0 ? 'dn' : '';
+    $('eStk').textContent = k + (k === 1 ? ' loss' : ' losses');
+    $('eDD').textContent = (dd > 0 ? '−' : '') + (dd * 100).toFixed(1) + '%'; $('eDD').className = dd > 0 ? 'dn' : '';
+  }
+  document.querySelectorAll('#ecalc input').forEach(i => i.addEventListener('input', eDraw)); eDraw();
+
+  /* 2 · PSR / DSR: the app's btPhi, btPhiInv, btPSR, btSR0 */
+  const G = .5772156649015329;
+  function phi(x) { const z = Math.abs(x) / Math.SQRT2, t = 1 / (1 + .3275911 * z), e = 1 - t * (.254829592 + t * (-.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429)))) * Math.exp(-z * z); return x >= 0 ? (1 + e) / 2 : (1 - e) / 2; }
+  function phiInv(p) {
+    if (p <= 0) return -Infinity; if (p >= 1) return Infinity;
+    const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239], b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572], c = [-.007784894002430293, -.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783], d = [.007784695709041462, .3224671290700398, 2.445134137142996, 3.754408661907416];
+    const lo = .02425, f = q => (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    if (p < lo) return f(Math.sqrt(-2 * Math.log(p))); if (p > 1 - lo) return -f(Math.sqrt(-2 * Math.log(1 - p)));
+    const q = p - .5, r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  }
+  const psr = (sr, n, sk, ku, s0 = 0) => n > 1 ? phi((sr - s0) * Math.sqrt(n - 1) / Math.sqrt(Math.max(1e-6, 1 - sk * sr + (ku - 1) / 4 * sr * sr))) : null;
+  const sr0 = (N, sd) => N > 1 && sd > 0 ? sd * ((1 - G) * phiInv(1 - 1 / N) + G * phiInv(1 - 1 / (N * Math.E))) : 0;
+  const pc = x => x == null ? '—' : (x * 100).toFixed(x > .995 || x < .005 ? 1 : 0) + '%';
+  function dDraw() {
+    const sr = v('dSr'), n = Math.max(0, Math.round(v('dN'))), sk = v('dSk'), ku = v('dKu'), N = Math.max(1, Math.round(v('dT'))), sd = Math.max(0, v('dV'));
+    const ok = n >= 5, b = sr0(N, sd), P = ok ? psr(sr, n, sk, ku) : null, D = ok ? psr(sr, n, sk, ku, b) : null;
+    $('dPsr').textContent = pc(P); $('dDsr').textContent = pc(D); $('dSr0').textContent = b.toFixed(3); $('dThis').textContent = sr.toFixed(3);
+    const tries = `${N} tr${N === 1 ? 'y' : 'ies'}`;
+    $('dVer').innerHTML = n < 20 ? `<b>Verdict:</b> Too few trades to judge: ${n}. Below about 20 trades a result, good or bad, is mostly luck.` :
+      D != null && D >= .95 ? `<b>Verdict:</b> Looks better than luck after ${tries} (DSR ${pc(D)}); check it on new data before trusting it.` :
+      `<b>Verdict:</b> Within what luck gives after ${tries} (DSR ${pc(D)}): no evidence of an edge.`;
+  }
+  document.querySelectorAll('#dcalc input').forEach(i => i.addEventListener('input', dDraw)); dDraw();
+
+  /* 3 · Walk-forward windows and the coin-flip baseline: the app's runWalkForward arithmetic and btBinomTail */
+  function tail(K, k, p = .5) { if (k <= 0) return 1; if (k > K) return 0; let c = 1, s = 0; for (let i = 0; i <= K; i++) { if (i >= k) s += c * p ** i * (1 - p) ** (K - i); c = c * (K - i) / (i + 1); } return Math.min(1, s); }
+  function wDraw() {
+    const n = Math.max(0, Math.round(v('wN'))), W = Math.max(0, Math.round(v('wW'))), K = +$('wK').value, R = +$('wR').value, anch = $('wM').value === 'anchored';
+    const T = Math.floor((n - W) / (R + K)), body = $('wTbl').tBodies[0];
+    let k = Math.round(v('wP')); k = Math.max(0, Math.min(K, k));
+    const pN = tail(K, k), need = (() => { for (let j = Math.ceil(K * .6); j <= K; j++) if (tail(K, j) <= .1) return j; return null; })();
+    $('wNull').textContent = (pN * 100).toFixed(1) + '%';
+    $('wNeed').textContent = need == null ? `none of ${K} (impossible)` : `${need} of ${K}`;
+    if (!(T >= 15)) { $('wT').textContent = T > 0 ? T : '—'; body.innerHTML = ''; $('wVer').innerHTML = `<b>Not enough history:</b> only ${Math.max(0, n - W)} usable bars — use fewer folds, a smaller train ratio or a lower timeframe.`; return; }
+    $('wT').textContent = T;
+    let h = '';
+    for (let f = 0; f < K; f++) { const a = anch ? W : W + f * T, b = W + (R + f) * T, te = f === K - 1 ? n : b + T; h += `<tr><td>F${f + 1}</td><td class="n">${a}–${b - 1} (${b - a})</td><td class="n">${b}–${te - 1} (${te - b})</td></tr>`; }
+    body.innerHTML = h;
+    $('wVer').innerHTML = `On a random walk, ${k} or more of ${K} windows come out profitable by chance ${(pN * 100).toFixed(pN < .01 ? 1 : 0)}% of the time. ` + (need != null && k >= need ? 'This count passes the windows part of the ▲ verdict.' : 'This count does not pass the windows part of the ▲ verdict.');
+  }
+  document.querySelectorAll('#wcalc input, #wcalc select').forEach(i => i.addEventListener('input', wDraw)); wDraw();
+})();
+</script>
+</body>
+</html>

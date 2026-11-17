@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intrinsic time guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Intrinsic time in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Intrinsic time</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Intrinsic time</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#what-you-see"><span>02</span>What you see</a>
+  <a href="#one-event-step-by-step"><span>03</span>One event, step by step</a>
+  <a href="#controls"><span>04</span>Controls</a>
+  <a href="#how-it-is-computed"><span>05</span>How it is computed</a>
+  <a href="#the-eight-figures"><span>06</span>The eight figures</a>
+  <a href="#charts-and-the-action-row"><span>07</span>Charts and the action row</a>
+  <a href="#scaling-law"><span>08</span>Scaling law</a>
+  <a href="#more"><span>09</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Intrinsic time</h1>
+  <p class="g-lede">It works on any FX pair; on a CFD it shows a message and an <b>Open EUR/USD</b> button. A busy hour holds many steps of intrinsic time, a quiet one few.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Intrinsic time</b></div>
+    <div><label>Covers</label><b>The open instrument (FX pairs)</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“How busy is the market, measured in reversals instead of minutes. One event per move of δ against the last extreme.”</p></div>
+  
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">02</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+<svg class="wide" viewBox="0 0 760 290" role="img" aria-label="The same price path on clock time and on intrinsic time">
+<text x="20" y="22" class="b s-tx">Clock time · one step per minute</text><text x="410" y="22" class="b s-tx">Intrinsic time · one step per reversal of δ</text>
+<rect x="105.9" y="40" width="127.1" height="190" class="s-wnbg"/>
+<text x="169.4" y="246" text-anchor="middle" class="s s-wn">busy hours: many events</text>
+<polyline points="20,186.9 20.7,190.4 21.4,189.3 22.1,186.6 22.8,188.1 23.5,191.8 24.3,192 25,190.7 25.7,187.7 26.4,191.1 27.1,194.7 27.8,192.8 28.5,191.6 29.2,187.4 29.9,184.7 30.6,185 31.4,185.8 32.1,178.6 32.8,179.5 33.5,181.7 34.2,185 34.9,184.7 35.6,184.4 36.3,185.4 37,185.6 37.7,184.9 38.5,183 39.2,179.9 39.9,179.4 40.6,184.4 41.3,182.5 42,186.5 42.7,187 43.4,191.2 44.1,191.2 44.8,193.4 45.6,192.8 46.3,183.7 47,183.9 47.7,181.6 48.4,185.3 49.1,186.2 49.8,184.3 50.5,184.6 51.2,183.6 51.9,183.4 52.7,186.2 53.4,184.7 54.1,187 54.8,181.8 55.5,183.3 56.2,181.4 56.9,181.4 57.6,178.8 58.3,180.5 59,177.7 59.7,178.1 60.5,174.5 61.2,172.8 61.9,172.4 62.6,174.7 63.3,172.5 64,171.2 64.7,166.5 65.4,167.6 66.1,166.1 66.8,164.6 67.6,163.8 68.3,163.2 69,162.7 69.7,164.6 70.4,167.6 71.1,168.8 71.8,167.1 72.5,162.7 73.2,159.8 73.9,156.7 74.7,154.4 75.4,152.4 76.1,151.9 76.8,149.6 77.5,144.2 78.2,145.2 78.9,147.4 79.6,141.4 80.3,140.7 81,137.7 81.8,135 82.5,138.6 83.2,131 83.9,125.4 84.6,124.8 85.3,122.5 86,122.1 86.7,125 87.4,125.4 88.1,124.2 88.9,120.7 89.6,118.4 90.3,118.3 91,113.9 91.7,116.4 92.4,113.9 93.1,110.2 93.8,111.2 94.5,117.2 95.2,120.2 95.9,119.5 96.7,117.8 97.4,112.7 98.1,116.1 98.8,116.1 99.5,114 100.2,114.6 100.9,122.4 101.6,119.8 102.3,112.3 103,109 103.8,112.1 104.5,113.5 105.2,112.8 105.9,104.6 106.6,99.3 107.3,98.3 108,84.5 108.7,85.3 109.4,68.4 110.1,74.7 110.9,79.1 111.6,72.6 112.3,59.3 113,53.2 113.7,50.3 114.4,67.6 115.1,74.3 115.8,79.9 116.5,84.8 117.2,79.5 118,82.6 118.7,75.5 119.4,74.8 120.1,77.9 120.8,76.8 121.5,73 122.2,65 122.9,69.5 123.6,71.7 124.3,84.2 125.1,69.6 125.8,56 126.5,57.8 127.2,62.4 127.9,73.7 128.6,72 129.3,69.9 130,49.1 130.7,46.6 131.4,53.9 132.2,76.6 132.9,63.4 133.6,61.5 134.3,76.3 135,74.4 135.7,88.9 136.4,56.6 137.1,45.7 137.8,40 138.5,41.6 139.2,61.9 140,62.9 140.7,77.2 141.4,71.6 142.1,90.8 142.8,98.6 143.5,87.7 144.2,72.6 144.9,83.3 145.6,96.8 146.3,88.8 147.1,81 147.8,89.7 148.5,95.7 149.2,101.7 149.9,111.7 150.6,117.4 151.3,106.6 152,100.5 152.7,82 153.4,82.7 154.2,83.7 154.9,92.4 155.6,93.3 156.3,104.7 157,119.6 157.7,113.6 158.4,101.1 159.1,93.6 159.8,81.5 160.5,79.1 161.3,85.4 162,84.5 162.7,87.7 163.4,97.4 164.1,111.9 164.8,124.2 165.5,124.1 166.2,122.7 166.9,126.5 167.6,114.5 168.4,112.8 169.1,107.7 169.8,96.9 170.5,103.9 171.2,120.6 171.9,114.1 172.6,119.7 173.3,108.5 174,105.5 174.7,96.5 175.4,89.6 176.2,107.7 176.9,101.3 177.6,107 178.3,113.3 179,116.9 179.7,110.2 180.4,102.4 181.1,93.4 181.8,107.8 182.5,112.7 183.3,132.3 184,133 184.7,127.9 185.4,134 186.1,131.9 186.8,129.9 187.5,121.4 188.2,128.1 188.9,134.7 189.6,140.7 190.4,126.4 191.1,117.1 191.8,118 192.5,116 193.2,114.9 193.9,113 194.6,114.6 195.3,117.3 196,127.6 196.7,132.7 197.5,119 198.2,114.3 198.9,113.6 199.6,115.3 200.3,114.6 201,111.5 201.7,116.8 202.4,115 203.1,112.9 203.8,119 204.6,125.5 205.3,133.7 206,142.3 206.7,135.2 207.4,153.9 208.1,156 208.8,160.8 209.5,165.5 210.2,164.8 210.9,156.2 211.6,155.7 212.4,156.8 213.1,161.6 213.8,162.6 214.5,155.6 215.2,158.7 215.9,167.4 216.6,176.9 217.3,185 218,194.9 218.7,187.1 219.5,184.6 220.2,186.4 220.9,175.8 221.6,180.7 222.3,175.2 223,169.3 223.7,180.7 224.4,191.9 225.1,198.5 225.8,192.1 226.6,182.9 227.3,191.7 228,184.3 228.7,187.1 229.4,189.9 230.1,193.9 230.8,196.2 231.5,208.7 232.2,215.5 232.9,223.6 233.7,222.4 234.4,217.1 235.1,210.1 235.8,211 236.5,215.5 237.2,216.6 237.9,219 238.6,214 239.3,212.5 240,214.4 240.8,212 241.5,210.7 242.2,215 242.9,216.4 243.6,217 244.3,217 245,216.7 245.7,217.6 246.4,217.2 247.1,218.7 247.8,221 248.6,217.2 249.3,216.3 250,215.2 250.7,219.3 251.4,219.8 252.1,217.7 252.8,221.1 253.5,218.3 254.2,219.3 254.9,218.3 255.7,218.7 256.4,218.2 257.1,215.1 257.8,216.2 258.5,212.2 259.2,214.3 259.9,216.7 260.6,214.9 261.3,217.7 262,218.7 262.8,216.4 263.5,213.3 264.2,217.9 264.9,216.7 265.6,211.8 266.3,208.7 267,209.4 267.7,211 268.4,211.8 269.1,214.8 269.9,215.6 270.6,216.1 271.3,216.5 272,213.5 272.7,214.1 273.4,217.9 274.1,215.2 274.8,218 275.5,219.2 276.2,219.6 277,220.5 277.7,223.1 278.4,223.8 279.1,218.2 279.8,219.8 280.5,220.2 281.2,217.4 281.9,215.5 282.6,213.5 283.3,211.3 284.1,216.5 284.8,218.7 285.5,218.4 286.2,217.2 286.9,213.9 287.6,212.7 288.3,213.4 289,213.3 289.7,213.9 290.4,213.3 291.1,211.6 291.9,212.5 292.6,214.6 293.3,216.9 294,214.1 294.7,210.8 295.4,208.2 296.1,206 296.8,203.8 297.5,203.8 298.2,202.1 299,205 299.7,205.5 300.4,207.5 301.1,205.6 301.8,207.2 302.5,207.5 303.2,206.5 303.9,202.9 304.6,205.1 305.3,207.6 306.1,205.5 306.8,208.5 307.5,207.3 308.2,208.8 308.9,209.2 309.6,213.9 310.3,212.1 311,213.5 311.7,215.8 312.4,210.5 313.2,208.6 313.9,199.3 314.6,198.3 315.3,199.2 316,199 316.7,194.7 317.4,194.8 318.1,193.6 318.8,192.2 319.5,194.7 320.3,194.4 321,195.8 321.7,199.2 322.4,196.9 323.1,195.2 323.8,195 324.5,197.5 325.2,202.9 325.9,201.7 326.6,202 327.3,206.5 328.1,206.7 328.8,210.7 329.5,210.8 330.2,210.5 330.9,209.6 331.6,209.1 332.3,208.7 333,211.7 333.7,212.7 334.4,214.1 335.2,214.7 335.9,214.1 336.6,212.5 337.3,208.3 338,215 338.7,214 339.4,214.6 340.1,208.6 340.8,206.2 341.5,210.6 342.3,209.6 343,211 343.7,208.4 344.4,211.2 345.1,211.5 345.8,211.9 346.5,212.2 347.2,213.8 347.9,218.5 348.6,217.4 349.4,214.9 350.1,215.1 350.8,217.7 351.5,217.2 352.2,215.8 352.9,216.3 353.6,216.4 354.3,212.8 355,215.7 355.7,217.2 356.5,222.1 357.2,223.9 357.9,225.8 358.6,228.2 359.3,230 360,225.5" class="s-px" style="stroke-width:1"/>
+<circle cx="43.4" cy="191.2" r="2.6" class="s-dn"/>
+<circle cx="47.7" cy="181.6" r="2.6" class="s-up"/>
+<circle cx="100.9" cy="122.4" r="2.6" class="s-dn"/>
+<circle cx="103" cy="109" r="2.6" class="s-up"/>
+<circle cx="114.4" cy="67.6" r="2.6" class="s-dn"/>
+<circle cx="122.2" cy="65" r="2.6" class="s-up"/>
+<circle cx="124.3" cy="84.2" r="2.6" class="s-dn"/>
+<circle cx="125.1" cy="69.6" r="2.6" class="s-up"/>
+<circle cx="127.9" cy="73.7" r="2.6" class="s-dn"/>
+<circle cx="130" cy="49.1" r="2.6" class="s-up"/>
+<circle cx="132.2" cy="76.6" r="2.6" class="s-dn"/>
+<circle cx="132.9" cy="63.4" r="2.6" class="s-up"/>
+<circle cx="134.3" cy="76.3" r="2.6" class="s-dn"/>
+<circle cx="136.4" cy="56.6" r="2.6" class="s-up"/>
+<circle cx="139.2" cy="61.9" r="2.6" class="s-dn"/>
+<circle cx="144.2" cy="72.6" r="2.6" class="s-up"/>
+<circle cx="145.6" cy="96.8" r="2.6" class="s-dn"/>
+<circle cx="147.1" cy="81" r="2.6" class="s-up"/>
+<circle cx="148.5" cy="95.7" r="2.6" class="s-dn"/>
+<circle cx="152" cy="100.5" r="2.6" class="s-up"/>
+<circle cx="156.3" cy="104.7" r="2.6" class="s-dn"/>
+<circle cx="158.4" cy="101.1" r="2.6" class="s-up"/>
+<circle cx="163.4" cy="97.4" r="2.6" class="s-dn"/>
+<circle cx="167.6" cy="114.5" r="2.6" class="s-up"/>
+<circle cx="171.2" cy="120.6" r="2.6" class="s-dn"/>
+<circle cx="173.3" cy="108.5" r="2.6" class="s-up"/>
+<circle cx="176.2" cy="107.7" r="2.6" class="s-dn"/>
+<circle cx="180.4" cy="102.4" r="2.6" class="s-up"/>
+<circle cx="181.8" cy="107.8" r="2.6" class="s-dn"/>
+<circle cx="187.5" cy="121.4" r="2.6" class="s-up"/>
+<circle cx="188.9" cy="134.7" r="2.6" class="s-dn"/>
+<circle cx="190.4" cy="126.4" r="2.6" class="s-up"/>
+<circle cx="196" cy="127.6" r="2.6" class="s-dn"/>
+<circle cx="197.5" cy="119" r="2.6" class="s-up"/>
+<circle cx="204.6" cy="125.5" r="2.6" class="s-dn"/>
+<circle cx="219.5" cy="184.6" r="2.6" class="s-up"/>
+<circle cx="223.7" cy="180.7" r="2.6" class="s-dn"/>
+<circle cx="226.6" cy="182.9" r="2.6" class="s-up"/>
+<circle cx="230.1" cy="193.9" r="2.6" class="s-dn"/>
+<circle cx="235.1" cy="210.1" r="2.6" class="s-up"/>
+<circle cx="247.8" cy="221" r="2.6" class="s-dn"/>
+<circle cx="265.6" cy="211.8" r="2.6" class="s-up"/>
+<circle cx="275.5" cy="219.2" r="2.6" class="s-dn"/>
+<circle cx="282.6" cy="213.5" r="2.6" class="s-up"/>
+<circle cx="309.6" cy="213.9" r="2.6" class="s-dn"/>
+<circle cx="313.9" cy="199.3" r="2.6" class="s-up"/>
+<circle cx="325.2" cy="202.9" r="2.6" class="s-dn"/>
+<text x="20" y="264" class="s s-tx3">47 events in 8 hours; most of them in the busy stretch</text>
+<polyline points="410,186.9 417,178.6 424,193.4 431.1,110.2 438.1,122.4 445.1,50.3 452.1,84.8 459.1,65 466.2,84.2 473.2,56 480.2,73.7 487.2,46.6 494.3,76.6 501.3,61.5 508.3,88.9 515.3,40 522.3,98.6 529.4,72.6 536.4,96.8 543.4,81 550.4,117.4 557.4,82 564.5,119.6 571.5,79.1 578.5,126.5 585.5,96.9 592.6,120.6 599.6,89.6 606.6,116.9 613.6,93.4 620.6,134 627.7,121.4 634.7,140.7 641.7,113 648.7,132.7 655.7,111.5 662.8,194.9 669.8,169.3 676.8,198.5 683.8,182.9 690.9,223.6 697.9,210.1 704.9,221.1 711.9,208.7 718.9,223.8 726,202.1 733,215.8 740,192.2 747,230" class="s-ln3"/>
+<line x1="417" y1="191.2" x2="424" y2="193.4" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="417" cy="191.2" r="2.6" class="s-dn"/>
+<line x1="424" y1="181.6" x2="431.1" y2="110.2" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="424" cy="181.6" r="2.6" class="s-up"/>
+<line x1="431.1" y1="122.4" x2="438.1" y2="122.4" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="431.1" cy="122.4" r="2.6" class="s-dn"/>
+<line x1="438.1" y1="109" x2="445.1" y2="50.3" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="438.1" cy="109" r="2.6" class="s-up"/>
+<line x1="445.1" y1="67.6" x2="452.1" y2="84.8" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="445.1" cy="67.6" r="2.6" class="s-dn"/>
+<line x1="452.1" y1="65" x2="459.1" y2="65" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="452.1" cy="65" r="2.6" class="s-up"/>
+<line x1="459.1" y1="84.2" x2="466.2" y2="84.2" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="459.1" cy="84.2" r="2.6" class="s-dn"/>
+<line x1="466.2" y1="69.6" x2="473.2" y2="56" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="466.2" cy="69.6" r="2.6" class="s-up"/>
+<line x1="473.2" y1="73.7" x2="480.2" y2="73.7" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="473.2" cy="73.7" r="2.6" class="s-dn"/>
+<line x1="480.2" y1="49.1" x2="487.2" y2="46.6" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="480.2" cy="49.1" r="2.6" class="s-up"/>
+<line x1="487.2" y1="76.6" x2="494.3" y2="76.6" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="487.2" cy="76.6" r="2.6" class="s-dn"/>
+<line x1="494.3" y1="63.4" x2="501.3" y2="61.5" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="494.3" cy="63.4" r="2.6" class="s-up"/>
+<line x1="501.3" y1="76.3" x2="508.3" y2="88.9" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="501.3" cy="76.3" r="2.6" class="s-dn"/>
+<line x1="508.3" y1="56.6" x2="515.3" y2="40" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="508.3" cy="56.6" r="2.6" class="s-up"/>
+<line x1="515.3" y1="61.9" x2="522.3" y2="98.6" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="515.3" cy="61.9" r="2.6" class="s-dn"/>
+<line x1="522.3" y1="72.6" x2="529.4" y2="72.6" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="522.3" cy="72.6" r="2.6" class="s-up"/>
+<line x1="529.4" y1="96.8" x2="536.4" y2="96.8" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="529.4" cy="96.8" r="2.6" class="s-dn"/>
+<line x1="536.4" y1="81" x2="543.4" y2="81" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="536.4" cy="81" r="2.6" class="s-up"/>
+<line x1="543.4" y1="95.7" x2="550.4" y2="117.4" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="543.4" cy="95.7" r="2.6" class="s-dn"/>
+<line x1="550.4" y1="100.5" x2="557.4" y2="82" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="550.4" cy="100.5" r="2.6" class="s-up"/>
+<line x1="557.4" y1="104.7" x2="564.5" y2="119.6" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="557.4" cy="104.7" r="2.6" class="s-dn"/>
+<line x1="564.5" y1="101.1" x2="571.5" y2="79.1" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="564.5" cy="101.1" r="2.6" class="s-up"/>
+<line x1="571.5" y1="97.4" x2="578.5" y2="126.5" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="571.5" cy="97.4" r="2.6" class="s-dn"/>
+<line x1="578.5" y1="114.5" x2="585.5" y2="96.9" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="578.5" cy="114.5" r="2.6" class="s-up"/>
+<line x1="585.5" y1="120.6" x2="592.6" y2="120.6" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="585.5" cy="120.6" r="2.6" class="s-dn"/>
+<line x1="592.6" y1="108.5" x2="599.6" y2="89.6" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="592.6" cy="108.5" r="2.6" class="s-up"/>
+<line x1="599.6" y1="107.7" x2="606.6" y2="116.9" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="599.6" cy="107.7" r="2.6" class="s-dn"/>
+<line x1="606.6" y1="102.4" x2="613.6" y2="93.4" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="606.6" cy="102.4" r="2.6" class="s-up"/>
+<line x1="613.6" y1="107.8" x2="620.6" y2="134" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="613.6" cy="107.8" r="2.6" class="s-dn"/>
+<line x1="620.6" y1="121.4" x2="627.7" y2="121.4" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="620.6" cy="121.4" r="2.6" class="s-up"/>
+<line x1="627.7" y1="134.7" x2="634.7" y2="140.7" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="627.7" cy="134.7" r="2.6" class="s-dn"/>
+<line x1="634.7" y1="126.4" x2="641.7" y2="113" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="634.7" cy="126.4" r="2.6" class="s-up"/>
+<line x1="641.7" y1="127.6" x2="648.7" y2="132.7" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="641.7" cy="127.6" r="2.6" class="s-dn"/>
+<line x1="648.7" y1="119" x2="655.7" y2="111.5" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="648.7" cy="119" r="2.6" class="s-up"/>
+<line x1="655.7" y1="125.5" x2="662.8" y2="194.9" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="655.7" cy="125.5" r="2.6" class="s-dn"/>
+<line x1="662.8" y1="184.6" x2="669.8" y2="169.3" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="662.8" cy="184.6" r="2.6" class="s-up"/>
+<line x1="669.8" y1="180.7" x2="676.8" y2="198.5" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="669.8" cy="180.7" r="2.6" class="s-dn"/>
+<line x1="676.8" y1="182.9" x2="683.8" y2="182.9" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="676.8" cy="182.9" r="2.6" class="s-up"/>
+<line x1="683.8" y1="193.9" x2="690.9" y2="223.6" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="683.8" cy="193.9" r="2.6" class="s-dn"/>
+<line x1="690.9" y1="210.1" x2="697.9" y2="210.1" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="690.9" cy="210.1" r="2.6" class="s-up"/>
+<line x1="697.9" y1="221" x2="704.9" y2="221.1" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="697.9" cy="221" r="2.6" class="s-dn"/>
+<line x1="704.9" y1="211.8" x2="711.9" y2="208.7" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="704.9" cy="211.8" r="2.6" class="s-up"/>
+<line x1="711.9" y1="219.2" x2="718.9" y2="223.8" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="711.9" cy="219.2" r="2.6" class="s-dn"/>
+<line x1="718.9" y1="213.5" x2="726" y2="202.1" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="718.9" cy="213.5" r="2.6" class="s-up"/>
+<line x1="726" y1="213.9" x2="733" y2="215.8" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="726" cy="213.9" r="2.6" class="s-dn"/>
+<line x1="733" y1="199.3" x2="740" y2="192.2" class="s-lup" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="733" cy="199.3" r="2.6" class="s-up"/>
+<line x1="740" y1="202.9" x2="740" y2="230" class="s-ldn" style="stroke-width:3;stroke-opacity:.55"/>
+<circle cx="740" cy="202.9" r="2.6" class="s-dn"/>
+<text x="410" y="246" class="s s-tx3">event 1</text><text x="740" y="246" text-anchor="end" class="s s-tx3">event 47 · now</text>
+<text x="410" y="264" class="s s-tx3">every step is the same size in δ, whatever the time it took</text>
+</svg>
+  </div><figcaption><b>Fig. 1</b>The same path twice. Left, minutes; right, one step per confirmed reversal. Thick segments are the overshoots.</figcaption></figure>
+
+  
+</section>
+
+<section class="ch" id="one-event-step-by-step">
+  <div class="ch-h"><span class="n">03</span><h3>One event, step by step</h3></div>
+
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 270" role="img" aria-label="Anatomy of a directional change on EUR/USD with delta 0.10 percent">
+      <polyline points="30,200 80,180 120,214 160,236 200,222 240,196 280,160 320,170 360,122 400,98 440,110 480,70 520,46 560,58 600,76 640,65" class="s-px"/>
+      <circle cx="160" cy="236" r="5" class="s-tx"/><text x="160" y="258" text-anchor="middle" class="m s s-tx2">low 1.08420</text>
+      <circle cx="280" cy="160" r="5" class="s-up"/><text x="290" y="182" class="m s s-up">▲ up event 1.08528</text><text x="290" y="196" class="s s-tx3">δ = 0.10% above the low</text>
+      <path d="M280 160 L520 46" class="s-lup" style="stroke-width:4;stroke-opacity:.5"/>
+      <text x="382" y="64" text-anchor="end" class="s s-up">overshoot so far 1.49 × δ</text>
+      <circle cx="520" cy="46" r="5" class="s-tx"/><text x="520" y="32" text-anchor="middle" class="m s s-tx2">current extreme 1.08690</text>
+      <path d="M30 104 H740" style="stroke:var(--ind1);fill:none" stroke-dasharray="6 4"/><text x="40" y="98" class="m s" style="fill:var(--ind1)">reversal 1.08581</text>
+      <path d="M30 72 H740" class="s-ln3" stroke-dasharray="2 4"/><text x="40" y="66" class="m s s-tx3">avg leg 1.08641</text>
+      <circle cx="640" cy="65" r="4" class="s-tx"/><text x="652" y="56" class="m s s-tx">now 1.08655</text>
+      <path d="M660 69 V100" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="668" y="92" class="m s s-tx2">7.4 pips · 0.68 × δ</text>
+      <text x="40" y="20" class="s s-tx3">EUR/USD · δ 0.10% · illustration</text>
+    </svg>
+  </div><figcaption><b>Fig. 2</b>An up leg confirmed at the low + δ, its overshoot, and the one level the method defines in advance: the reversal.</figcaption></figure>
+
+  
+</section>
+
+<section class="ch" id="controls">
+  <div class="ch-h"><span class="n">04</span><h3>Controls</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Control</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Threshold δ</td><td class="n">0.05% · <b>0.10%</b> · 0.20% · 0.50%</td><td>The reversal that counts as an event. Small δ = many small events (a busy clock); large δ = only the big swings. Every number on the page is measured with this δ.</td></tr>
+      <tr><td>Auto</td><td class="n">Auto x.xxx%</td><td>δ chosen for this instrument so that the history gives about 1.5 events per hour of trading (between 1 and 2); its value is shown on the button. Not kept after a reload; picking a fixed δ clears it.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="how-it-is-computed">
+  <div class="ch-h"><span class="n">05</span><h3>How it is computed</h3></div>
+
+  <div class="fml">
+    <div>event    price ≤ last high × (1 − δ) → down · price ≥ last low × (1 + δ) → up   <span class="c">on all 1-minute closes</span></div>
+    <div>         the first event is discarded (its extreme depends on the arbitrary start)</div>
+    <div>rate     events ÷ hours of trading   <span class="c">closed hours count zero</span></div>
+    <div>overshoot |ln(next extreme ÷ event price)| ÷ δ · mean ± 1.96 SE</div>
+    <div>heartbeat events in the last 6 hours ÷ λ, λ = rate × 6 · band = central 95% of Poisson(λ)</div>
+    <div>coastline Σ |ln(extreme ÷ previous extreme)| in % of price, against the net move</div>
+    <div>reversal current extreme × (1 ∓ δ) · avg leg end = event price × (1 ± δ × avg overshoot)</div>
+    <div class="c">Fewer than 4 events: “Only N directional changes at δ — pick a smaller threshold.”</div>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="the-eight-figures">
+  <div class="ch-h"><span class="n">06</span><h3>The eight figures</h3></div>
+
+  <figure><div class="fig-b">
+    <div class="kpis k4">
+      <div class="kpi"><label>Reversal level</label><b>1.08581</b><span>7.4 pips · 0.68 × δ</span></div>
+      <div class="kpi"><label>Events</label><b>384</b><span>3.2/h</span></div>
+      <div class="kpi"><label>Heartbeat · last 6h</label><b class="wn">1.61×</b><span>31 events <span class="tag wn">busier</span></span></div>
+      <div class="kpi" style="border-right:0"><label>Avg overshoot</label><b>1.04 × δ</b><span>n=383</span></div>
+      <div class="kpi" style="border-top:1px solid var(--line)"><label>Coastline</label><b>78.3%</b><span>384 legs</span></div>
+      <div class="kpi" style="border-top:1px solid var(--line)"><label>Last leg</label><b class="up">▲ up</b><span>δ 0.10%</span></div>
+      <div class="kpi" style="border-top:1px solid var(--line)"><label>Overshoot so far</label><b>1.49 × δ</b><span>longer than 71% of past</span></div>
+      <div class="kpi" style="border-top:1px solid var(--line);border-right:0"><label>Average leg ends at</label><b>1.08641</b><span>22.1 pips leg</span></div>
+    </div>
+  </div><figcaption><b>Fig. 3</b>Illustration over 120 hours of trading: 31 events in 6 hours lie above the 11–28 a pace of 3.2 per hour gives by chance.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td>Reversal level</td><td>A δ move back from the current extreme would confirm the opposite leg at this price. A natural place for an alert or a stop.</td></tr>
+      <tr><td>Events</td><td>Reversals of δ per hour of open market. More per hour = busier, choppier at this scale.</td></tr>
+      <tr><td>Heartbeat</td><td>The last 6 hours against the average pace. Highlighted only outside the Poisson band; inside it is normal variation. London and New York hours bring more events than Asia.</td></tr>
+      <tr><td>Avg overshoot</td><td>How much further price went after a reversal was confirmed, in δ, with its 95% interval. FX research finds about 1 × δ.</td></tr>
+      <tr><td>Coastline</td><td>How far price travelled to get where it is. A long coastline with a small net move = a lot of travel for little progress: a range.</td></tr>
+      <tr><td>Last leg</td><td>Which way the last reversal went, nothing more.</td></tr>
+      <tr><td>Overshoot so far</td><td>How far the current leg has run past its confirmation, ranked against past overshoots. A description, not a turning signal.</td></tr>
+      <tr><td>Average leg ends at</td><td>A price, not a forecast: where the current leg would end if it were exactly average. Legs end early or run long at random.</td></tr>
+    </tbody>
+  </table>
+
+  
+</section>
+
+<section class="ch" id="charts-and-the-action-row">
+  <div class="ch-h"><span class="n">07</span><h3>Charts and the action row</h3></div>
+
+  <ul>
+    <li><b>Intrinsic-time chart</b>: the last 80 events (or all). Each dot is a change point, each thick segment its overshoot (green up, red down). On the right: <code>now</code>, <code>reversal</code> (dashed) and <code>avg leg</code> (dotted), scale references, not targets. The time axis shows the UTC time of the extremes at even steps, so the uneven gaps are intentional. Hover an event for its extreme, confirmation and overshoot.</li>
+    <li><b>Alert at reversal</b>: adds a price alert at the reversal level, below the price after an up leg, above it after a down leg, in the Alerts list like one set from the chart. The level is recomputed at the moment you click. It fires if price crosses it; it is not an order.</li>
+  </ul>
+  
+</section>
+
+<section class="ch" id="scaling-law">
+  <div class="ch-h"><span class="n">08</span><h3>Scaling law</h3></div>
+
+  <p>Events are also counted at 2δ and 4δ. For a random walk the count falls about 4× each time δ doubles. A ratio is read against the rough noise of the two counts.</p>
+  <table class="g-t">
+    <thead><tr><th>δ</th><th>Events</th><th>Ratio</th><th>Reading (illustration)</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0.10%</td><td class="n">384</td><td class="n">—</td><td>the base</td></tr>
+      <tr><td class="n">0.20%</td><td class="n">101</td><td class="n">3.80</td><td>near 4: as a random walk scales</td></tr>
+      <tr><td class="n">0.40%</td><td class="n">24</td><td class="n">4.21</td><td>near 4: as a random walk scales</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">Clearly above 4: fewer reversals at the larger δ than a random walk gives (moves stall before getting large). Clearly below 4: more big swings than a random walk (trending at larger scales). Under 10 events at the larger δ: too few to read.</p>
+  <div class="cards">
+    <div class="card"><h5>Pick δ for your trades</h5><p>0.05–0.10% for intraday, 0.20–0.50% for swings. A δ close to the moves you trade makes every number speak your scale.</p></div>
+    <div class="card"><h5>Alert, don’t stare</h5><p>Set Alert at reversal and decide when it fires: at that moment the current leg is over by this definition.</p></div>
+    <div class="card"><h5>Stops and the heartbeat</h5><p>Avoid tight stops when the heartbeat is high: small reversals are frequent.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>The method describes this week’s history. A long leg by this history is a description, not a reason to fade it; how long a leg lasts or how far it runs is not predicted.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">09</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li><li><a href="obs-exit.html">Exit lab</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Intrinsic time guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

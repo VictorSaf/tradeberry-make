@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exit lab guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use Exit lab in the tradeBerry Observatory.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> <a href="obs.html">Observatory</a> <i>/</i> Exit lab</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">Exit lab</span>
+  <a href="#question"><span>01</span>The question</a>
+  <a href="#trades-and-unit"><span>02</span>Trades and unit</a>
+  <a href="#the-nine-rows"><span>03</span>The nine rows</a>
+  <a href="#what-you-see"><span>04</span>What you see</a>
+  <a href="#the-verdict"><span>05</span>The verdict</a>
+  <a href="#stop-target-map"><span>06</span>Stop × target map</a>
+  <a href="#where-you-lose-and-the-trades"><span>07</span>Where you lose, and the trades</a>
+  <a href="#more"><span>08</span>Related reading</a>
+  <span class="p">Observatory</span>
+  <a href="obs.html"><span>↗</span>Overview and statistics</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research › Observatory</span>
+  <h1>Exit lab</h1>
+  <p class="g-lede">How to read, interpret and use Exit lab: what it shows, how it is computed and how to act on it.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Observatory › Exit lab</b></div>
+    <div><label>Covers</label><b>Your closed trades</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+    <div><label>All tools</label><b><a href="obs.html">Observatory guide</a></b></div>
+  </div>
+</div>
+
+<section class="ch" id="question">
+  <div class="ch-h"><span class="n">01</span><h3>The question</h3></div>
+
+  <div class="call key"><b class="t">The question</b><p>“Would other exit rules have done better on your own closed trades? Your trades replayed with nine exit rules.”</p></div>
+  <p class="lead">“Most traders tune entries and ignore exits.” Exit lab replays your closed FX and CFD trades on the real price path, each in its own unit, and asks: with the same entries, what would other exit rules have earned? Use it to judge your exits, not your entries.</p>
+
+  
+</section>
+
+<section class="ch" id="trades-and-unit">
+  <div class="ch-h"><span class="n">02</span><h3>Trades and unit</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Choice</th><th>Options · default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Trades</td><td class="n"><b>My trades · N</b> · Sample trader</td><td>Your closed trades (one record per position, partial closes merged), the 200 most recent at most. The sample trader takes random entries with no edge, grabs small wins and lets losses hit the stop ($100 a trade): its numbers show costs only. <b>New sample</b> draws another.</td></tr>
+      <tr><td>Unit</td><td class="n"><b>R = my stop</b> · R = volatility</td><td>1R = your initial stop distance, or 1.5 × the 15-minute volatility at entry (also used for trades without a stop). R = volatility mixes trades with different risks: compare rules as shape, not size.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">A trade is left out when it is older than the loaded 1-minute history, has under 15 minutes of price after entry, or its entry or exit is not on the bar path within spread plus a tolerance. Exit lab needs 5 replayed trades; with fewer it offers <b>Try it with a sample trader</b>. The sample is not kept after a reload.</p>
+
+  
+</section>
+
+<section class="ch" id="the-nine-rows">
+  <div class="ch-h"><span class="n">03</span><h3>The nine rows</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Rule</th><th>Does</th><th>In the ticket</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>Your exits</td><td>What you actually did: the benchmark every rule is compared with.</td><td>—</td></tr>
+      <tr><td>Target 1R · 2R · 3R</td><td>Stop 1R, take profit at 1R, 2R or 3R</td><td><b>Use</b></td></tr>
+      <tr><td>Trail 1R</td><td>Stop follows the best price at 1R distance</td><td><b>Use</b></td></tr>
+      <tr><td>Break-even + 3R</td><td>Stop to entry after +1R, target 3R</td><td><b>Use</b></td></tr>
+      <tr><td>Time stop 1h · 4h</td><td>Stop 1R, otherwise exit after 1 or 4 hours</td><td>time stop · by hand</td></tr>
+      <tr><td>Hold 24h</td><td>Stop 1R, otherwise exit after 24 hours</td><td>time stop · by hand</td></tr>
+    </tbody>
+  </table>
+  <div class="fml">
+    <div>replay   from the first bar at or after your entry · a buy is checked on bid lows/highs, a sell on ask = bid + normal spread</div>
+    <div>         within a bar the stop is checked before the target · a stop gapped through fills at the opening price</div>
+    <div>         every alternative: 1R stop, at most 1,440 open minutes (60 or 240 for the time stops)</div>
+    <div>money    move × pip value of your size − your commission · spread paid, no slippage</div>
+    <div class="c">A replay whose time window has not finished is marked at the last price and keeps moving.</div>
+  </div>
+
+  
+</section>
+
+<section class="ch" id="what-you-see">
+  <div class="ch-h"><span class="n">04</span><h3>What you see</h3></div>
+
+  <figure><div class="fig-b">
+    <div class="kpis k4">
+      <div class="kpi"><label>Trades replayed</label><b>24</b><span>of 24 closed</span></div>
+      <div class="kpi"><label>Your exits</label><b class="dn">−3.2 R</b><span>as you closed them</span></div>
+      <div class="kpi"><label>Best rule (hindsight)</label><b class="up">+2.2 R</b><span>Target 3R</span></div>
+      <div class="kpi" style="border-right:0"><label>Exit efficiency</label><b>27%</b><span>of the best open profit</span></div>
+    </div>
+    <table class="g-t" style="margin-bottom:0">
+      <thead><tr><th>Exit rule</th><th>Total R</th><th>Avg R</th><th>Win rate</th><th>Max DD (R)</th><th>P&amp;L</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>Your exits</td><td class="n dn">−3.2</td><td class="n">−0.13</td><td class="n">46%</td><td class="n">6.1</td><td class="n dn">−$184</td></tr>
+        <tr><td>Target 1R</td><td class="n dn">−1.2</td><td class="n">−0.05</td><td class="n">46%</td><td class="n">4.0</td><td class="n dn">−$70</td></tr>
+        <tr><td>Target 2R</td><td class="n up">+1.4</td><td class="n">+0.06</td><td class="n">38%</td><td class="n">5.0</td><td class="n up">+$58</td></tr>
+        <tr><td>Target 3R <span class="tag nt">best</span></td><td class="n up">+2.2</td><td class="n">+0.09</td><td class="n">29%</td><td class="n">6.0</td><td class="n up">+$95</td></tr>
+        <tr><td>Trail 1R</td><td class="n up">+1.8</td><td class="n">+0.08</td><td class="n">42%</td><td class="n">4.2</td><td class="n up">+$71</td></tr>
+        <tr><td>Break-even + 3R</td><td class="n up">+0.9</td><td class="n">+0.04</td><td class="n">25%</td><td class="n">3.6</td><td class="n up">+$33</td></tr>
+        <tr><td>Time stop 1h</td><td class="n dn">−0.6</td><td class="n">−0.03</td><td class="n">50%</td><td class="n">3.1</td><td class="n dn">−$29</td></tr>
+        <tr><td>Time stop 4h</td><td class="n up">+0.2</td><td class="n">+0.01</td><td class="n">48%</td><td class="n">3.8</td><td class="n up">+$6</td></tr>
+        <tr><td>Hold 24h</td><td class="n dn">−0.8</td><td class="n">−0.03</td><td class="n">42%</td><td class="n">5.5</td><td class="n dn">−$41</td></tr>
+      </tbody>
+    </table>
+  </div><figcaption><b>Fig. 1</b>Illustration on 24 trades. Every sign is printed: green and red repeat it, they never carry it alone.</figcaption></figure>
+  <p>Total R gives every trade the same weight; P&amp;L, in dollars with your commission, weights each by its size, so the two signs can differ. Max DD is the worst losing stretch you would have sat through. <b>Exit efficiency</b> is how much of the best open profit (MFE) your exits kept on trades that were ever in profit: under 30%, profits were often given back.</p>
+
+  
+</section>
+
+<section class="ch" id="the-verdict">
+  <div class="ch-h"><span class="n">05</span><h3>The verdict</h3></div>
+
+  <table class="g-t">
+    <thead><tr><th>Checked in this order</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>The best rule averages more than 1 R a trade</td><td>Check this: the replay disagrees with the recorded trades. On a market without drift a simple exit rarely earns that much on the same entries: check that the fills match the price path.</td></tr>
+      <tr><td>Fewer than 8 replayed trades</td><td>Too few trades for a fair test: the best rule is picked in hindsight and cannot be tested on trades it did not see.</td></tr>
+      <tr><td>Walk-forward, paired t, p &lt; 0.05 ÷ 8, rule ahead</td><td class="up">&lt;Rule&gt; beat your exits on newer trades: try it forward before adopting it</td></tr>
+      <tr><td>p &lt; 0.05 ÷ 8, your exits ahead</td><td>Your exits did better than &lt;rule&gt; on newer trades</td></tr>
+      <tr><td>Otherwise</td><td>No reliable difference between your exits and the rules</td></tr>
+    </tbody>
+  </table>
+  <div class="call ex"><b class="t">Worked example</b><p>The 24 trades, sorted by entry time, split into 12 older and 12 newer. On the older half the best rule is Trail 1R. On the newer half it makes <code>+0.3 R</code> against <code>−1.4 R</code> from your own exits, paired t 1.1. That is far from p below 0.05 ÷ 8 = 0.00625: <b>No reliable difference</b>. Target 3R’s +2.2 R in the table is hindsight.</p></div>
+
+  
+</section>
+
+<section class="ch" id="stop-target-map">
+  <div class="ch-h"><span class="n">06</span><h3>Stop × target map</h3></div>
+
+  <figure><div class="fig-b">
+    <table class="g-t" style="margin:0;text-align:center">
+      <thead><tr><th>Stop \ target</th><th>1×</th><th>1.5×</th><th>2×</th><th>3×</th><th>none (24h)</th></tr></thead>
+      <tbody>
+        <tr><td>0.5R</td><td class="n" style="background:color-mix(in srgb,var(--dn) 55%,var(--s1))">−4.1</td><td class="n" style="background:color-mix(in srgb,var(--dn) 35%,var(--s1))">−2.6</td><td class="n" style="background:color-mix(in srgb,var(--dn) 13%,var(--s1))">−1.0</td><td class="n" style="background:color-mix(in srgb,var(--up) 5%,var(--s1))">+0.4</td><td class="n" style="background:color-mix(in srgb,var(--dn) 44%,var(--s1))">−3.3</td></tr>
+        <tr><td>1R</td><td class="n" style="background:color-mix(in srgb,var(--dn) 16%,var(--s1))">−1.2</td><td class="n" style="background:color-mix(in srgb,var(--up) 8%,var(--s1))">+0.6</td><td class="n" style="background:color-mix(in srgb,var(--up) 19%,var(--s1))">+1.4</td><td class="n" style="background:color-mix(in srgb,var(--up) 30%,var(--s1));outline:2px solid var(--tx);outline-offset:-2px">+2.2</td><td class="n" style="background:color-mix(in srgb,var(--dn) 11%,var(--s1))">−0.8</td></tr>
+        <tr><td>1.5R</td><td class="n" style="background:color-mix(in srgb,var(--dn) 5%,var(--s1))">−0.4</td><td class="n" style="background:color-mix(in srgb,var(--up) 15%,var(--s1))">+1.1</td><td class="n" style="background:color-mix(in srgb,var(--up) 25%,var(--s1))">+1.9</td><td class="n" style="background:color-mix(in srgb,var(--up) 21%,var(--s1))">+1.6</td><td class="n" style="background:color-mix(in srgb,var(--dn) 3%,var(--s1))">−0.2</td></tr>
+        <tr><td>2R</td><td class="n" style="background:color-mix(in srgb,var(--dn) 12%,var(--s1))">−0.9</td><td class="n" style="background:color-mix(in srgb,var(--up) 4%,var(--s1))">+0.3</td><td class="n" style="background:color-mix(in srgb,var(--up) 11%,var(--s1))">+0.8</td><td class="n" style="background:color-mix(in srgb,var(--up) 7%,var(--s1))">+0.5</td><td class="n" style="background:color-mix(in srgb,var(--dn) 8%,var(--s1))">−0.6</td></tr>
+      </tbody>
+    </table>
+  </div><figcaption><b>Fig. 2</b>Total R for each stop and target on the same entries, each cell in R of its own stop. Outlined: the best cell, in a good neighbourhood.</figcaption></figure>
+  <p>Rows: stop distance as a multiple of base R. Columns: target as a multiple of that stop (“none” = exit after 24h). Because each cell is counted in R of its own stop, a 2R stop, which risks twice as much, has its total halved: cells compare results at equal risk. A lone bright cell among dark ones is luck; a bright neighbourhood is more believable.</p>
+
+  
+</section>
+
+<section class="ch" id="where-you-lose-and-the-trades">
+  <div class="ch-h"><span class="n">07</span><h3>Where you lose, and the trades</h3></div>
+
+  <p><b>Where you lose</b> groups your trades by how they closed (Manual, Stop loss, Take profit, Trail, Break-even, Time stop, Stop-out), sorted from the type that lost the most; under 3 trades a type shows “too few (under 3)”. The trades table lists the 12 most recent: your result, <b>Best seen (MFE)</b> in R, the best rule on that one trade, and <b>Open chart</b>, which switches the symbol and zooms the chart onto the trade.</p>
+  <p><b>Use</b> on Target 1R/2R/3R, Trail 1R or Break-even + 3R sets the order ticket to that rule, with 1R = your ticket stop (or the volatility stop on the open instrument when the ticket has none); split targets are switched off so the ticket matches the rule. With no stop to build on: “Ticket unchanged … set a stop in the ticket first.” The ticket has no exit by time, so time stops are by hand.</p>
+  <div class="cards">
+    <div class="card"><h5>Start with the sample</h5><p>Learn the page on the sample trader; switch to your trades when at least 5 can be replayed. Fewer than about 30 makes every comparison loose.</p></div>
+    <div class="card"><h5>Believe the walk-forward</h5><p>Hindsight always finds a winner. Only a rule that also wins on the newer trades is worth switching to.</p></div>
+    <div class="card"><h5>Fix the habit first</h5><p>The exit type that lost the most is where to look first. A large gap between Best seen and Yours means profit was available and given back.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Limits</b><p>Counterfactual exits pay the normal spread but no slippage, and stops fill exactly at the level unless the price gapped through it. Choosing the best of eight rules after the fact overstates its edge; test it forward before adopting it. On a pure random walk, stops cannot add expected return — they only help when prices trend.</p></div>
+
+</section>
+
+<section class="ch" id="more">
+  <div class="ch-h"><span class="n">08</span><h3>Related reading</h3></div>
+  <div class="cards">
+    <div class="card"><h5>The Observatory in general</h5><p>How every view is laid out, which tool answers which question, and what is remembered: <a href="obs.html#what">Observatory overview</a>.</p></div>
+    <div class="card"><h5>The statistics behind it</h5><p>Correlation, standard errors, noise bands, multiple testing and more, on one page: <a href="obs.html#stats">Statistics in one page</a>.</p></div>
+    <div class="card"><h5>Workflows</h5><p>How this tool chains with the others before a trade, when testing an idea and after a week: <a href="obs.html#flows">Workflows</a>.</p></div>
+    <div class="card"><h5>Reference</h5><p><a href="obs.html#ref">All thresholds</a> · <a href="obs.html#sources">Research references</a> · <a href="obs.html#glossary">Glossary</a></p></div>
+  </div>
+  <h4>The other tools of the Observatory</h4>
+  <ul class="g-cols"><li><a href="obs-const.html">Constellation</a></li><li><a href="obs-tap.html">Tapestry</a></li><li><a href="obs-regime.html">Regime map</a></li><li><a href="obs-rp.html">Recurrence</a></li><li><a href="obs-dc.html">Intrinsic time</a></li><li><a href="obs-clock.html">Volatility clock</a></li><li><a href="obs-cone.html">Range cone</a></li><li><a href="obs-drv.html">Drivers</a></li><li><a href="obs-bask.html">Baskets</a></li><li><a href="obs-deja.html">Déjà vu</a></li><li><a href="obs-scan.html">Edge check</a></li></ul>
+</section>
+
+<p class="g-foot">tradeBerry · Exit lab guide. Every reading describes past prices; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+</body>
+</html>

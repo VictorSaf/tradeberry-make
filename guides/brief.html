@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Brief guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use the Market Brief in tradeBerry.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> Market Brief</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the brief is</a>
+  <a href="#minute"><span>02</span>The brief in one minute</a>
+  <a href="#map"><span>03</span>Map of the page</a>
+  <span class="p">II · Reading the numbers</span>
+  <a href="#scanner"><span>04</span>Trend scanner</a>
+  <a href="#header"><span>05</span>Header</a>
+  <a href="#kpis"><span>06</span>The five headline figures</a>
+  <a href="#score"><span>07</span>How the trend score works</a>
+  <a href="#tfs"><span>08</span>Timeframes together</a>
+  <a href="#chart"><span>09</span>Chart and layers</a>
+  <span class="p">III · Levels and plan</span>
+  <a href="#reading"><span>10</span>Reading</a>
+  <a href="#levels"><span>11</span>Key levels</a>
+  <a href="#plan"><span>12</span>Plan template</a>
+  <a href="#risk"><span>13</span>Size, risk, reward</a>
+  <a href="#ind"><span>14</span>Indicators</a>
+  <span class="p">IV · Practice</span>
+  <a href="#routine"><span>15</span>A routine before a trade</a>
+  <a href="#situations"><span>16</span>Common situations</a>
+  <a href="#limits"><span>17</span>Limits and pitfalls</a>
+  <span class="p">V · Reference</span>
+  <a href="#ref"><span>18</span>All thresholds</a>
+  <a href="#glossary"><span>19</span>Glossary</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research</span>
+  <h1>Market Brief</h1>
+  <p class="g-lede">An analyst-style reading of one instrument, generated on your device from the terminal’s prices: trend, momentum, volatility, key levels, upcoming events, your own positions, and a trade plan built by fixed rules. This guide explains every part of the page, how each number is calculated, how to read it and how to use it.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Market Brief</b></div>
+    <div><label>Shortcut</label><b><kbd>I</kbd> anywhere</b></div>
+    <div><label>Works on</label><b>FX · indices · commodities · crypto · stocks</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the brief is, what to read first, where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the brief is, and what it is not</h3></div>
+  <p class="lead">The brief applies one set of rules to any instrument and writes down what it finds. Three properties decide how you should use it.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div><h5>Explainable</h5><p>Every sentence is backed by a number shown on the page. Hover or focus any highlighted number for its explanation. No hidden model.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div><h5>Descriptive</h5><p>It describes what price has done. “Strong down” means the recent 4H bars fell steadily, not that the next bar will fall.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h5>A structure, not a signal</h5><p>The plan fixes entry, stop and target before you trade, so the decision is made calmly. Taking the trade is your call.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Not financial advice</b><p>The brief only reads price. It does not know the news behind a move, other traders’ positioning, or anything that is not in the chart. Past trend does not predict the next move.</p></div>
+  <p>The header says where the numbers come from: <code>from platform prices</code> is the broker platform’s live feed. Events come from the terminal’s Calendar; if it is unavailable the brief writes <code>(calendar unavailable)</code> next to any event it mentions.</p>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The brief in one minute</h3></div>
+  <p>Short on time? Read these five things, in this order.</p>
+  <div class="flow">
+    <div><h5>Verdict · Trend 4H</h5><p>Trend or not, which way, how strong. Beyond ±55 strong, within ±20 none.</p></div>
+    <div><h5>Timeframes</h5><p>3/3 = all agree. Less in a trend usually means a pullback.</p></div>
+    <div><h5>Event risk</h5><p>A high-impact release soon can override everything else.</p></div>
+    <div><h5>Key levels</h5><p>How far R1 and S1 are, compared with the hourly ATR.</p></div>
+    <div><h5>Plan template</h5><p>Entry, stop, target, reward : risk, money at risk.</p></div>
+  </div>
+  <div class="call tip"><b class="t">Already in a position?</b><p>Read the last paragraph of the Reading first: it tells you whether your positions point with or against the 4H trend, and reminds you to check every stop.</p></div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the page</h3></div>
+  <p>Each block below is a part of the page. Click one to jump to its chapter.</p>
+  <figure><div class="fig-b">
+    <div class="pmap">
+      <a class="scan" href="#scanner" data-n="4">Trend scanner<small>group ranked by trend score</small></a>
+      <a class="head" href="#header" data-n="5">Header<small>instrument · price · verdict · Generated · Refresh · Copy</small></a>
+      <a href="#kpis" data-n="6">Trend 4H</a><a href="#kpis" data-n="6">Timeframes</a><a href="#kpis" data-n="6">RSI 1H</a><a href="#kpis" data-n="6">ATR 1H</a><a href="#kpis" data-n="6">Event risk</a>
+      <a class="chart" href="#chart" data-n="9">Chart<small>1H / 4H · layers · RSI pane</small></a>
+      <a class="why" href="#score" data-n="7">Why ±N<small>score taken apart · per timeframe</small></a>
+      <a class="read" href="#reading" data-n="10">Reading<small>the numbers written as an analyst would</small></a>
+      <a class="lv" href="#levels" data-n="11">Key levels</a><a class="plan" href="#plan" data-n="12">Plan template</a><a class="ind" href="#ind" data-n="14">Indicators</a>
+      <a class="disc" href="#limits" data-n="17">Disclaimer · what the brief is</a>
+    </div>
+  </div><figcaption><b>Fig. 1</b>Layout of the Market Brief on a desktop screen. On a phone the blocks stack in the same order.</figcaption></figure>
+  <p>The page follows the instrument selected anywhere in the terminal: a row in Market watch, a cell in the Monitor or a row in the scanner.</p>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Reading the numbers</h2><p>What each figure measures, how it is built, and what it means for you.</p></div></div>
+
+<section class="ch" id="scanner">
+  <div class="ch-h"><span class="n">04</span><h3>Trend scanner</h3></div>
+  <div class="two">
+    <div>
+      <p>The left column ranks a group of instruments by their <b>4H trend score</b>, the same number the page explains for one instrument. Rows are sorted by the <b>size</b> of the score, so the clearest trends (up or down) are on top and flat ones at the bottom.</p>
+      <p>The bar is drawn from the centre: to the right for up, to the left for down. Click a row to load its brief here and everywhere in the terminal.</p>
+      <h4>Which instruments it lists</h4>
+      <table class="g-t">
+        <thead><tr><th>Open instrument</th><th>Scanner shows</th></tr></thead>
+        <tbody>
+          <tr><td>FX major (G8 pair)</td><td>The 16 FX majors</td></tr>
+          <tr><td>Other FX pair</td><td>Its group (crosses, exotics…)</td></tr>
+          <tr><td>Stock</td><td>Its sector</td></tr>
+          <tr><td>Index · commodity · crypto</td><td>The whole category</td></tr>
+        </tbody>
+      </table>
+      <p class="mut">The menu under the title picks any other group; scores refresh at most every two minutes of market time.</p>
+    </div>
+    <figure><div class="fig-b" style="padding:12px">
+      <div class="mock">
+        <div class="mh"><span>Trend scanner</span><span>12 crypto</span></div>
+        <div class="scan-r" style="color:var(--tx3);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase"><span>Pair</span><span>Score 4H</span><span></span><span>Trend</span></div>
+        <div class="scan-r"><b>LTCEUR</b><span class="trk"><i class="s" style="left:50%;width:44.5%;background:var(--up)"></i></span><span class="mono up">+89</span><em class="up">▲ Strong up</em></div>
+        <div class="scan-r"><b>BCHUSD</b><span class="trk"><i style="left:8.5%;width:41.5%;background:var(--dn)"></i></span><span class="mono dn">−83</span><em class="dn">▼ Strong down</em></div>
+        <div class="scan-r"><b>ETHEUR</b><span class="trk"><i style="left:50%;width:25%;background:var(--up)"></i></span><span class="mono up">+50</span><em class="up">▲ Up</em></div>
+        <div class="scan-r"><b>XRPUSD</b><span class="trk"><i style="left:36%;width:14%;background:var(--dn)"></i></span><span class="mono dn">−28</span><em class="dn">▼ Down</em></div>
+        <div class="scan-r"><b>BTCUSD</b><span class="trk"><i style="left:44.5%;width:5.5%;background:var(--tx3)"></i></span><span class="mono">−11</span><em class="mut">■ Flat</em></div>
+      </div>
+    </div><figcaption><b>Fig. 2</b>Illustration of the scanner. Biggest scores on top, whatever their sign.</figcaption></figure>
+  </div>
+  <div class="cards">
+    <div class="card"><h5>Find trends fast</h5><p>The top rows are where the trend is clearest, in either direction.</p></div>
+    <div class="card"><h5>Spot the exception</h5><p>One instrument against its whole group often has a story of its own. Check events and news first.</p></div>
+    <div class="card"><h5>Don’t double one bet</h5><p>If every USD pair shows the same trend, several positions on them are one trade on the dollar.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="header">
+  <div class="ch-h"><span class="n">05</span><h3>Header: verdict, Generated, Refresh, Copy</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 92" role="img" aria-label="The header of the brief with its parts labelled">
+      <rect x="1" y="16" width="758" height="44" class="s-box"/>
+      <text x="16" y="44" class="l b s-tx">BCHEUR</text><text x="88" y="44" class="m s-tx">207.96</text>
+      <rect x="150" y="27" width="150" height="22" class="s-dnbg"/><rect x="150" y="27" width="150" height="22" class="s-ldn"/><text x="225" y="42" text-anchor="middle" class="b s-dn">▼ Strong down trend</text>
+      <text x="420" y="43" class="s s-tx3">Generated 22:10 UTC · from platform prices</text>
+      <text x="660" y="43" class="b s s-acc">REFRESH</text><text x="720" y="43" class="b s s-acc">COPY</text>
+      <g class="s-tx3"><path d="M50 62 v12" class="s-ln3"/><text x="16" y="88" class="s s-tx3">instrument · mid price</text>
+      <path d="M225 62 v12" class="s-ln3"/><text x="225" y="88" text-anchor="middle" class="s s-tx3">verdict = label of Trend 4H</text>
+      <path d="M520 62 v12" class="s-ln3"/><text x="520" y="88" text-anchor="middle" class="s s-tx3">when, and from which prices</text>
+      <path d="M700 62 v12" class="s-ln3"/><text x="700" y="88" text-anchor="middle" class="s s-tx3">actions</text></g>
+      <text x="16" y="10" class="s s-tx3">HEADER</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>The header. The arrow ▲ ▼ ■ repeats the direction so it never depends on colour.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Element</th><th>What it does</th><th>When to use it</th></tr></thead>
+    <tbody>
+      <tr><td>Verdict</td><td>The 4H trend label in words: Strong up, Up, No clear trend, Down, Strong down.</td><td>A first glance; the number behind it is Trend 4H.</td></tr>
+      <tr><td>Generated</td><td>Time of the calculation (UTC) and the price source. The brief recomputes itself after 30 minutes of market time.</td><td>Check it before acting on an older brief.</td></tr>
+      <tr><td>Refresh</td><td>Recomputes now with the latest bars.</td><td>Before every decision.</td></tr>
+      <tr><td>Copy</td><td>The whole brief as plain text: headline, timeframes, today, levels, risk, plan.</td><td>Paste it into the journal note of the trade.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="kpis">
+  <div class="ch-h"><span class="n">06</span><h3>The five headline figures</h3></div>
+  <p class="lead">The strip under the header summarises the whole brief. Each cell has a full explanation on hover.</p>
+  <figure><div class="fig-b">
+    <div class="kpis">
+      <div class="kpi"><label>Trend 4H</label><b class="dn">−82</b><span class="tag dn">▼ Strong down</span></div>
+      <div class="kpi"><label>Timeframes</label><b>3<small style="font-size:12px">/3</small></b><span>15m ▼ · 1H ▼ · 4H ▼</span></div>
+      <div class="kpi"><label>Momentum · RSI 1H</label><b class="wn">22</b><span class="tag wn">Below 30</span></div>
+      <div class="kpi"><label>Volatility · ATR 1H</label><b class="wn">1.6×</b><span>583.8 pt <span class="tag wn">elevated</span></span></div>
+      <div class="kpi"><label>Event risk</label><b>—</b><span>Nothing in 6 hours</span></div>
+    </div>
+  </div><figcaption><b>Fig. 4</b>Example strip on a crypto pair in a strong downtrend.</figcaption></figure>
+
+  <h4>Trend 4H: the headline</h4>
+  <p>From <b>−100</b> to <b>+100</b> on 4-hour bars. Where it falls on this scale is the verdict:</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 110" role="img" aria-label="Trend score scale from minus 100 to plus 100 with five zones">
+      <rect x="40" y="46" width="153" height="20" class="s-dn" fill-opacity=".55" style="fill-opacity:.55"/>
+      <rect x="193" y="46" width="119" height="20" class="s-dnbg"/>
+      <rect x="312" y="46" width="136" height="20" class="s-box2"/>
+      <rect x="448" y="46" width="119" height="20" class="s-upbg"/>
+      <rect x="567" y="46" width="153" height="20" class="s-up" style="fill-opacity:.55"/>
+      <text x="116" y="34" text-anchor="middle" class="b s-dn">▼▼ Strong down</text>
+      <text x="252" y="34" text-anchor="middle" class="b s-dn">▼ Down</text>
+      <text x="380" y="34" text-anchor="middle" class="b s-tx2">■ Flat</text>
+      <text x="508" y="34" text-anchor="middle" class="b s-up">▲ Up</text>
+      <text x="643" y="34" text-anchor="middle" class="b s-up">▲▲ Strong up</text>
+      <g class="m s"><text x="40" y="86" text-anchor="middle" class="m s s-tx3">−100</text><text x="193" y="86" text-anchor="middle" class="m s s-tx3">−55</text><text x="312" y="86" text-anchor="middle" class="m s s-tx3">−20</text><text x="380" y="86" text-anchor="middle" class="m s s-tx3">0</text><text x="448" y="86" text-anchor="middle" class="m s s-tx3">+20</text><text x="567" y="86" text-anchor="middle" class="m s s-tx3">+55</text><text x="720" y="86" text-anchor="middle" class="m s s-tx3">+100</text></g>
+      <path d="M193 66v6M312 66v6M380 66v6M448 66v6M567 66v6" class="s-ln3"/>
+      <text x="380" y="104" text-anchor="middle" class="s s-tx3">within ±20 the plan uses the range template · beyond ±20 the trend template</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The five zones of the trend score. Chapter 07 shows how the number is built.</figcaption></figure>
+
+  <h4>Timeframes</h4>
+  <p>The same trend score on <b>15m, 1H and 4H</b>. The cell counts how many point the same way as the 4H trend with a score beyond ±20 (0/3 when 4H itself is flat). Chapter 08 shows the three typical patterns.</p>
+
+  <h4>Momentum · RSI 1H</h4>
+  <p>The 14-period Relative Strength Index on 1-hour bars: the average up-move against the average down-move of the last 14 hours, from 0 to 100.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 96" role="img" aria-label="RSI scale from 0 to 100 with the labels the brief uses">
+      <rect x="40" y="40" width="204" height="18" class="s-wnbg"/><rect x="244" y="40" width="102" height="18" class="s-box"/><rect x="346" y="40" width="68" height="18" class="s-box2"/><rect x="414" y="40" width="102" height="18" class="s-box"/><rect x="516" y="40" width="204" height="18" class="s-wnbg"/>
+      <text x="142" y="30" text-anchor="middle" class="b s-wn">Below 30</text><text x="295" y="30" text-anchor="middle" class="s-tx2">Slightly negative</text><text x="380" y="30" text-anchor="middle" class="b s-tx">Neutral</text><text x="465" y="30" text-anchor="middle" class="s-tx2">Slightly positive</text><text x="618" y="30" text-anchor="middle" class="b s-wn">Above 70</text>
+      <text x="40" y="76" text-anchor="middle" class="m s s-tx3">0</text><text x="244" y="76" text-anchor="middle" class="m s s-tx3">30</text><text x="346" y="76" text-anchor="middle" class="m s s-tx3">45</text><text x="414" y="76" text-anchor="middle" class="m s s-tx3">55</text><text x="516" y="76" text-anchor="middle" class="m s s-tx3">70</text><text x="720" y="76" text-anchor="middle" class="m s s-tx3">100</text>
+      <text x="142" y="92" text-anchor="middle" class="s s-tx3">losses clearly outweighed gains</text><text x="618" y="92" text-anchor="middle" class="s s-tx3">gains clearly outweighed losses</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>RSI labels. The extremes are amber: they call for attention, not for a trade.</figcaption></figure>
+  <div class="call key"><b class="t">Pressure, not turning points</b><p>In a strong trend RSI can stay beyond 70 or below 30 for a long time. With the trend, an RSI back near 50 is usually a calmer entry than one at an extreme. An extreme against your position is a reason to review the plan, not a signal by itself.</p></div>
+
+  <h4>Volatility · ATR 1H</h4>
+  <p>The big number is a <b>ratio</b>: the hourly ATR now ÷ the ATR at the same hours of the day earlier in the week. Under it, the hourly ATR itself (Wilder, 14 complete hours) in pips for FX or points otherwise: how far one hour moves on average.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 100" role="img" aria-label="Volatility ratio scale from 0 to 2 times">
+      <rect x="40" y="40" width="272" height="18" class="s-inbg"/><rect x="312" y="40" width="153" height="18" class="s-box2"/><rect x="465" y="40" width="255" height="18" class="s-wnbg"/>
+      <path d="M380 34v30" class="s-ln3" stroke-dasharray="3 3"/>
+      <text x="176" y="30" text-anchor="middle" class="b s-in">compressed</text><text x="388" y="30" text-anchor="middle" class="b s-tx">normal</text><text x="592" y="30" text-anchor="middle" class="b s-wn">elevated</text>
+      <text x="40" y="78" text-anchor="middle" class="m s s-tx3">0×</text><text x="312" y="78" text-anchor="middle" class="m s s-tx3">0.8×</text><text x="388" y="78" text-anchor="middle" class="m s s-tx2">1× week</text><text x="465" y="78" text-anchor="middle" class="m s s-tx3">1.25×</text><text x="720" y="78" text-anchor="middle" class="m s s-tx3">2×</text>
+      <text x="176" y="94" text-anchor="middle" class="s s-tx3">quiet; tends to return to normal</text><text x="592" y="94" text-anchor="middle" class="s s-tx3">wider swings: widen stops or cut size</text>
+    </svg>
+  </div><figcaption><b>Fig. 7</b>Volatility regimes. They tell you how far price moves, never which way.</figcaption></figure>
+
+  <h4>Event risk</h4>
+  <p>The next scheduled release in the next <b>6 hours</b> for the currencies that move the instrument: both currencies of an FX pair, otherwise its quote currency (USD for a US index, EUR for the DAX).</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 104" role="img" aria-label="Event window: the next six hours, with the first two hours highlighted">
+      <rect x="40" y="38" width="227" height="20" class="s-wnbg"/><rect x="267" y="38" width="453" height="20" class="s-box"/>
+      <path d="M40 30v36M720 30v36" class="s-ln3"/>
+      <text x="40" y="24" class="b s-tx">now</text><text x="720" y="24" text-anchor="end" class="b s-tx">+6 h</text><text x="267" y="24" text-anchor="middle" class="s s-tx3">+2 h</text>
+      <circle cx="191" cy="48" r="6" class="s-wn"/><text x="191" y="80" text-anchor="middle" class="s s-tx">USD CPI · High · in 1h20</text>
+      <circle cx="493" cy="48" r="5" class="s-tx3"/><text x="493" y="80" text-anchor="middle" class="s s-tx2">EUR PMI · Medium · in 4h</text>
+      <text x="153" y="98" text-anchor="middle" class="s s-wn">high impact here leads the risk paragraph</text><text x="493" y="98" text-anchor="middle" class="s s-tx3">shown as the next release</text>
+    </svg>
+  </div><figcaption><b>Fig. 8</b>What the brief looks at. Nothing scheduled in 6 hours shows a dash.</figcaption></figure>
+  <div class="call warn"><b class="t">High impact</b><p>Around a high-impact release price can jump either way, and spreads and slippage widen for a few minutes. Avoid opening right before one, or size down and accept the wider spread.</p></div>
+</section>
+
+<section class="ch" id="score">
+  <div class="ch-h"><span class="n">07</span><h3>How the trend score works</h3></div>
+  <p class="lead">The score is two simple measurements, weighted and added. The Why panel on the page shows both parts for the instrument you are looking at.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 250" role="img" aria-label="Flow: two EMA checks make the position part, the EMA20 slope makes the slope part, both add to the trend score">
+      <rect x="10" y="18" width="210" height="50" class="s-box"/><text x="22" y="40" class="b s-tx">Price vs EMA20</text><text x="22" y="58" class="s s-tx2">above +1 · below −1</text>
+      <rect x="10" y="80" width="210" height="50" class="s-box"/><text x="22" y="102" class="b s-tx">EMA20 vs EMA50</text><text x="22" y="120" class="s s-tx2">above +1 · below −1</text>
+      <rect x="10" y="172" width="210" height="50" class="s-box"/><text x="22" y="194" class="b s-tx">EMA20 slope</text><text x="22" y="212" class="s s-tx2">change over 5 bars ÷ ATR(14)</text>
+      <rect x="275" y="49" width="215" height="50" class="s-box2"/><text x="287" y="71" class="b s-tx">Position · 55%</text><text x="287" y="89" class="s m s-tx2">sum ÷ 2 × 55 → −55 · 0 · +55</text>
+      <rect x="275" y="172" width="215" height="50" class="s-box2"/><text x="287" y="194" class="b s-tx">Slope · 45%</text><text x="287" y="212" class="s m s-tx2">÷ 1.2, capped ±1, × 45</text>
+      <rect x="545" y="104" width="205" height="64" class="s-box2" style="stroke:var(--tx2)"/><text x="557" y="128" class="b l s-tx">4H trend score</text><text x="557" y="148" class="s m s-tx2">position + slope</text><text x="557" y="162" class="s m s-tx3">−100 … +100</text>
+      <path d="M220 43 L273 66" class="s-arrow" marker-end="url(#ah)"/><path d="M220 105 L273 84" class="s-arrow" marker-end="url(#ah)"/><path d="M220 197 L273 197" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M490 74 L543 124" class="s-arrow" marker-end="url(#ah)"/><path d="M490 197 L543 150" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="10" y="242" class="s s-tx3">All three measurements use 4-hour bars. ATR(14) = average size of one 4H bar.</text>
+    </svg>
+  </div><figcaption><b>Fig. 9</b>From prices to the score. Position says where price stands; slope says how fast the trend is moving.</figcaption></figure>
+
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="Schematic chart: price above a rising EMA20, which is above the EMA50">
+      <path d="M30 190 C200 185 380 160 560 125" class="s-e50"/>
+      <path d="M30 200 C200 190 380 140 560 90" class="s-e20"/>
+      <polyline points="30,195 60,185 90,192 120,175 150,180 180,165 210,170 240,150 270,158 300,138 330,145 360,122 390,128 420,108 450,115 480,95 510,100 540,80 560,72" class="s-px"/>
+      <path d="M480 112 H560" class="s-ln3" stroke-dasharray="3 3"/><path d="M566 112 V92" class="s-arrow" marker-end="url(#ah)"/>
+      <text x="578" y="70" class="b s-tx">Price above EMA20 → +1</text>
+      <text x="578" y="94" class="s s-tx2">EMA20 rose ≥ 1.2 ATR in 5 bars</text><text x="578" y="108" class="s s-tx2">→ full slope share</text>
+      <text x="578" y="130" class="b s-tx">EMA20 above EMA50 → +1</text>
+      <text x="30" y="222" class="s s-tx3">Position (+1, +1) = +55 · Slope full = +45 · Score +100, Strong up</text>
+      <g class="legend-svg"><rect x="30" y="18" width="14" height="3" class="s-tx"/><text x="50" y="23" class="s s-tx2">price</text><rect x="100" y="18" width="14" height="3" style="fill:var(--ind1)"/><text x="120" y="23" class="s s-tx2">EMA20 (fast)</text><rect x="210" y="18" width="14" height="3" style="fill:var(--ind2)"/><text x="230" y="23" class="s s-tx2">EMA50 (slow)</text></g>
+    </svg>
+  </div><figcaption><b>Fig. 10</b>What the three measurements look like on a chart, in a textbook uptrend.</figcaption></figure>
+
+  <h4>Try it: build a score</h4>
+  <p>Set the two checks and the slope, and watch the score and its label change. This is the exact arithmetic the brief uses.</p>
+  <div class="calc" id="calc">
+    <div class="cin">
+      <label class="sw">Price vs EMA20 <span class="seg" data-k="p"><button type="button" data-v="1" aria-pressed="true">above</button><button type="button" data-v="-1" aria-pressed="false">below</button></span></label>
+      <label class="sw">EMA20 vs EMA50 <span class="seg" data-k="e"><button type="button" data-v="1" aria-pressed="true">above</button><button type="button" data-v="-1" aria-pressed="false">below</button></span></label>
+      <div style="padding-top:12px"><label for="cSl" style="font-size:14px">EMA20 slope over 5 bars: <b class="mono" id="cSlV">+0.60</b> ATR</label>
+      <input type="range" id="cSl" min="-2" max="2" step="0.05" value="0.6"><div class="rv"><span>−2</span><span>−1.2</span><span>0</span><span>+1.2</span><span>+2</span></div></div>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="cTot">+78</b><span class="tag" id="cLab">▲ Strong up</span></div>
+      <svg viewBox="0 0 400 34" aria-hidden="true" style="width:100%;height:auto;display:block">
+        <rect x="0" y="12" width="90" height="10" class="s-dn" style="fill-opacity:.55"/><rect x="90" y="12" width="70" height="10" class="s-dnbg"/><rect x="160" y="12" width="80" height="10" class="s-box2"/><rect x="240" y="12" width="70" height="10" class="s-upbg"/><rect x="310" y="12" width="90" height="10" class="s-up" style="fill-opacity:.55"/>
+        <rect id="cMk" x="354" y="4" width="3" height="26" class="s-tx"/>
+      </svg>
+      <div class="parts"><span>Position · 55%</span><b id="cPos">+55</b><span>Slope · 45%</span><b id="cSlp">+23</b><span style="color:var(--tx)">Total</span><b id="cTot2">+78</b></div>
+      <p class="sub">Slope points = slope ÷ 1.2, capped at ±1, × 45. Position points = (check 1 + check 2) ÷ 2 × 55.</p>
+    </div>
+  </div>
+
+  <h4>How to read the mix</h4>
+  <table class="g-t">
+    <thead><tr><th>Pattern in the Why panel</th><th>What it usually means</th></tr></thead>
+    <tbody>
+      <tr><td>Full position, small slope</td><td>The averages are still stacked but the move is losing pace: the trend may be slowing.</td></tr>
+      <tr><td>Big slope, position 0</td><td>The EMA20 is turning fast while price and the averages have not lined up yet: often a fresh turn.</td></tr>
+      <tr><td>Both full (±100)</td><td>A mature, steady move. Good context for trend trades; check whether price is stretched (RSI, 24h range).</td></tr>
+      <tr><td>Position and slope opposite</td><td>Price is crossing its averages: transition. The score sits near zero.</td></tr>
+    </tbody>
+  </table>
+  <div class="call ex"><b class="t">Worked example</b><p>A crypto pair shows <code>−100</code>. Price is below the EMA20 (−1) and the EMA20 below the EMA50 (−1): position −2 of ±2 → <code>−55</code>. The EMA20 fell 1.24 ATR in 5 bars, more than 1.2 → <code>−45</code>. Total <code>−100</code>, strong down.</p></div>
+</section>
+
+<section class="ch" id="tfs">
+  <div class="ch-h"><span class="n">08</span><h3>Timeframes together</h3></div>
+  <p>The table under the Why panel repeats the calculation on 15m, 1H and 4H, with ✓ / ✗ for “price above EMA20” and “EMA20 above EMA50”, the score and the RSI. Short timeframes turn first. Three patterns cover most cases:</p>
+  <div class="cards">
+    <figure style="margin:0"><div class="fig-b">
+      <svg viewBox="0 0 220 70" aria-hidden="true"><polyline points="6,62 30,56 52,58 76,46 98,48 122,36 146,38 170,24 194,22 214,10" class="s-px"/></svg>
+      <table class="g-t" style="margin-bottom:0"><tbody><tr><td>15m</td><td class="up">▲ up</td></tr><tr><td>1H</td><td class="up">▲ up</td></tr><tr><td>4H</td><td class="up">▲ strong up</td></tr></tbody></table>
+    </div><figcaption><b>3/3</b>Aligned: a consistent trend. After a long run, possibly stretched.</figcaption></figure>
+    <figure style="margin:0"><div class="fig-b">
+      <svg viewBox="0 0 220 70" aria-hidden="true"><polyline points="6,62 30,54 52,56 76,42 98,44 122,28 146,22 166,30 186,38 204,42 214,40" class="s-px"/><rect x="146" y="6" width="70" height="60" class="s-wnbg"/></svg>
+      <table class="g-t" style="margin-bottom:0"><tbody><tr><td>15m</td><td class="dn">▼ down</td></tr><tr><td>1H</td><td class="dn">▼ down</td></tr><tr><td>4H</td><td class="up">▲ up</td></tr></tbody></table>
+    </div><figcaption><b>1/3</b>Pullback inside the 4H trend: where trend traders look for an entry.</figcaption></figure>
+    <figure style="margin:0"><div class="fig-b">
+      <svg viewBox="0 0 220 70" aria-hidden="true"><path d="M0 18H220M0 54H220" class="s-ln" stroke-dasharray="3 3"/><polyline points="6,40 26,22 48,36 70,52 92,30 114,20 136,44 158,52 180,28 200,24 214,36" class="s-px"/></svg>
+      <table class="g-t" style="margin-bottom:0"><tbody><tr><td>15m</td><td class="up">▲ up</td></tr><tr><td>1H</td><td class="mut">■ flat</td></tr><tr><td>4H</td><td class="mut">■ flat</td></tr></tbody></table>
+    </div><figcaption><b>0/3</b>No 4H trend: a range. The plan switches to the range template.</figcaption></figure>
+  </div>
+  <div class="call tip"><b class="t">Timing an entry</b><p>When 15m and 1H turn back in the 4H direction after a pullback, the trend has resumed on the timeframes you enter on. When 15m alone turns against a 4H trend, it is the first sign of a pullback, nothing more.</p></div>
+</section>
+
+<section class="ch" id="chart">
+  <div class="ch-h"><span class="n">09</span><h3>Chart and layers</h3></div>
+  <p>The chart opens on <b>4H</b> (last 20 days, the score’s timeframe); <b>1H</b> shows the last 5 days, the plan’s timeframe. Hover a bar for its prices and indicator values; hover a highlighted number in the text and the chart points to it.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 680 320" role="img" aria-label="Schematic of the brief chart with EMAs, key levels, the plan zone, the 24h range and an event">
+<rect x="528.9" y="146.7" width="58.1" height="90.5" class="s-inbg"/>
+<line x1="28.7" x2="28.7" y1="106.6" y2="116.0" class="s-ldn"/>
+<rect x="25.9" y="111.5" width="5.6" height="2.5" class="s-dn"/>
+<line x1="38.0" x2="38.0" y1="105.1" y2="119.4" class="s-ldn"/>
+<rect x="35.2" y="113.9" width="5.6" height="3.5" class="s-dn"/>
+<line x1="47.4" x2="47.4" y1="92.2" y2="127.2" class="s-lup"/>
+<rect x="44.6" y="96.2" width="5.6" height="21.2" class="s-up"/>
+<line x1="56.8" x2="56.8" y1="86.2" y2="98.0" class="s-lup"/>
+<rect x="54.0" y="90.0" width="5.6" height="6.3" class="s-up"/>
+<line x1="66.2" x2="66.2" y1="81.9" y2="121.5" class="s-ldn"/>
+<rect x="63.3" y="90.0" width="5.6" height="26.8" class="s-dn"/>
+<line x1="75.5" x2="75.5" y1="90.3" y2="133.2" class="s-lup"/>
+<rect x="72.7" y="106.2" width="5.6" height="10.6" class="s-up"/>
+<line x1="84.9" x2="84.9" y1="101.8" y2="122.5" class="s-ldn"/>
+<rect x="82.1" y="106.2" width="5.6" height="13.4" class="s-dn"/>
+<line x1="94.2" x2="94.2" y1="113.5" y2="125.6" class="s-lup"/>
+<rect x="91.4" y="118.4" width="5.6" height="1.2" class="s-up"/>
+<line x1="103.6" x2="103.6" y1="107.4" y2="124.7" class="s-lup"/>
+<rect x="100.8" y="111.1" width="5.6" height="7.3" class="s-up"/>
+<line x1="113.0" x2="113.0" y1="74.3" y2="122.4" class="s-lup"/>
+<rect x="110.2" y="79.5" width="5.6" height="31.6" class="s-up"/>
+<line x1="122.3" x2="122.3" y1="72.5" y2="91.5" class="s-ldn"/>
+<rect x="119.5" y="79.5" width="5.6" height="8.8" class="s-dn"/>
+<line x1="131.7" x2="131.7" y1="82.2" y2="90.6" class="s-lup"/>
+<rect x="128.9" y="88.1" width="5.6" height="1.0" class="s-up"/>
+<line x1="141.1" x2="141.1" y1="79.1" y2="98.8" class="s-ldn"/>
+<rect x="138.3" y="88.1" width="5.6" height="5.8" class="s-dn"/>
+<line x1="150.4" x2="150.4" y1="63.2" y2="96.2" class="s-lup"/>
+<rect x="147.6" y="70.8" width="5.6" height="23.1" class="s-up"/>
+<line x1="159.8" x2="159.8" y1="47.5" y2="71.3" class="s-lup"/>
+<rect x="157.0" y="61.5" width="5.6" height="9.3" class="s-up"/>
+<line x1="169.2" x2="169.2" y1="24.3" y2="64.5" class="s-lup"/>
+<rect x="166.4" y="43.3" width="5.6" height="18.2" class="s-up"/>
+<line x1="178.6" x2="178.6" y1="35.6" y2="54.1" class="s-ldn"/>
+<rect x="175.7" y="43.3" width="5.6" height="6.2" class="s-dn"/>
+<line x1="187.9" x2="187.9" y1="35.6" y2="62.6" class="s-ldn"/>
+<rect x="185.1" y="49.4" width="5.6" height="5.4" class="s-dn"/>
+<line x1="197.3" x2="197.3" y1="38.7" y2="68.4" class="s-lup"/>
+<rect x="194.5" y="47.6" width="5.6" height="7.2" class="s-up"/>
+<line x1="206.7" x2="206.7" y1="44.5" y2="59.8" class="s-lup"/>
+<rect x="203.8" y="45.6" width="5.6" height="1.9" class="s-up"/>
+<line x1="216.0" x2="216.0" y1="33.6" y2="49.9" class="s-lup"/>
+<rect x="213.2" y="39.3" width="5.6" height="6.3" class="s-up"/>
+<line x1="225.4" x2="225.4" y1="30.2" y2="70.5" class="s-ldn"/>
+<rect x="222.6" y="39.3" width="5.6" height="26.2" class="s-dn"/>
+<line x1="234.8" x2="234.8" y1="28.4" y2="79.2" class="s-lup"/>
+<rect x="231.9" y="47.5" width="5.6" height="17.9" class="s-up"/>
+<line x1="244.1" x2="244.1" y1="33.9" y2="53.2" class="s-ldn"/>
+<rect x="241.3" y="47.5" width="5.6" height="1.0" class="s-dn"/>
+<line x1="253.5" x2="253.5" y1="24.0" y2="88.2" class="s-ldn"/>
+<rect x="250.7" y="47.7" width="5.6" height="37.1" class="s-dn"/>
+<line x1="262.9" x2="262.9" y1="74.3" y2="111.1" class="s-ldn"/>
+<rect x="260.0" y="84.9" width="5.6" height="17.0" class="s-dn"/>
+<line x1="272.2" x2="272.2" y1="85.7" y2="104.2" class="s-lup"/>
+<rect x="269.4" y="87.2" width="5.6" height="14.7" class="s-up"/>
+<line x1="281.6" x2="281.6" y1="69.0" y2="93.0" class="s-lup"/>
+<rect x="278.8" y="84.0" width="5.6" height="3.2" class="s-up"/>
+<line x1="290.9" x2="290.9" y1="74.2" y2="98.8" class="s-lup"/>
+<rect x="288.1" y="79.4" width="5.6" height="4.6" class="s-up"/>
+<line x1="300.3" x2="300.3" y1="52.5" y2="84.3" class="s-lup"/>
+<rect x="297.5" y="61.5" width="5.6" height="17.8" class="s-up"/>
+<line x1="309.7" x2="309.7" y1="55.6" y2="107.9" class="s-ldn"/>
+<rect x="306.9" y="61.5" width="5.6" height="38.4" class="s-dn"/>
+<line x1="319.1" x2="319.1" y1="98.2" y2="145.2" class="s-ldn"/>
+<rect x="316.2" y="99.9" width="5.6" height="35.6" class="s-dn"/>
+<line x1="328.4" x2="328.4" y1="120.4" y2="167.7" class="s-ldn"/>
+<rect x="325.6" y="135.6" width="5.6" height="27.0" class="s-dn"/>
+<line x1="337.8" x2="337.8" y1="159.5" y2="175.6" class="s-ldn"/>
+<rect x="335.0" y="162.5" width="5.6" height="6.9" class="s-dn"/>
+<line x1="347.1" x2="347.1" y1="158.6" y2="177.9" class="s-ldn"/>
+<rect x="344.3" y="169.4" width="5.6" height="2.2" class="s-dn"/>
+<line x1="356.5" x2="356.5" y1="161.9" y2="183.4" class="s-ldn"/>
+<rect x="353.7" y="171.7" width="5.6" height="11.5" class="s-dn"/>
+<line x1="365.9" x2="365.9" y1="174.2" y2="216.5" class="s-ldn"/>
+<rect x="363.1" y="183.1" width="5.6" height="19.5" class="s-dn"/>
+<line x1="375.2" x2="375.2" y1="189.7" y2="215.9" class="s-ldn"/>
+<rect x="372.4" y="202.7" width="5.6" height="12.0" class="s-dn"/>
+<line x1="384.6" x2="384.6" y1="191.5" y2="227.9" class="s-lup"/>
+<rect x="381.8" y="194.3" width="5.6" height="20.4" class="s-up"/>
+<line x1="394.0" x2="394.0" y1="162.0" y2="206.2" class="s-lup"/>
+<rect x="391.2" y="173.8" width="5.6" height="20.4" class="s-up"/>
+<line x1="403.4" x2="403.4" y1="147.5" y2="184.5" class="s-lup"/>
+<rect x="400.5" y="153.4" width="5.6" height="20.4" class="s-up"/>
+<line x1="412.7" x2="412.7" y1="139.7" y2="154.8" class="s-lup"/>
+<rect x="409.9" y="142.9" width="5.6" height="10.5" class="s-up"/>
+<line x1="422.1" x2="422.1" y1="137.5" y2="146.3" class="s-ldn"/>
+<rect x="419.3" y="142.9" width="5.6" height="1.7" class="s-dn"/>
+<line x1="431.4" x2="431.4" y1="138.7" y2="144.6" class="s-lup"/>
+<rect x="428.6" y="144.1" width="5.6" height="1.0" class="s-up"/>
+<line x1="440.8" x2="440.8" y1="129.9" y2="163.1" class="s-lup"/>
+<rect x="438.0" y="135.3" width="5.6" height="8.9" class="s-up"/>
+<line x1="450.2" x2="450.2" y1="129.9" y2="138.8" class="s-lup"/>
+<rect x="447.4" y="134.0" width="5.6" height="1.3" class="s-up"/>
+<line x1="459.6" x2="459.6" y1="125.3" y2="141.7" class="s-ldn"/>
+<rect x="456.7" y="134.0" width="5.6" height="4.5" class="s-dn"/>
+<line x1="468.9" x2="468.9" y1="118.8" y2="162.7" class="s-lup"/>
+<rect x="466.1" y="136.2" width="5.6" height="2.3" class="s-up"/>
+<line x1="478.3" x2="478.3" y1="133.9" y2="163.6" class="s-ldn"/>
+<rect x="475.5" y="136.2" width="5.6" height="23.7" class="s-dn"/>
+<line x1="487.6" x2="487.6" y1="155.8" y2="166.3" class="s-ldn"/>
+<rect x="484.8" y="159.9" width="5.6" height="1.0" class="s-dn"/>
+<line x1="497.0" x2="497.0" y1="154.6" y2="183.0" class="s-lup"/>
+<rect x="494.2" y="159.5" width="5.6" height="1.0" class="s-up"/>
+<line x1="506.4" x2="506.4" y1="152.5" y2="160.5" class="s-lup"/>
+<rect x="503.6" y="157.7" width="5.6" height="1.8" class="s-up"/>
+<line x1="515.8" x2="515.8" y1="157.1" y2="191.6" class="s-ldn"/>
+<rect x="512.9" y="157.7" width="5.6" height="8.2" class="s-dn"/>
+<line x1="525.1" x2="525.1" y1="156.4" y2="189.7" class="s-ldn"/>
+<rect x="522.3" y="165.9" width="5.6" height="12.7" class="s-dn"/>
+<line x1="534.5" x2="534.5" y1="169.7" y2="192.2" class="s-ldn"/>
+<rect x="531.7" y="178.7" width="5.6" height="5.5" class="s-dn"/>
+<line x1="543.9" x2="543.9" y1="146.7" y2="187.5" class="s-lup"/>
+<rect x="541.0" y="162.7" width="5.6" height="21.4" class="s-up"/>
+<line x1="553.2" x2="553.2" y1="156.8" y2="183.2" class="s-ldn"/>
+<rect x="550.4" y="162.7" width="5.6" height="10.2" class="s-dn"/>
+<line x1="562.6" x2="562.6" y1="162.6" y2="237.2" class="s-ldn"/>
+<rect x="559.8" y="172.9" width="5.6" height="50.7" class="s-dn"/>
+<line x1="572.0" x2="572.0" y1="202.0" y2="225.2" class="s-lup"/>
+<rect x="569.1" y="216.1" width="5.6" height="7.5" class="s-up"/>
+<line x1="581.3" x2="581.3" y1="198.3" y2="217.9" class="s-lup"/>
+<rect x="578.5" y="199.8" width="5.6" height="16.3" class="s-up"/>
+<polyline points="28.7,113.9 38.0,114.0 47.4,113.3 56.8,112.4 66.2,112.6 75.5,112.3 84.9,112.6 94.2,112.9 103.6,112.8 113.0,111.5 122.3,110.6 131.7,109.7 141.1,109.1 150.4,107.6 159.8,105.8 169.2,103.3 178.6,101.2 187.9,99.4 197.3,97.4 206.7,95.3 216.0,93.1 225.4,92.0 234.8,90.3 244.1,88.6 253.5,88.5 262.9,89.0 272.2,88.9 281.6,88.7 290.9,88.4 300.3,87.3 309.7,87.8 319.1,89.7 328.4,92.5 337.8,95.6 347.1,98.5 356.5,101.9 365.9,105.8 375.2,110.1 384.6,113.4 394.0,115.8 403.4,117.2 412.7,118.2 422.1,119.3 431.4,120.3 440.8,120.8 450.2,121.4 459.6,122.0 468.9,122.6 478.3,124.0 487.6,125.5 497.0,126.8 506.4,128.0 515.8,129.5 525.1,131.4 534.5,133.5 543.9,134.6 553.2,136.1 562.6,139.6 572.0,142.6 581.3,144.8" class="s-e50"/>
+<polyline points="28.7,113.9 38.0,114.2 47.4,112.5 56.8,110.4 66.2,111.0 75.5,110.5 84.9,111.4 94.2,112.1 103.6,112.0 113.0,108.9 122.3,106.9 131.7,105.1 141.1,104.1 150.4,100.9 159.8,97.1 169.2,92.0 178.6,88.0 187.9,84.8 197.3,81.3 206.7,77.9 216.0,74.2 225.4,73.4 234.8,70.9 244.1,68.7 253.5,70.2 262.9,73.2 272.2,74.6 281.6,75.5 290.9,75.8 300.3,74.5 309.7,76.9 319.1,82.5 328.4,90.1 337.8,97.7 347.1,104.7 356.5,112.2 365.9,120.8 375.2,129.7 384.6,135.9 394.0,139.5 403.4,140.8 412.7,141.0 422.1,141.4 431.4,141.6 440.8,141.0 450.2,140.4 459.6,140.2 468.9,139.8 478.3,141.7 487.6,143.5 497.0,145.0 506.4,146.2 515.8,148.1 525.1,151.0 534.5,154.1 543.9,155.0 553.2,156.7 562.6,163.0 572.0,168.1 581.3,171.1" class="s-e20"/>
+<line x1="24" x2="586" y1="87.8" y2="87.8" class="s-ldn" stroke-dasharray="5 4"/>
+<text x="592" y="91.8" class="m s s-dn">R2 253.02</text>
+<line x1="24" x2="586" y1="146.7" y2="146.7" class="s-ldn" stroke-dasharray="5 4"/>
+<text x="592" y="150.7" class="m s s-dn">R1 245.52</text>
+<line x1="24" x2="586" y1="232.7" y2="232.7" class="s-lup" stroke-dasharray="5 4"/>
+<text x="592" y="236.7" class="m s s-up">S1 234.55</text>
+<line x1="24" x2="586" y1="307.7" y2="307.7" class="s-lup" stroke-dasharray="5 4"/>
+<text x="592" y="311.7" class="m s s-up">S2 225.00</text>
+<rect x="515.8" y="132.9" width="70.2" height="66.8" class="s-dnbg"/>
+<rect x="515.8" y="199.8" width="70.2" height="105.2" class="s-upbg"/>
+<line x1="515.8" x2="586" y1="199.8" y2="199.8" class="s-px" stroke-width="1"/>
+<text x="519.8" y="128.9" class="m s s-dn">SL</text>
+<text x="519.8" y="317.0" class="m s s-up">TP</text>
+<line x1="588.1" x2="588.1" y1="24" y2="300" class="s-lwn" stroke-dasharray="2 3"/>
+<g><rect x="300.7" y="41.9" width="18" height="18" class="s-acc"/><text x="309.7" y="54.9" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">1</text></g>
+<g><rect x="94.6" y="133.8" width="18" height="18" class="s-acc"/><text x="103.6" y="146.8" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">2</text></g>
+<g><rect x="47.8" y="78.8" width="18" height="18" class="s-acc"/><text x="56.8" y="91.8" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">3</text></g>
+<g><rect x="490.8" y="210.0" width="18" height="18" class="s-acc"/><text x="499.8" y="223.0" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">4</text></g>
+<g><rect x="544.2" y="123.7" width="18" height="18" class="s-acc"/><text x="553.2" y="136.7" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">5</text></g>
+<g><rect x="591.1" y="29.0" width="18" height="18" class="s-acc"/><text x="600.1" y="42.0" text-anchor="middle" class="m s b" style="fill:var(--acc-ink)">6</text></g>
+    </svg>
+    <div class="legend"><span style="color:var(--ind1)"><i></i>EMA20</span><span style="color:var(--ind2)"><i></i>EMA50</span><span class="dn"><i class="d"></i>R1, R2 resistance</span><span class="up"><i class="d"></i>S1, S2 support</span><span class="in"><i style="height:8px;opacity:.4"></i>24h range</span><span class="wn"><i class="d"></i>event</span></div>
+  </div><figcaption><b>Fig. 11</b>Schematic of a downtrend with every layer on. Numbers match the list below.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>#</th><th>Layer</th><th>What you see</th><th>What to check</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>EMA 20 / 50</td><td>The two averages the score reads.</td><td>Are they really sloping, and in which order?</td></tr>
+      <tr><td class="n">2</td><td>EMA50</td><td>The slow average, above the fast one in a downtrend.</td><td>Price far from it = an extended move.</td></tr>
+      <tr><td class="n">3</td><td>Key levels</td><td>R1, R2, S1, S2 as dashed lines.</td><td>Does price react at them on the chart?</td></tr>
+      <tr><td class="n">4</td><td>Plan</td><td>Entry line, red risk zone up to SL, green reward zone down to TP (for a sell).</td><td>Does the stop sit beyond a level? Is the green zone bigger than the red?</td></tr>
+      <tr><td class="n">5</td><td>24h range</td><td>The last 24 hours’ high and low (off by default).</td><td>Is price at an end of its day?</td></tr>
+      <tr><td class="n">6</td><td>Events</td><td>Upcoming releases for the instrument’s currencies.</td><td>Is a release due before the trade would play out?</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>Levels and plan</h2><p>Where the market may react, and how the template turns that into entry, stop and target.</p></div></div>
+
+<section class="ch" id="reading">
+  <div class="ch-h"><span class="n">10</span><h3>Reading</h3></div>
+  <p>The Reading writes the numbers out as an analyst would. Every highlighted number has its explanation on hover. Each paragraph draws on specific parts of the page:</p>
+  <table class="g-t">
+    <thead><tr><th>Paragraph</th><th>Says</th><th>From</th></tr></thead>
+    <tbody>
+      <tr><td>Trend</td><td>The 4H score, its label, and that past trend does not predict the next move.</td><td><a href="#score">Trend 4H</a></td></tr>
+      <tr><td>Timeframes and currencies</td><td>How the three timeframes line up; for an FX pair of G8 currencies, which currency outperforms on the 4-hour strength meter (reported above a 6 bp gap, flagged when it runs against the trend); the 1H RSI.</td><td><a href="#tfs">Timeframes</a> · <a href="#ind">Strength</a> · <a href="#kpis">RSI</a></td></tr>
+      <tr><td>Today</td><td>24h change, position in the 24h range (top above 80%, bottom below 20%), the volatility regime.</td><td><a href="#ind">Indicators</a> · <a href="#kpis">ATR</a></td></tr>
+      <tr><td>Levels</td><td>The nearest levels above (R1, R2) and below (S1, S2).</td><td><a href="#levels">Key levels</a></td></tr>
+      <tr class="hl"><td>Risk and positioning</td><td>The next relevant release; your positions on this instrument (P&amp;L, with or against the 4H trend); exposure to its currencies through other pairs.</td><td><a href="#kpis">Event risk</a> · your account</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="levels">
+  <div class="ch-h"><span class="n">11</span><h3>Key levels</h3></div>
+  <p class="lead">Prices where the market turned or paused recently. Reactions are most likely there, so plans place entries, stops and targets around them.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 240" role="img" aria-label="How key levels are found: three sources, merge, filter, keep the two strongest per side">
+      <rect x="8" y="14" width="180" height="46" class="s-box"/><text x="20" y="34" class="b s-tx">1H swing highs / lows</text><text x="20" y="50" class="s s-tx2">last 7 days · 3 bars each side</text>
+      <rect x="8" y="72" width="180" height="46" class="s-box"/><text x="20" y="92" class="b s-tx">24h high and low</text><text x="20" y="108" class="s s-tx2">the day’s extremes</text>
+      <rect x="8" y="130" width="180" height="46" class="s-box"/><text x="20" y="150" class="b s-tx">Round numbers</text><text x="20" y="166" class="s s-tx2">50 pips on FX · scaled otherwise</text>
+      <rect x="232" y="72" width="150" height="46" class="s-box2"/><text x="244" y="92" class="b s-tx">Merge</text><text x="244" y="108" class="s s-tx2">closer than ~½ ATR</text>
+      <rect x="420" y="72" width="150" height="46" class="s-box2"/><text x="432" y="92" class="b s-tx">Drop the closest</text><text x="432" y="108" class="s s-tx2">within 0.15 ATR of price</text>
+      <rect x="608" y="72" width="144" height="46" class="s-box2" style="stroke:var(--tx2)"/><text x="620" y="92" class="b s-tx">Rank</text><text x="620" y="108" class="s s-tx2">4 nearest → 2 strongest</text>
+      <path d="M188 37 L230 88" class="s-arrow" marker-end="url(#ah)"/><path d="M188 95 L230 95" class="s-arrow" marker-end="url(#ah)"/><path d="M188 153 L230 102" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M382 95 L418 95" class="s-arrow" marker-end="url(#ah)"/><path d="M570 95 L606 95" class="s-arrow" marker-end="url(#ah)"/><path d="M680 118 L680 140" class="s-arrow" marker-end="url(#ah)"/>
+      <rect x="560" y="146" width="192" height="22" class="s-dnbg"/><text x="656" y="161" text-anchor="middle" class="m b s s-dn">R2 · R1  (above)</text>
+      <rect x="560" y="170" width="192" height="20" style="fill:var(--acc);fill-opacity:.16"/><text x="656" y="184" text-anchor="middle" class="m s s-tx">current price</text>
+      <rect x="560" y="192" width="192" height="22" class="s-upbg"/><text x="656" y="207" text-anchor="middle" class="m b s s-up">S1 · S2  (below)</text>
+      <text x="8" y="206" class="s s-tx3">A merged level’s price is the average of its swing and 24h prices;</text><text x="8" y="220" class="s s-tx3">a round number joins a level but does not move it.</text>
+    </svg>
+  </div><figcaption><b>Fig. 12</b>The level pipeline. It runs again on every refresh, so levels move as new swings form.</figcaption></figure>
+
+  <div class="two">
+    <figure><div class="fig-b" style="padding:12px">
+      <div class="mock ladder">
+        <div class="mh"><span>Key levels</span><span>illustration</span></div>
+        <div class="r" style="color:var(--tx3);font-size:10px;letter-spacing:.06em;text-transform:uppercase"><span>Level</span><span>Price</span><span>Why</span><span>Strength</span><span>Distance</span></div>
+        <div class="r"><span class="tag dn">R2</span><span class="mono">253.02</span><span class="why">swing high · 2 touches</span><span class="dots">●●</span><span class="mono dn">+14.3</span></div>
+        <div class="r"><span class="tag dn">R1</span><span class="mono">245.52</span><span class="why">24h high + swing high</span><span class="dots">●●</span><span class="mono dn">+6.8</span></div>
+        <div class="r now"><span></span><span class="mono">238.75</span><span class="why">current price</span><span></span><span></span></div>
+        <div class="r"><span class="tag up">S1</span><span class="mono">234.55</span><span class="why">swing low</span><span class="dots">●</span><span class="mono up">−4.2</span></div>
+        <div class="r"><span class="tag up">S2</span><span class="mono">225.00</span><span class="why">swing low + round number</span><span class="dots">●◐</span><span class="mono up">−13.8</span></div>
+      </div>
+    </div><figcaption><b>Fig. 13</b>The ladder: resistance on top, support below, price in amber between them. Each row also has an Alert button.</figcaption></figure>
+    <div>
+      <h4 style="margin-top:0">Strength, dot by dot</h4>
+      <table class="g-t">
+        <thead><tr><th>Source</th><th>Adds</th></tr></thead>
+        <tbody>
+          <tr><td>Each swing touch</td><td class="n">● 1</td></tr>
+          <tr><td>24h high or low</td><td class="n">● 1</td></tr>
+          <tr><td>Round number</td><td class="n">◐ ½</td></tr>
+        </tbody>
+      </table>
+      <p>Five dots is the most shown. More dots: respected more often, watched by more traders. One or half a dot: a weak reference, a checkpoint rather than a wall.</p>
+      <div class="call tip"><b class="t">Distance vs ATR</b><p>Compare a level’s distance with the hourly ATR: a level less than one ATR away can be reached within the hour.</p></div>
+    </div>
+  </div>
+  <h4>How to use levels</h4>
+  <div class="cards">
+    <div class="card"><h5>Buyers</h5><p>Take profit or tighten the stop near R1. Avoid buying right under a strong resistance.</p></div>
+    <div class="card"><h5>Sellers</h5><p>Take profit or tighten the stop near S1. Avoid selling right above a strong support.</p></div>
+    <div class="card"><h5>Stops</h5><p>Beyond a strong level, with room for normal swings. Never exactly on it: levels are zones.</p></div>
+    <div class="card"><h5>Breaks</h5><p>A clean break often flips a level: broken resistance can act as support later, and the reverse.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="plan">
+  <div class="ch-h"><span class="n">12</span><h3>Plan template</h3></div>
+  <p class="lead">The plan applies fixed rules to the trend, the hourly ATR and the key levels. First it decides <b>what kind</b> of plan, then <b>where</b> each price goes.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 430" role="img" aria-label="Decision flow of the plan template">
+      <rect x="300" y="10" width="160" height="38" class="s-box2" style="stroke:var(--tx2)"/><text x="380" y="34" text-anchor="middle" class="b s-tx">4H trend score</text>
+      <polygon points="380,72 480,112 380,152 280,112" class="s-box"/><text x="380" y="108" text-anchor="middle" class="b s-tx">|score| &gt; 20 ?</text><text x="380" y="124" text-anchor="middle" class="s s-tx3">a trend?</text>
+      <path d="M380 48 V70" class="s-arrow" marker-end="url(#ah)"/>
+      <path d="M280 112 H190 V168" class="s-arrow" marker-end="url(#ah)"/><text x="232" y="104" class="b s s-tx2">yes</text>
+      <path d="M480 112 H580 V168" class="s-arrow" marker-end="url(#ah)"/><text x="518" y="104" class="b s s-tx2">no</text>
+      <rect x="95" y="170" width="190" height="40" class="s-box2"/><text x="190" y="188" text-anchor="middle" class="b s-tx">Trend template</text><text x="190" y="203" text-anchor="middle" class="s s-tx2">buy if up · sell if down</text>
+      <polygon points="580,170 700,218 580,266 460,218" class="s-box"/><text x="580" y="208" text-anchor="middle" class="b s s-tx">S1 and R1 found,</text><text x="580" y="223" text-anchor="middle" class="b s s-tx">range ≥ 1.5 ATR ?</text>
+      <path d="M190 210 V238" class="s-arrow" marker-end="url(#ah)"/>
+      <polygon points="190,240 320,290 190,340 60,290" class="s-box"/><text x="190" y="280" text-anchor="middle" class="b s s-tx">price &gt; 1.1 ATR from</text><text x="190" y="295" text-anchor="middle" class="b s s-tx">1H EMA20, with trend ?</text><text x="190" y="310" text-anchor="middle" class="s s-tx3">stretched?</text>
+      <path d="M60 290 H40 V368" class="s-arrow" marker-end="url(#ah)"/><text x="18" y="282" class="b s s-tx2">yes</text>
+      <path d="M320 290 H340 V368" class="s-arrow" marker-end="url(#ah)"/><text x="330" y="282" class="b s s-tx2">no</text>
+      <rect x="4" y="370" width="170" height="48" class="s-inbg" style="stroke:var(--info)"/><text x="89" y="390" text-anchor="middle" class="b s-tx">Limit near EMA20</text><text x="89" y="406" text-anchor="middle" class="s s-tx2">wait for price to come back</text>
+      <rect x="260" y="370" width="170" height="48" class="s-inbg" style="stroke:var(--info)"/><text x="345" y="390" text-anchor="middle" class="b s-tx">Enter at market</text><text x="345" y="406" text-anchor="middle" class="s s-tx2">price is close enough</text>
+      <path d="M580 266 V368" class="s-arrow" marker-end="url(#ah)"/><text x="588" y="300" class="b s s-tx2">yes</text>
+      <path d="M700 218 H740 V368" class="s-arrow" marker-end="url(#ah)"/><text x="708" y="210" class="b s s-tx2">no</text>
+      <rect x="470" y="370" width="200" height="48" class="s-inbg" style="stroke:var(--info)"/><text x="570" y="390" text-anchor="middle" class="b s-tx">Range template</text><text x="570" y="406" text-anchor="middle" class="s s-tx2">limit at the nearer edge</text>
+      <rect x="680" y="370" width="76" height="48" class="s-box2" style="stroke:var(--tx2);stroke-dasharray:4 3"/><text x="718" y="390" text-anchor="middle" class="b s-tx">Wait</text><text x="718" y="406" text-anchor="middle" class="s s-tx2">for a break</text>
+    </svg>
+  </div><figcaption><b>Fig. 14</b>Which plan the template builds. Blue boxes produce an order; Wait produces only a note saying which break to wait for.</figcaption></figure>
+
+  <h4>Where the stop goes (trend template)</h4>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 290" role="img" aria-label="Decision flow for the stop of the trend template">
+      <polygon points="150,20 270,62 150,104 30,62" class="s-box"/><text x="150" y="58" text-anchor="middle" class="b s s-tx">level on the side</text><text x="150" y="73" text-anchor="middle" class="b s s-tx">against the trade?</text>
+      <path d="M150 104 V196" class="s-arrow" marker-end="url(#ah)"/><text x="158" y="150" class="b s s-tx2">no</text>
+      <rect x="60" y="198" width="180" height="40" class="s-inbg" style="stroke:var(--info)"/><text x="150" y="223" text-anchor="middle" class="b s-tx">Stop 1.5 ATR away</text>
+      <path d="M270 62 H318" class="s-arrow" marker-end="url(#ah)"/><text x="284" y="54" class="b s s-tx2">yes</text>
+      <rect x="320" y="42" width="190" height="40" class="s-box2"/><text x="415" y="67" text-anchor="middle" class="b s-tx">beyond it + 0.5 ATR</text>
+      <path d="M415 82 V108" class="s-arrow" marker-end="url(#ah)"/>
+      <polygon points="415,110 515,145 415,180 315,145" class="s-box"/><text x="415" y="141" text-anchor="middle" class="b s s-tx">closer than</text><text x="415" y="156" text-anchor="middle" class="b s s-tx">0.8 ATR ?</text>
+      <path d="M515 145 H588" class="s-arrow" marker-end="url(#ah)"/><text x="530" y="137" class="b s s-tx2">yes</text>
+      <rect x="590" y="125" width="160" height="40" class="s-inbg" style="stroke:var(--info)"/><text x="670" y="150" text-anchor="middle" class="b s-tx">Stop 1.2 ATR away</text>
+      <path d="M415 180 V206" class="s-arrow" marker-end="url(#ah)"/><text x="423" y="198" class="b s s-tx2">no</text>
+      <polygon points="415,208 515,243 415,278 315,243" class="s-box"/><text x="415" y="239" text-anchor="middle" class="b s s-tx">further than</text><text x="415" y="254" text-anchor="middle" class="b s s-tx">3 ATR ?</text>
+      <path d="M515 243 H588" class="s-arrow" marker-end="url(#ah)"/><text x="530" y="235" class="b s s-tx2">yes</text>
+      <rect x="590" y="223" width="160" height="40" class="s-inbg" style="stroke:var(--info)"/><text x="670" y="248" text-anchor="middle" class="b s-tx">Stop 2 ATR away</text>
+      <path d="M315 243 H262" class="s-arrow" marker-end="url(#ah)"/><text x="276" y="235" class="b s s-tx2">no</text>
+      <rect x="60" y="250" width="200" height="34" class="s-inbg" style="stroke:var(--info)"/><text x="160" y="272" text-anchor="middle" class="b s-tx">Keep: level + 0.5 ATR</text>
+    </svg>
+  </div><figcaption><b>Fig. 15</b>The stop rule. The plan’s “How the template built it” list says which branch applied. ATR = hourly ATR; distances are from the entry.</figcaption></figure>
+
+  <div class="two">
+    <div>
+      <h4 style="margin-top:0">Entry and target</h4>
+      <table class="g-t">
+        <thead><tr><th>Price</th><th>Trend template</th><th>Range template</th></tr></thead>
+        <tbody>
+          <tr><td>Entry</td><td>Market within 1.1 ATR of the 1H EMA20; otherwise a limit near it (or just beyond the nearest level, if closer).</td><td>Limit 0.1 ATR inside the nearer edge.</td></tr>
+          <tr><td>Stop</td><td>Fig. 15.</td><td>0.6 ATR beyond the edge.</td></tr>
+          <tr><td>Target</td><td>0.1 ATR before the first level at least 1.5 × the risk away; none: 2 × the risk.</td><td>0.2 ATR before the opposite edge.</td></tr>
+        </tbody>
+      </table>
+      <div class="call key"><b class="t">A limit that never fills</b><p>is a missed trade, not a loss. Do not chase price with a market order instead.</p></div>
+    </div>
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 380 300" role="img" aria-label="Geometry of a sell from the trend template in the example">
+        <rect x="70" y="54" width="150" height="50" class="s-dnbg"/><rect x="70" y="104" width="150" height="160" class="s-upbg"/>
+        <path d="M40 74 H250" class="s-ldn" stroke-dasharray="5 4"/><text x="256" y="78" class="m s s-dn">R1 245.52</text>
+        <path d="M40 54 H250" class="s-ldn"/><text x="256" y="52" class="m s b s-dn">SL 247.27</text>
+        <path d="M40 104 H250" class="s-px"/><text x="256" y="108" class="m s b s-tx">Entry 238.75</text>
+        <path d="M40 140 H250" class="s-lup" stroke-dasharray="5 4"/><text x="256" y="144" class="m s s-up">S1 234.55</text>
+        <path d="M40 270 H250" class="s-lup" stroke-dasharray="5 4"/><text x="256" y="282" class="m s s-up">S2 225.00</text>
+        <path d="M40 264 H250" class="s-lup"/><text x="256" y="264" class="m s b s-up">TP 225.35</text>
+        <path d="M60 56 V102" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="56" y="84" text-anchor="end" class="s m s-dn">8.5</text>
+        <path d="M60 106 V262" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="56" y="190" text-anchor="end" class="s m s-up">13.4</text>
+        <text x="145" y="84" text-anchor="middle" class="s b s-dn">risk</text><text x="145" y="222" text-anchor="middle" class="s b s-up">reward</text>
+        <text x="145" y="166" text-anchor="middle" class="s s-tx2">S1 is only 4.2 away</text><text x="145" y="180" text-anchor="middle" class="s s-tx2">(&lt; 1.5 × 8.5): skipped</text>
+        <text x="10" y="20" class="s b s-tx">Sell at market · ATR 3.5 · R:R 1 : 1.57</text>
+      </svg>
+    </div><figcaption><b>Fig. 16</b>The example of Fig. 11 in numbers: stop = R1 + 0.5 ATR; S1 is too close for a 1.5× target, so the target goes just above S2.</figcaption></figure>
+  </div>
+  <h4>The plan card, top to bottom</h4>
+  <ol>
+    <li><b>Order</b>: side and type (Buy at market, Sell limit…) and which template built it.</li>
+    <li><b>Entry · Stop · Target</b>, each with its distance in pips or points, and <b>Reward : risk</b>.</li>
+    <li><b>The red and green bar</b>: the two distances to scale.</li>
+    <li><b>Size and risk</b>: type a size to see the money at stake (chapter 13).</li>
+    <li><b>How the template built it</b>: the rules as they applied now, one line each.</li>
+    <li><b>Load plan into ticket</b> fills New order (side, entry, stop, target, size) and <b>sends nothing</b>. <b>Alerts at key levels</b> sets alerts at R1 and S1.</li>
+  </ol>
+</section>
+
+<section class="ch" id="risk">
+  <div class="ch-h"><span class="n">13</span><h3>Size, risk, reward</h3></div>
+  <p>Reward : risk is the distance to the target divided by the distance to the stop. It decides how often you must win just to break even:</p>
+  <table class="g-t">
+    <thead><tr><th>Reward : risk</th><th style="width:46%">Risk vs reward</th><th>Break-even win rate</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1 : 1</td><td><div style="display:flex;gap:2px"><span style="width:22%;height:12px;background:var(--dn)"></span><span style="width:22%;height:12px;background:var(--up)"></span></div></td><td class="n">50%</td></tr>
+      <tr class="hl"><td class="n">1 : 1.5 <span class="tag nt">template minimum</span></td><td><div style="display:flex;gap:2px"><span style="width:22%;height:12px;background:var(--dn)"></span><span style="width:33%;height:12px;background:var(--up)"></span></div></td><td class="n">40%</td></tr>
+      <tr><td class="n">1 : 2</td><td><div style="display:flex;gap:2px"><span style="width:22%;height:12px;background:var(--dn)"></span><span style="width:44%;height:12px;background:var(--up)"></span></div></td><td class="n">33%</td></tr>
+      <tr><td class="n">1 : 3</td><td><div style="display:flex;gap:2px"><span style="width:22%;height:12px;background:var(--dn)"></span><span style="width:66%;height:12px;background:var(--up)"></span></div></td><td class="n">25%</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">Red = risk (left), green = reward (right). Break-even win rate = 1 ÷ (1 + reward/risk), before costs.</p>
+  <div class="call key"><b class="t">Ratio is not probability</b><p>A high ratio makes a trade worth taking; it does not make it more likely to work. Far targets are reached less often.</p></div>
+  <h4>Money at risk</h4>
+  <p>Under the plan, type a size (lots, or shares for stocks; it starts from the ticket’s size). The line below shows the <b>loss at the stop</b> in dollars and as a share of your equity, and the <b>gain at the target</b>.</p>
+  <div class="call tip"><b class="t">Size from the loss, not the feeling</b><p>Many traders keep the risk per trade small and constant, often 0.5–1% of equity. Change the size until the risk line says so, then load the plan.</p></div>
+</section>
+
+<section class="ch" id="ind">
+  <div class="ch-h"><span class="n">14</span><h3>Indicators</h3></div>
+  <p>The same figures as gauges, for one quick question: is price <b>stretched</b> or <b>in the middle</b>?</p>
+  <table class="g-t">
+    <thead><tr><th>Gauge</th><th>Scale</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td>RSI 14 · 1H</td><td>0–100, marks at 30 and 70</td><td>At a mark: one-sided pressure. Near 50: balanced.</td></tr>
+      <tr><td>ATR 1H · now / week</td><td>middle = the week, right end = 2×</td><td>Right of the middle: busier than usual for these hours.</td></tr>
+      <tr><td>Position in the 24h range</td><td>0% at the day’s low, 100% at its high</td><td>At an end: testing the day’s extreme. Breaks and reversals both start there.</td></tr>
+      <tr><td>Strength 4H <span class="tag nt">FX G8 only</span></td><td>each currency vs the G8 average, basis points</td><td>The stronger currency of the pair; against the 4H trend = treat the trend as less reliable now.</td></tr>
+    </tbody>
+  </table>
+  <p class="mut">The 24h change is measured from the close before the last 24 hours (the previous session’s close on markets that close).</p>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Practice</h2><p>Putting it together before, during and after a trade.</p></div></div>
+
+<section class="ch" id="routine">
+  <div class="ch-h"><span class="n">15</span><h3>A routine before a trade</h3></div>
+  <ol class="tl">
+    <li><span class="ph">Choose</span><div><b>Pick the instrument</b><span>Scan for clear trends, or the exception in its group, and click it.</span></div></li>
+    <li><span class="ph">Choose</span><div><b>Refresh</b><span>Make sure the brief is fresh.</span></div></li>
+    <li><span class="ph">Context</span><div><b>Trend and timeframes</b><span>With the trend, against it, or in a range?</span></div></li>
+    <li><span class="ph">Context</span><div><b>Why panel</b><span>Accelerating (slope) or only stacked (position)?</span></div></li>
+    <li><span class="ph">Risk</span><div><b>Events</b><span>A high-impact release close by: wait, or reduce size.</span></div></li>
+    <li><span class="ph">Structure</span><div><b>Levels</b><span>Where R1 and S1 are, in ATRs. Look at them on the 1H chart.</span></div></li>
+    <li><span class="ph">Plan</span><div><b>Template and size</b><span>Read reward : risk and the steps; type the size until the risk is the share you accept.</span></div></li>
+    <li><span class="ph">Decide</span><div><b>Load and review</b><span>Load into the ticket, read its warnings, risk and margin, change what you disagree with, then send or skip.</span></div></li>
+    <li><span class="ph">Record</span><div><b>Copy into the journal</b><span>So you can compare what you expected with what happened.</span></div></li>
+    <li><span class="ph">Wait</span><div><b>Alerts</b><span>If the entry is not there yet, set alerts at the key levels and stop watching the screen.</span></div></li>
+  </ol>
+</section>
+
+<section class="ch" id="situations">
+  <div class="ch-h"><span class="n">16</span><h3>Common situations</h3></div>
+  <div class="mx">
+    <div class="c"><div class="s">Steady trend<div class="tags"><span class="tag up">▲ strong</span><span class="tag nt">3/3</span><span class="tag nt">RSI ≈ 50</span><span class="tag nt">mid-range</span></div></div><div class="m">A trend that is not stretched.</div><div class="u">The cleanest context for the trend template at market.</div></div>
+    <div class="c"><div class="s">Stretched trend<div class="tags"><span class="tag up">▲ strong</span><span class="tag nt">3/3</span><span class="tag wn">RSI &gt; 70</span><span class="tag wn">24h top</span></div></div><div class="m">Strong, but far from its averages.</div><div class="u">The template uses a limit near the EMA20. Wait for it; don’t chase.</div></div>
+    <div class="c"><div class="s">Pullback<div class="tags"><span class="tag up">▲ 4H</span><span class="tag dn">▼ 15m · 1H</span><span class="tag nt">1/3</span></div></div><div class="m">A move against the trend inside it.</div><div class="u">Watch for 15m and 1H to turn back in the 4H direction near a level.</div></div>
+    <div class="c"><div class="s">Range<div class="tags"><span class="tag nt">■ flat</span><span class="tag nt">wide S1–R1</span></div></div><div class="m">No direction, room between the edges.</div><div class="u">Range template at the edges, or wait for a break.</div></div>
+    <div class="c"><div class="s">Coiling<div class="tags"><span class="tag nt">■ flat</span><span class="tag nt">tight range</span><span class="tag in">compressed</span></div></div><div class="m">A quiet market winding up.</div><div class="u">The plan says Wait. Set alerts at both edges.</div></div>
+    <div class="c"><div class="s">Busy market<div class="tags"><span class="tag wn">elevated ≥ 1.25×</span></div></div><div class="m">Wider swings than usual for these hours.</div><div class="u">Same plan, smaller size: wider stop in pips, same money at risk.</div></div>
+    <div class="c"><div class="s">Release ahead<div class="tags"><span class="tag wn">High · &lt; 2 h</span></div></div><div class="m">A jump in either direction is possible.</div><div class="u">Don’t open just before it; check stops on open positions.</div></div>
+    <div class="c"><div class="s">You’re against the trend<div class="tags"><span class="tag dn">your side ≠ 4H</span></div></div><div class="m">Your positions fight the recent direction.</div><div class="u">Confirm the stop is in place and the reason still holds.</div></div>
+  </div>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">17</span><h3>Limits and pitfalls</h3></div>
+  <div class="cards">
+    <div class="card"><h5>It describes the past</h5><p>−100 says the recent bars fell steadily. Markets often reverse right after strong moves; the brief cannot know when.</p></div>
+    <div class="card"><h5>Only price</h5><p>No news, fundamentals or order flow. A headline can override every number on the page.</p></div>
+    <div class="card"><h5>Averages lag</h5><p>The score turns after price. Fresh turns show first in the slope and on short timeframes.</p></div>
+    <div class="card"><h5>Levels are zones</h5><p>Price can overshoot by a few pips or points and still respect a level. Stops exactly on it get hit.</p></div>
+    <div class="card"><h5>Thin history</h5><p>Too few 4H bars: “Not enough 4H history for a score yet”, and the score stays flat.</p></div>
+    <div class="card"><h5>Costs are extra</h5><p>Spread, commission and swap are not in the plan. The ticket shows them; check before sending.</p></div>
+  </div>
+  <div class="call warn"><b class="t">Closed markets</b><p>When a market is closed, the numbers describe the last session, and spreads at the reopen can be wider than the plan assumes.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<div class="g-part"><span class="n">V</span><div><h2>Reference</h2><p>Every threshold and term in one place.</p></div></div>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">18</span><h3>All thresholds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Figure</th><th>Calculation</th><th>Thresholds</th></tr></thead>
+    <tbody>
+      <tr><td>Trend score</td><td>4H · position (price vs EMA20, EMA20 vs EMA50) 55% + EMA20 slope over 5 bars in ATR 45%</td><td class="n">±20 trend · ±55 strong · full slope 1.2 ATR</td></tr>
+      <tr><td>Timeframes</td><td>Trend score on 15m, 1H, 4H</td><td>those beyond ±20 in the 4H direction</td></tr>
+      <tr><td>RSI</td><td>14 bars, 1H</td><td class="n">30 · 45 · 55 · 70</td></tr>
+      <tr><td>Hourly ATR</td><td>Wilder, 14 complete hours</td><td>—</td></tr>
+      <tr><td>Volatility ratio</td><td>ATR now ÷ same hours earlier in the week</td><td class="n">&lt; 0.8 compressed · &gt; 1.25 elevated</td></tr>
+      <tr><td>Event risk</td><td>Calendar, the instrument’s currencies</td><td>next 6 h · high impact &lt; 2 h leads the risk paragraph</td></tr>
+      <tr><td>24h range position</td><td>(price − low) ÷ (high − low)</td><td class="n">&lt; 20% bottom · &gt; 80% top</td></tr>
+      <tr><td>Currency strength</td><td>G8, 4 hours, basis points</td><td>gap &gt; 6 bp reported</td></tr>
+      <tr><td>Key levels</td><td>1H swings 7 days (3 bars each side), 24h high/low, round numbers</td><td>merge ~½ ATR · 2 per side · strength = touches + 1 + ½</td></tr>
+      <tr><td>Trend entry</td><td>Distance from 1H EMA20</td><td class="n">≤ 1.1 ATR market · else limit</td></tr>
+      <tr><td>Trend stop</td><td>Level + 0.5 ATR</td><td class="n">&lt; 0.8 → 1.2 · &gt; 3 → 2 · none → 1.5 ATR</td></tr>
+      <tr><td>Trend target</td><td>First level ≥ 1.5 × risk, −0.1 ATR</td><td class="n">none → 2 × risk</td></tr>
+      <tr><td>Range plan</td><td>S1–R1 range</td><td class="n">width ≥ 1.5 ATR · 0.1 in · 0.6 out · 0.2 before</td></tr>
+      <tr><td>Auto refresh</td><td>Age of the brief</td><td>30 min of market time</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">19</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>ATR</dt><dd>Average true range: the average size of one bar’s move, gaps included. The brief uses Wilder’s 14-period ATR.</dd>
+    <dt>EMA</dt><dd>Exponential moving average: the average of the last N closes, weighted toward recent ones. EMA20 is fast, EMA50 slow.</dd>
+    <dt>RSI</dt><dd>Relative strength index: average up-move against average down-move over 14 bars, 0–100.</dd>
+    <dt>Pip / point</dt><dd>The unit of distance: pips for FX (0.0001, or 0.01 on JPY pairs), points for other instruments.</dd>
+    <dt>Swing high / low</dt><dd>A bar whose high (low) is the highest (lowest) of the bars around it: a turn in price.</dd>
+    <dt>Resistance / support</dt><dd>A level above price where rallies stopped before / below price where declines stopped before.</dd>
+    <dt>Pullback</dt><dd>A move against the main trend that has not ended it.</dd>
+    <dt>Limit order</dt><dd>An order that fills only at the entry price or better.</dd>
+    <dt>Reward : risk</dt><dd>Distance to the target ÷ distance to the stop.</dd>
+    <dt>Basis point</dt><dd>0.01%. Used for currency strength.</dd>
+    <dt>G8 currencies</dt><dd>USD, EUR, JPY, GBP, CHF, AUD, CAD, NZD. The 16 FX majors are pairs of them.</dd>
+    <dt>Equity</dt><dd>Balance plus the profit or loss of open positions.</dd>
+  </dl>
+</section>
+
+<p class="g-foot">tradeBerry · Market Brief guide. Figures marked as illustrations use example values. The brief describes past prices; past trend does not predict the next move. Nothing here is financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* Fig.: the trend score calculator, the brief's arithmetic (brief.js trendOn) */
+(function () {
+  const st = { p: 1, e: 1 }, sl = document.getElementById('cSl');
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  function draw() {
+    const s = +sl.value, pos = Math.round((st.p + st.e) / 2 * 55), slp = Math.round(Math.max(-1, Math.min(1, s / 1.2)) * 45), t = pos + slp;
+    const lab = t > 55 ? ['▲ Strong up', 'up'] : t > 20 ? ['▲ Up', 'up'] : t < -55 ? ['▼ Strong down', 'dn'] : t < -20 ? ['▼ Down', 'dn'] : ['■ Flat', 'nt'];
+    document.getElementById('cSlV').textContent = (s >= 0 ? '+' : '−') + Math.abs(s).toFixed(2);
+    document.getElementById('cPos').textContent = sgn(pos); document.getElementById('cSlp').textContent = sgn(slp);
+    const tot = document.getElementById('cTot'); tot.textContent = sgn(t); tot.className = lab[1] === 'nt' ? '' : lab[1];
+    document.getElementById('cTot2').textContent = sgn(t);
+    const l = document.getElementById('cLab'); l.textContent = lab[0]; l.className = 'tag ' + lab[1];
+    document.getElementById('cMk').setAttribute('x', (200 + t * 2 - 1.5).toFixed(1));
+  }
+  document.querySelectorAll('#calc .seg').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    st[g.dataset.k] = +b.dataset.v; g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); draw();
+  }));
+  sl.addEventListener('input', draw); draw();
+})();
+</script>
+</body>
+</html>

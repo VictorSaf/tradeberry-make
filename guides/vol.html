@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volatility guide · tradeBerry</title>
+<meta name="description" content="How to read, interpret and use the Volatility table in tradeBerry.">
+<link rel="icon" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<header class="g-top">
+  <a class="g-brand" href="../">trade<b>Berry</b></a>
+  <span class="g-crumb">Guides <i>/</i> Research <i>/</i> Volatility</span>
+  <a class="g-back" href="../">Back to the terminal</a>
+  <span class="g-prog" aria-hidden="true"></span>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="s-ah"/></marker></defs>
+</svg>
+
+<div class="g-wrap">
+<nav class="g-toc" aria-label="Contents">
+  <span class="p">I · Orientation</span>
+  <a href="#what"><span>01</span>What the table is</a>
+  <a href="#minute"><span>02</span>The table in one minute</a>
+  <a href="#map"><span>03</span>Map of the page</a>
+  <span class="p">II · Reading it</span>
+  <a href="#atr"><span>04</span>ATR: one hour of movement</a>
+  <a href="#week"><span>05</span>vs week: busy or quiet?</a>
+  <a href="#range"><span>06</span>The 24h range</a>
+  <a href="#pos"><span>07</span>Price in the 24h range</a>
+  <a href="#summary"><span>08</span>Summary and sorting</a>
+  <span class="p">III · Using it</span>
+  <a href="#time"><span>09</span>How far price travels in time</a>
+  <a href="#stops"><span>10</span>Stops and size from ATR</a>
+  <a href="#uses"><span>11</span>What to do with it</a>
+  <a href="#situations"><span>12</span>Common situations</a>
+  <a href="#limits"><span>13</span>Limits and pitfalls</a>
+  <span class="p">IV · Reference</span>
+  <a href="#ref"><span>14</span>All definitions and thresholds</a>
+  <a href="#glossary"><span>15</span>Glossary</a>
+</nav>
+
+<main class="g-main">
+
+<div class="g-hero">
+  <span class="g-kicker">Guide · Research</span>
+  <h1>Volatility</h1>
+  <p class="g-lede">How much each instrument moves right now: one hour of average movement (ATR), compared with the same hours earlier in the week, plus the last 24 hours’ range and where price sits in it. Use it to size stops and positions, to set realistic targets, and to see which markets are busy or quiet before you trade.</p>
+  <div class="g-facts">
+    <div><label>Open it</label><b>Research › Volatility</b></div>
+    <div><label>Rows</label><b>16 G8 pairs + yours (up to 60)</b></div>
+    <div><label>Refresh</label><b>Every 5 s while open</b></div>
+    <div><label>Guided tour</label><b>Account menu › Teach me</b></div>
+  </div>
+</div>
+
+<!-- ================= PART I ================= -->
+<div class="g-part"><span class="n">I</span><div><h2>Orientation</h2><p>What the table measures, what to read first, where everything is.</p></div></div>
+
+<section class="ch" id="what">
+  <div class="ch-h"><span class="n">01</span><h3>What the table is, and what it is not</h3></div>
+  <p class="lead">Each row is one instrument. Its numbers answer three questions: <b>how far does it move in an hour</b>, <b>is that more or less than usual for these hours</b>, and <b>where is price within today’s range</b>.</p>
+  <div class="cards">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12h3l2-6 4 12 2-6h5"/></svg></div><h5>How far, not which way</h5><p>Volatility measures the size of the moves. A busy market can go up or down; nothing on this page predicts direction.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14"/><path d="M4 10h16M9 5v14"/></svg></div><h5>Comparable across classes</h5><p>ATR as a % of price puts a JPY pair, a stock, an index and bitcoin on one scale; pips or points give the distance your stop is measured in.</p></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></div><h5>Against its own hours</h5><p>“vs week” compares now with the same hours of the day earlier in the week, so a busy London afternoon is judged against other afternoons, not against quiet nights.</p></div>
+  </div>
+  <div class="call key"><b class="t">Why it matters</b><p>A 20-pip stop is generous on EUR/GBP and tight on GBP/JPY. Without knowing how far an instrument moves in an hour, a stop is a guess: too close and ordinary noise takes you out, too far and the position is too big for its risk.</p></div>
+</section>
+
+<section class="ch" id="minute">
+  <div class="ch-h"><span class="n">02</span><h3>The table in one minute</h3></div>
+  <div class="flow">
+    <div><h5>Market vs its week</h5><p>Is the whole market busier (amber, above 1.25×) or quieter (blue, below 0.8×) than usual?</p></div>
+    <div><h5>Your instrument’s row</h5><p>Click a row to open it. Read ATR in pips: one hour of typical movement.</p></div>
+    <div><h5>vs week</h5><p>Above 1.25×: wider swings than usual, widen the stop or cut size.</p></div>
+    <div><h5>Price in 24h range</h5><p>At an end (high or low marked): price is testing the day’s extreme.</p></div>
+    <div><h5>Size</h5><p>Stop outside normal noise; size so that stop costs your chosen risk (chapter 10).</p></div>
+  </div>
+</section>
+
+<section class="ch" id="map">
+  <div class="ch-h"><span class="n">03</span><h3>Map of the page</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 300" role="img" aria-label="Layout of the Volatility page: intro, three summary cards, sort control, column heads and rows">
+      <text x="10" y="18" class="s s-tx2">How much each instrument moves: the ATR of one hour against the week, and where price sits in the last 24 hours.</text>
+      <rect x="1" y="28" width="250" height="52" class="s-box"/><text x="12" y="46" class="s b s-tx3">MOST / LEAST VOLATILE</text><text x="12" y="68" class="s s-tx"><tspan class="b">AUD/JPY</tspan> 0.27% · <tspan class="b">EUR/GBP</tspan> 0.08%</text>
+      <rect x="255" y="28" width="250" height="52" class="s-box"/><text x="266" y="46" class="s b s-tx3">MARKET VS ITS WEEK</text><text x="266" y="68" class="s s-tx">1.10× normal</text>
+      <rect x="509" y="28" width="250" height="52" class="s-box"/><text x="520" y="46" class="s b s-tx3">AT THE 24H HIGH / LOW</text><text x="520" y="68" class="s s-tx">high: AUD/USD, EUR/CHF</text>
+      <text x="10" y="102" class="s s-tx3">16 instruments · the 16 G8 pairs (favourites, held, visible)</text>
+      <text x="356" y="102" class="s s-tx3">sort</text><rect x="386" y="90" width="196" height="18" class="s-box2"/><text x="484" y="103" text-anchor="middle" class="s b s-tx">Volatility · vs week · At an end</text>
+      <rect x="1" y="116" width="758" height="24" class="s-box2"/>
+      <g class="s b"><text x="10" y="132" class="s b s-tx3">INSTRUMENT</text><text x="250" y="132" class="s b s-tx3">ATR(14) 1H</text><text x="362" y="132" class="s b s-tx3">% OF PRICE</text><text x="440" y="132" class="s b s-tx3">PIPS / PT</text><text x="508" y="132" class="s b s-tx3">VS WEEK</text><text x="566" y="132" class="s b s-tx3">24H RANGE</text><text x="640" y="132" class="s b s-tx3">PRICE IN 24H RANGE</text></g>
+      <g>
+        <rect x="1" y="142" width="758" height="26" class="s-box"/><text x="10" y="159" class="s b s-tx">AUD/JPY</text><rect x="80" y="152" width="270" height="6" class="s-tx2"/><text x="362" y="159" class="m s s-tx">0.27%</text><text x="440" y="159" class="m s s-tx2">29.5 pips</text><rect x="506" y="149" width="40" height="14" class="s-wnbg" style="stroke:var(--warn)"/><text x="526" y="160" text-anchor="middle" class="m s s-tx">1.33×</text><text x="566" y="159" class="m s s-tx">54p</text><text x="594" y="159" class="m s s-tx3">0.50% · 1.8×</text><rect x="666" y="154" width="70" height="2" class="s-tx3"/><rect x="726" y="149" width="2" height="12" class="s-tx"/><text x="742" y="159" class="m s s-tx3">87%</text>
+        <rect x="1" y="170" width="758" height="26" class="s-box"/><text x="10" y="187" class="s b s-tx">AUD/USD</text><rect x="80" y="180" width="200" height="6" class="s-tx2"/><text x="362" y="187" class="m s s-tx">0.19%</text><text x="440" y="187" class="m s s-tx2">13.4 pips</text><text x="526" y="188" text-anchor="middle" class="m s s-tx">1.21×</text><text x="566" y="187" class="m s s-tx">38p</text><text x="594" y="187" class="m s s-tx3">0.55% · 2.8×</text><rect x="666" y="182" width="70" height="2" class="s-tx3"/><rect x="730" y="177" width="2" height="12" class="s-wn"/><text x="742" y="187" class="m s s-wn">92%</text>
+        <rect x="1" y="198" width="758" height="26" class="s-box"/><text x="10" y="215" class="s b s-tx">EUR/GBP</text><rect x="80" y="208" width="80" height="6" class="s-tx2"/><text x="362" y="215" class="m s s-tx">0.08%</text><text x="440" y="215" class="m s s-tx2">6.9 pips</text><text x="526" y="216" text-anchor="middle" class="m s s-tx">0.99×</text><text x="566" y="215" class="m s s-tx">19p</text><text x="594" y="215" class="m s s-tx3">0.23% · 2.7×</text><rect x="666" y="210" width="70" height="2" class="s-tx3"/><rect x="693" y="205" width="2" height="12" class="s-tx"/><text x="742" y="215" class="m s s-tx3">39%</text>
+      </g>
+      <g class="s">
+        <text x="80" y="246" class="s s-tx3">bar: ATR % against the most volatile row</text>
+        <text x="362" y="262" class="s s-tx3">% compares classes; pips size stops</text>
+        <text x="506" y="246" class="s s-tx3">amber &gt; 1.25× · blue &lt; 0.8×</text>
+        <text x="566" y="278" class="s s-tx3">range: pips · % · × one hour</text>
+        <text x="756" y="262" text-anchor="end" class="s s-tx3">≥ 90% “high” · ≤ 10% “low”</text>
+      </g>
+      <text x="10" y="294" class="s s-tx3">Illustration with values from live prices on a Monday morning. Click a row to open the instrument on the chart.</text>
+    </svg>
+  </div><figcaption><b>Fig. 1</b>The page: intro, three summary cards, the sort control, then one row per instrument.</figcaption></figure>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="g-part"><span class="n">II</span><div><h2>Reading it</h2><p>Every column: what it measures, how it is computed, how to read it.</p></div></div>
+
+<section class="ch" id="atr">
+  <div class="ch-h"><span class="n">04</span><h3>ATR: one hour of movement</h3></div>
+  <p><b>ATR</b> (average true range) is the average size of one hour’s move, gaps included. It is the same hourly ATR every panel of the terminal shows (the Market Brief, the ticket’s ATR stops).</p>
+  <div class="two">
+    <figure><div class="fig-b">
+      <svg viewBox="0 0 360 230" role="img" aria-label="True range of a bar: the largest of high minus low, high minus previous close, previous close minus low">
+        <line x1="60" y1="40" x2="60" y2="150" class="s-ln3"/><rect x="48" y="60" width="24" height="70" class="s-dn" style="fill-opacity:.8"/>
+        <text x="60" y="172" text-anchor="middle" class="s s-tx3">previous hour</text>
+        <path d="M30 140 H340" class="s-ln3" stroke-dasharray="3 3"/><text x="340" y="134" text-anchor="end" class="s m s-tx3">prev close</text>
+        <line x1="200" y1="50" x2="200" y2="110" class="s-ln3"/><rect x="188" y="62" width="24" height="34" class="s-up" style="fill-opacity:.8"/>
+        <text x="200" y="172" text-anchor="middle" class="s s-tx3">this hour (gapped up)</text>
+        <path d="M232 50 V110" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="238" y="84" class="s m s-tx2">H − L</text>
+        <path d="M280 50 V140" class="s-arrow" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="286" y="100" class="s m b s-tx">H − prev C</text>
+        <text x="20" y="200" class="s b s-tx">True range = the largest of</text>
+        <text x="20" y="216" class="s m s-tx2">H − L · |H − prev C| · |L − prev C|</text>
+      </svg>
+    </div><figcaption><b>Fig. 2</b>A gap counts: here the true range is high minus the previous close.</figcaption></figure>
+    <div>
+      <h4 style="margin-top:0">How it is computed</h4>
+      <ol>
+        <li>Take the last complete one-hour bars (up to 101; the hour in progress is left out).</li>
+        <li>For each bar, its <b>true range</b> (Fig. 2).</li>
+        <li>Average them with <b>Wilder’s smoothing over 14 hours</b>: each new hour moves the average by 1/14 of the difference.</li>
+        <li>Show it in <b>pips</b> (FX) or <b>points</b> (other instruments), and as <b>% of price</b>.</li>
+      </ol>
+      <p class="mut">An instrument with fewer than 15 complete hours of history has no row yet.</p>
+    </div>
+  </div>
+  <table class="g-t">
+    <thead><tr><th>Column</th><th>Shows</th><th>Use it for</th></tr></thead>
+    <tbody>
+      <tr><td>ATR(14) 1H · bar</td><td>ATR as % of price, drawn against the most volatile row (the longest bar = 100%).</td><td>Seeing at a glance who moves most.</td></tr>
+      <tr><td>% of price</td><td>ATR ÷ price × 100.</td><td>Comparing instruments of different price and class.</td></tr>
+      <tr><td>Pips / pt</td><td>ATR in pips or points.</td><td>Stop and target distances on that instrument.</td></tr>
+    </tbody>
+  </table>
+  <div class="call ex"><b class="t">Example</b><p>EUR/GBP shows 6.9 pips (0.08%), AUD/JPY 29.5 pips (0.27%). In the same hour AUD/JPY usually moves more than three times as far, in % terms: a stop that fits one is wrong for the other.</p></div>
+</section>
+
+<section class="ch" id="week">
+  <div class="ch-h"><span class="n">05</span><h3>vs week: busy or quiet?</h3></div>
+  <p>The ATR now divided by the <b>normal for these hours</b>: the average true range of the same hours of the day in the earlier part of the history (the hours covered by the last 14 bars, matched by UTC hour, at least 10 of them).</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 150" role="img" aria-label="Timeline of complete hours: the last 14 make the ATR, the same hours of the day earlier make the normal">
+      <rect x="20" y="40" width="720" height="26" class="s-box"/>
+      <g class="s-inbg"><rect x="70" y="40" width="60" height="26"/><rect x="230" y="40" width="60" height="26"/><rect x="390" y="40" width="60" height="26"/></g>
+      <rect x="590" y="40" width="150" height="26" class="s-wnbg" style="stroke:var(--warn)"/>
+      <text x="20" y="30" class="s s-tx3">← up to 101 complete hours</text><text x="740" y="30" text-anchor="end" class="s s-tx3">now →</text>
+      <text x="665" y="57" text-anchor="middle" class="s b s-tx">last 14 hours</text>
+      <text x="100" y="57" text-anchor="middle" class="s s-tx2">same hours</text><text x="260" y="57" text-anchor="middle" class="s s-tx2">same hours</text><text x="420" y="57" text-anchor="middle" class="s s-tx2">same hours</text>
+      <path d="M665 70 V92" class="s-arrow" marker-end="url(#ah)"/><text x="665" y="108" text-anchor="middle" class="s b s-tx">ATR now</text>
+      <path d="M260 70 V92" class="s-arrow" marker-end="url(#ah)"/><text x="260" y="108" text-anchor="middle" class="s b s-tx">normal = mean true range of those hours</text>
+      <text x="380" y="138" text-anchor="middle" class="b s-tx">vs week = ATR now ÷ normal</text>
+    </svg>
+  </div><figcaption><b>Fig. 3</b>Now against the same hours of the day earlier on. A busy afternoon is compared with other afternoons.</figcaption></figure>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 96" role="img" aria-label="The vs week scale with the compressed, normal and elevated zones">
+      <rect x="40" y="36" width="272" height="18" class="s-inbg"/><rect x="312" y="36" width="153" height="18" class="s-box2"/><rect x="465" y="36" width="255" height="18" class="s-wnbg"/>
+      <path d="M380 30v30" class="s-ln3" stroke-dasharray="3 3"/>
+      <text x="176" y="26" text-anchor="middle" class="b s-in">quieter than usual</text><text x="388" y="26" text-anchor="middle" class="b s-tx">normal</text><text x="592" y="26" text-anchor="middle" class="b s-wn">busier than usual</text>
+      <text x="40" y="74" text-anchor="middle" class="m s s-tx3">0×</text><text x="312" y="74" text-anchor="middle" class="m s s-tx3">0.8×</text><text x="388" y="74" text-anchor="middle" class="m s s-tx2">1×</text><text x="465" y="74" text-anchor="middle" class="m s s-tx3">1.25×</text><text x="720" y="74" text-anchor="middle" class="m s s-tx3">2×</text>
+      <text x="176" y="90" text-anchor="middle" class="s s-tx3">blue badge</text><text x="592" y="90" text-anchor="middle" class="s s-tx3">amber badge</text>
+    </svg>
+  </div><figcaption><b>Fig. 4</b>The vs week zones. The badge colour marks attention, never direction.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>vs week</th><th>Means</th><th>What to do</th></tr></thead>
+    <tbody>
+      <tr><td class="n wn">&gt; 1.25×</td><td>Moving more than usual for these hours: news, a breakout, a busy session.</td><td>Same plan, smaller size: the stop in pips must be wider, the money at risk should not be.</td></tr>
+      <tr><td class="n">0.8× – 1.25×</td><td>Normal pace.</td><td>Size from the ATR as usual.</td></tr>
+      <tr><td class="n in">&lt; 0.8×</td><td>Quieter than usual.</td><td>Expect less: closer targets, or wait. Quiet tends not to last, but that says nothing about which way it ends.</td></tr>
+      <tr><td class="n">—</td><td>Fewer than 10 matching hours in the history.</td><td>Read the ATR alone.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="range">
+  <div class="ch-h"><span class="n">06</span><h3>The 24h range</h3></div>
+  <p>The high minus the low of the bars in the <b>last 24 hours of clock time</b> (a market closed for longer: its last bar), shown three ways:</p>
+  <table class="g-t">
+    <thead><tr><th>Form</th><th>Example</th><th>Read it as</th></tr></thead>
+    <tbody>
+      <tr><td>Pips / points</td><td class="n">54p</td><td>How far it travelled from low to high.</td></tr>
+      <tr><td>% of price</td><td class="n">0.50%</td><td>The same, comparable across instruments.</td></tr>
+      <tr><td>× one hour of ATR</td><td class="n">1.8×</td><td>How many “typical hours” the day’s range spans.</td></tr>
+    </tbody>
+  </table>
+  <div class="call warn"><b class="t">After a weekend or a closed session</b><p>The window is 24 hours of the clock. On Monday morning it holds only the hours since the market reopened, so the range (and its × ATR) is small. Read it as “the range so far”.</p></div>
+</section>
+
+<section class="ch" id="pos">
+  <div class="ch-h"><span class="n">07</span><h3>Price in the 24h range</h3></div>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 110" role="img" aria-label="The 24h range track from low to high with the end zones">
+      <rect x="60" y="44" width="640" height="10" class="s-box2"/>
+      <rect x="60" y="44" width="64" height="10" class="s-wnbg" style="stroke:var(--warn)"/><rect x="636" y="44" width="64" height="10" class="s-wnbg" style="stroke:var(--warn)"/>
+      <text x="44" y="53" text-anchor="end" class="s b s-tx">L</text><text x="716" y="53" class="s b s-tx">H</text>
+      <text x="92" y="34" text-anchor="middle" class="s b s-wn">≤ 10% “low”</text><text x="668" y="34" text-anchor="middle" class="s b s-wn">≥ 90% “high”</text><text x="380" y="34" text-anchor="middle" class="s s-tx2">inside the day</text>
+      <rect x="648" y="38" width="3" height="22" class="s-tx"/><text x="650" y="78" text-anchor="middle" class="m s s-tx">92% high</text>
+      <rect x="309" y="38" width="3" height="22" class="s-tx"/><text x="311" y="78" text-anchor="middle" class="m s s-tx">39%</text>
+      <text x="380" y="102" text-anchor="middle" class="s m s-tx3">position = (price − 24h low) ÷ (24h high − 24h low)</text>
+    </svg>
+  </div><figcaption><b>Fig. 5</b>The track and its end zones. A marker in a zone is labelled “high” or “low”.</figcaption></figure>
+  <div class="cards">
+    <div class="card"><h5>At an end</h5><p>Price is testing the day’s extreme. Both breakouts and reversals start there: wait for the break to hold or for a clear rejection before acting.</p></div>
+    <div class="card"><h5>In the middle</h5><p>Room on both sides. A trade from here has the day’s range to work in, and the stop can sit beyond the nearer end.</p></div>
+    <div class="card"><h5>With the ATR</h5><p>Distance to an end in pips ÷ ATR = how many typical hours of movement until price reaches it.</p></div>
+  </div>
+</section>
+
+<section class="ch" id="summary">
+  <div class="ch-h"><span class="n">08</span><h3>Summary and sorting</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Card</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td>Most / least volatile</td><td>The highest and lowest ATR as % of price among the rows.</td></tr>
+      <tr><td>Market vs its week</td><td>The average vs week of all rows, with the same words: busier than usual (&gt; 1.25×), quieter than usual (&lt; 0.8×), normal.</td></tr>
+      <tr><td>At the 24h high / low</td><td>Instruments in the top or bottom 10% of their last 24 hours (up to five names each, then +N).</td></tr>
+    </tbody>
+  </table>
+  <table class="g-t">
+    <thead><tr><th>Sort</th><th>Order</th><th>Use it to</th></tr></thead>
+    <tbody>
+      <tr><td><b>Volatility</b> (default)</td><td>Highest ATR % first.</td><td>Pick busy markets for short-term trading, or calm ones for tight risk.</td></tr>
+      <tr><td>vs week</td><td>Furthest above its own week first.</td><td>Find where something is happening now.</td></tr>
+      <tr><td>At an end</td><td>Closest to the 24h high or low first.</td><td>Find instruments testing their extremes.</td></tr>
+    </tbody>
+  </table>
+  <p><b>Which rows:</b> the 16 G8 pairs, plus your instruments: the open one, favourites, everything you hold (positions, orders, active alerts), the multi-chart panes and the watchlist rows in view, up to 60 in all. The open instrument and held ones are outlined. Click any row to open it on the chart. The sort choice lasts for the session.</p>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="g-part"><span class="n">III</span><div><h2>Using it</h2><p>Turning one hour of movement into stops, size and realistic expectations.</p></div></div>
+
+<section class="ch" id="time">
+  <div class="ch-h"><span class="n">09</span><h3>How far price travels in time</h3></div>
+  <p>Typical movement does not grow in a straight line with time. For a market that moves at random, the usual distance grows with the <b>square root of time</b>: four hours move about twice as far as one, not four times.</p>
+  <figure><div class="fig-b">
+    <svg class="wide" viewBox="0 0 760 230" role="img" aria-label="Typical move grows with the square root of hours: 1, 2, 3, about 4.9 ATR at 1, 4, 9 and 24 hours">
+      <path d="M60 190 H730 M60 190 V20" class="s-ln3"/>
+      <polyline points="60.0,190.0 66.4,172.5 72.7,165.3 85.4,155.0 110.8,140.5 136.3,129.4 161.7,120.0 187.1,111.7 212.5,104.3 263.4,91.0 314.2,79.3 365.0,68.8 415.9,59.0 466.7,50.0 517.6,41.5 568.4,33.5 619.2,25.8 670.1,18.5" class="s-px"/>
+      <polyline points="60.0,190 161.7,50.0" class="s-ln3" stroke-dasharray="4 4"/>
+      <text x="167.7" y="54.0" class="s s-tx3">if it grew in a straight line (4h = 4×)</text>
+      <g class="s-tx"><circle cx="85.4" cy="155.0" r="3.5"/><circle cx="161.7" cy="120.0" r="3.5"/><circle cx="288.8" cy="85.0" r="3.5"/><circle cx="670.1" cy="18.5" r="3.5"/></g>
+      <text x="93.4" y="169.0" class="s m s-tx">1h · 1×</text><text x="169.7" y="134.0" class="s m s-tx">4h · 2×</text><text x="296.8" y="99.0" class="s m s-tx">9h · 3×</text><text x="662.1" y="34.5" text-anchor="end" class="s m s-tx">24h · ≈ 4.9×</text>
+      <text x="395" y="214" text-anchor="middle" class="s s-tx3">hours ahead</text><text x="30" y="105" text-anchor="middle" transform="rotate(-90 30 105)" class="s s-tx3">typical move, × one hour of ATR</text>
+    </svg>
+  </div><figcaption><b>Fig. 6</b>The square-root rule of thumb: k hours ≈ √k × one hour of movement. Real markets add sessions, news and trends on top.</figcaption></figure>
+  <table class="g-t">
+    <thead><tr><th>Holding time</th><th>Typical move</th><th>EUR/USD at 14 pips ATR</th></tr></thead>
+    <tbody>
+      <tr><td>1 hour</td><td class="n">1 × ATR</td><td class="n">≈ 14 pips</td></tr>
+      <tr><td>4 hours</td><td class="n">2 × ATR</td><td class="n">≈ 28 pips</td></tr>
+      <tr><td>9 hours</td><td class="n">3 × ATR</td><td class="n">≈ 42 pips</td></tr>
+      <tr><td>1 day of trading</td><td class="n">≈ 4.9 × ATR</td><td class="n">≈ 69 pips</td></tr>
+    </tbody>
+  </table>
+  <div class="call tip"><b class="t">Reverse it for targets</b><p>A target k ATR away needs about k² typical hours: a 3-ATR target is a 9-hour idea, not a 1-hour one. If your holding time is short, a far target is wishful.</p></div>
+</section>
+
+<section class="ch" id="stops">
+  <div class="ch-h"><span class="n">10</span><h3>Stops and size from ATR</h3></div>
+  <p>A stop inside one hour of ATR is within ordinary noise: it is likely to be hit by movement that means nothing. The usual approach: place the stop at a multiple of ATR beyond your level, then size the position so that stop costs a fixed share of your equity.</p>
+  <div class="calc" id="szcalc">
+    <div class="cin">
+      <label class="sw">Hourly ATR <span><input id="szAtr" type="number" value="14" min="0.1" step="0.1" style="width:80px"> pips</span></label>
+      <label class="sw">Stop at <span><input id="szK" type="number" value="1.5" min="0.1" step="0.1" style="width:80px"> × ATR</span></label>
+      <label class="sw">Equity <span><input id="szEq" type="number" value="10000" min="1" step="100" style="width:100px"> $</span></label>
+      <label class="sw">Risk per trade <span><input id="szR" type="number" value="1" min="0.05" step="0.05" style="width:80px"> %</span></label>
+      <label class="sw">Pip value per lot <span><input id="szPv" type="number" value="10" min="0.01" step="0.01" style="width:80px"> $</span></label>
+    </div>
+    <div class="cout">
+      <div class="tot"><b id="szLots">0.48</b><span class="tag nt">lots</span></div>
+      <div class="parts"><span>Stop distance</span><b id="szStop">21.0 pips</b><span>Money at risk</span><b id="szMoney">$100</b><span>Typical hours to reach the stop by noise alone</span><b id="szH">≈ 2.3 h</b></div>
+      <p class="sub">lots = equity × risk% ÷ (stop pips × pip value per lot). Pip value is about $10 per lot on pairs quoted in USD; the ticket shows the exact value for each instrument. Hours ≈ (stop ÷ ATR)², the square-root rule.</p>
+    </div>
+  </div>
+  <div class="call key"><b class="t">The point</b><p>When volatility doubles, the stop in pips doubles and the size halves: the money at risk stays the same. That is how a busy market (vs week above 1.25×) is traded without taking more risk.</p></div>
+</section>
+
+<section class="ch" id="uses">
+  <div class="ch-h"><span class="n">11</span><h3>What to do with it</h3></div>
+  <div class="cards">
+    <div class="card"><h5>Choose what to trade</h5><p>Short-term trading needs movement: sort by Volatility. Wide-stop swing trades on calm instruments keep size reasonable.</p></div>
+    <div class="card"><h5>Set the stop</h5><p>Beyond your level and outside one hour of ATR. In pips from the Pips / pt column.</p></div>
+    <div class="card"><h5>Set the size</h5><p>From the stop and your risk per trade (chapter 10), not from conviction.</p></div>
+    <div class="card"><h5>Check the target</h5><p>Is it reachable in your holding time? Use the square-root rule (chapter 9).</p></div>
+    <div class="card"><h5>Read the regime</h5><p>Market vs its week above 1.25×: reduce size across the board. Below 0.8×: expect less, be patient.</p></div>
+    <div class="card"><h5>Watch the ends</h5><p>Sort At an end to find instruments at the 24h high or low, then wait for the break or the rejection.</p></div>
+  </div>
+  <h4>A routine before a trade</h4>
+  <ol class="tl">
+    <li><span class="ph">Context</span><div><b>Market vs its week</b><span>Busy, normal or quiet overall?</span></div></li>
+    <li><span class="ph">Instrument</span><div><b>Its row</b><span>ATR in pips, vs week, where price sits in the 24h range.</span></div></li>
+    <li><span class="ph">Stop</span><div><b>Beyond the level, outside 1 ATR</b><span>For example 1.5 × ATR beyond your entry level.</span></div></li>
+    <li><span class="ph">Size</span><div><b>From the stop</b><span>So the stop costs your chosen share of equity.</span></div></li>
+    <li><span class="ph">Target</span><div><b>Reachable?</b><span>k ATR away ≈ k² hours of typical movement.</span></div></li>
+  </ol>
+  <p>For a forward-looking band of where price can go in the next hours, with session effects and a check of its own past accuracy, see <b>Research › Observatory › Range cone</b>; for how busy each hour of the day usually is, <b>Volatility clock</b>. Each has its own guide.</p>
+</section>
+
+<section class="ch" id="situations">
+  <div class="ch-h"><span class="n">12</span><h3>Common situations</h3></div>
+  <div class="mx">
+    <div class="c"><div class="s">Busy market<div class="tags"><span class="tag wn">vs week 1.4×</span></div></div><div class="m">News or a session open is moving prices more than usual.</div><div class="u">Wider stop in pips, smaller size, same money at risk.</div></div>
+    <div class="c"><div class="s">Quiet market<div class="tags"><span class="tag in">vs week 0.7×</span></div></div><div class="m">Less movement than usual for these hours.</div><div class="u">Closer targets, or wait; do not tighten stops into noise.</div></div>
+    <div class="c"><div class="s">At the 24h high<div class="tags"><span class="tag nt">price 95% high</span></div></div><div class="m">Testing the top of the day.</div><div class="u">Wait for the break to hold or a rejection; do not buy blindly into it.</div></div>
+    <div class="c"><div class="s">Your stop &lt; 1 ATR<div class="tags"><span class="tag nt">stop 8 pips · ATR 14</span></div></div><div class="m">Inside ordinary noise.</div><div class="u">Move the stop outside the noise and cut size instead.</div></div>
+    <div class="c"><div class="s">Monday morning<div class="tags"><span class="tag nt">24h range 1.5×</span></div></div><div class="m">The 24h window holds only the hours since the reopen.</div><div class="u">Read the range as “so far”; use ATR for sizing.</div></div>
+    <div class="c"><div class="s">Stock vs FX pair<div class="tags"><span class="tag nt">0.9% vs 0.15%</span></div></div><div class="m">The stock moves six times as much per hour, in % terms.</div><div class="u">Size each on its own ATR; never copy a stop between them.</div></div>
+  </div>
+</section>
+
+<section class="ch" id="limits">
+  <div class="ch-h"><span class="n">13</span><h3>Limits and pitfalls</h3></div>
+  <div class="cards">
+    <div class="card"><h5>It looks back</h5><p>ATR is an average of past hours. A release or a headline can produce a move several times the ATR in minutes.</p></div>
+    <div class="card"><h5>Gaps are bigger than hours</h5><p>A weekend or session gap can jump past any stop; ATR includes gaps only as they happened in the history.</p></div>
+    <div class="card"><h5>Rules of thumb</h5><p>The square-root rule assumes random movement; trending days travel further, ranging days less.</p></div>
+    <div class="card"><h5>Not direction</h5><p>High volatility is not a buy or sell signal. Nothing here is a forecast or financial advice.</p></div>
+  </div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<div class="g-part"><span class="n">IV</span><div><h2>Reference</h2><p>Every definition and threshold in one place.</p></div></div>
+
+<section class="ch" id="ref">
+  <div class="ch-h"><span class="n">14</span><h3>All definitions and thresholds</h3></div>
+  <table class="g-t">
+    <thead><tr><th>Item</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td>ATR(14) 1H</td><td>Wilder’s average of the true range over 14 hours, on up to 101 complete hourly bars (hour in progress excluded); a row needs ≥ 15 complete hours.</td></tr>
+      <tr><td>True range</td><td class="n">max(H − L, |H − prev C|, |L − prev C|)</td></tr>
+      <tr><td>% of price</td><td class="n">ATR ÷ last price × 100</td></tr>
+      <tr><td>vs week</td><td>ATR ÷ mean true range of the same UTC hours (those of the last 14 bars) earlier in the history; needs ≥ 10 matching hours.</td></tr>
+      <tr><td>Badges</td><td class="n">&gt; 1.25× amber “busier” · &lt; 0.8× blue “quieter”</td></tr>
+      <tr><td>24h range</td><td>High − low of the bars in the last 24 h of clock time (closed longer: last bar); in pips, % and × one hour of ATR.</td></tr>
+      <tr><td>Price in 24h range</td><td class="n">(price − low) ÷ (high − low); ≥ 90% “high”, ≤ 10% “low”</td></tr>
+      <tr><td>Market vs its week</td><td>Mean vs week of all rows, same thresholds.</td></tr>
+      <tr><td>Rows</td><td>16 G8 pairs + open, favourites, held, multi-chart and visible instruments, up to 60.</td></tr>
+      <tr><td>Refresh</td><td>Every 5 s while the page is open.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="ch" id="glossary">
+  <div class="ch-h"><span class="n">15</span><h3>Glossary</h3></div>
+  <dl class="g-dl">
+    <dt>ATR</dt><dd>Average true range: the average size of one bar’s move, gaps included (Wilder, 14 bars). Here one bar = one hour.</dd>
+    <dt>True range</dt><dd>The largest of the bar’s high − low and its distances from the previous close.</dd>
+    <dt>Pip / point</dt><dd>The unit of distance: pips for FX (0.0001, or 0.01 on JPY pairs), points for other instruments.</dd>
+    <dt>Volatility</dt><dd>How much price moves, whatever the direction.</dd>
+    <dt>Regime</dt><dd>Whether the market is busier, normal or quieter than usual for the time of day.</dd>
+    <dt>Square-root rule</dt><dd>For random movement, the typical distance over k hours ≈ √k times the distance over one hour.</dd>
+    <dt>Risk per trade</dt><dd>The share of equity lost if the stop is hit.</dd>
+    <dt>Pip value</dt><dd>The money one pip is worth for one lot; it depends on the instrument and the account currency.</dd>
+  </dl>
+</section>
+
+<p class="g-foot">tradeBerry · Volatility guide. Illustrations use example values. Volatility describes past movement; nothing here is a forecast or financial advice.</p>
+</main>
+</div>
+
+<script src="guide.js"></script>
+<script>
+/* Stop and size from ATR: lots = equity × risk% ÷ (k × ATR × pip value); hours ≈ k² (square-root rule) */
+(function () {
+  const v = id => +document.getElementById(id).value || 0;
+  function draw() {
+    const atr = v('szAtr'), k = v('szK'), eq = v('szEq'), r = v('szR'), pv = v('szPv');
+    const stop = atr * k, money = eq * r / 100, lots = stop > 0 && pv > 0 ? money / (stop * pv) : 0;
+    document.getElementById('szStop').textContent = stop.toFixed(1) + ' pips';
+    document.getElementById('szMoney').textContent = '$' + money.toFixed(money < 100 ? 2 : 0);
+    document.getElementById('szLots').textContent = lots.toFixed(2);
+    document.getElementById('szH').textContent = '≈ ' + (k * k).toFixed(1) + ' h';
+  }
+  document.querySelectorAll('#szcalc input').forEach(i => i.addEventListener('input', draw)); draw();
+})();
+</script>
+</body>
+</html>

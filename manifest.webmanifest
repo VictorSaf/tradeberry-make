@@ -1,0 +1,27 @@
+{
+  "name": "tradeBerry — Trading Terminal",
+  "short_name": "tradeBerry",
+  "description": "FX trading terminal on a simulated market seeded with ECB reference rates: charting, risk-first ticket, depth of market, backtester, Observatory and behaviour coach.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0d11",
+  "theme_color": "#0a0d11",
+  "categories": ["finance", "productivity", "education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [
+    { "src": "icons/shot-wide.png", "sizes": "1512x945", "type": "image/png", "form_factor": "wide", "label": "Desktop terminal" },
+    { "src": "icons/shot-narrow.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "Phone chart screen" }
+  ],
+  "shortcuts": [
+    { "name": "Trade", "url": "./?view=trade", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Observatory", "url": "./?tab=obs", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

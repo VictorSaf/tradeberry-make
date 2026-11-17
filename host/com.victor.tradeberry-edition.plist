@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.victor.tradeberry-edition</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/victorsafta/tradeberry/code/tools/edition.mjs</string><string>--if-needed</string></array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/Users/victorsafta/.local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>TB_DB</key><string>/Users/victorsafta/tradeberry/data/tradeberry.db</string>
+  </dict>
+  <key>WorkingDirectory</key><string>/Users/victorsafta/tradeberry/code</string>
+  <key>RunAtLoad</key><true/>
+  <key>StartInterval</key><integer>120</integer>
+  <key>StandardOutPath</key><string>/Users/victorsafta/tradeberry/logs/edition.log</string>
+  <key>StandardErrorPath</key><string>/Users/victorsafta/tradeberry/logs/edition.log</string>
+</dict></plist>
